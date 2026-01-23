@@ -98,8 +98,8 @@ export default function Navbar() {
 
   // Initialize language from localStorage
   useEffect(() => {
-    const savedLang = localStorage.getItem('language');
-    if (savedLang) {
+    const savedLang = localStorage.getItem('language') || 'en'; // Default to 'en'
+    if (savedLang !== language) {
       setLanguage(savedLang);
     }
   }, []);
@@ -109,6 +109,15 @@ export default function Navbar() {
     setLanguage(prev => {
       const newLang = prev === 'en' ? 'id' : 'en';
       localStorage.setItem('language', newLang);
+      
+      // Dispatch custom event to notify Home page and other components
+      window.dispatchEvent(new CustomEvent('languageChange', { 
+        detail: newLang,
+        bubbles: true 
+      }));
+      
+      console.log('Language changed to:', newLang); // Debug log
+      
       return newLang;
     });
   }, []);
