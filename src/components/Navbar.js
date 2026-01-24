@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, ChevronDown, X, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// Memoized NavLink component
+// memoized NavLink component
 const NavLink = memo(({ href, children }) => (
   <Link href={href}>
     <span className="inline-block px-4 py-2 text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200">
@@ -17,7 +18,7 @@ const NavLink = memo(({ href, children }) => (
 ));
 NavLink.displayName = 'NavLink';
 
-// Memoized DropdownButton component
+// memoized DropdownButton component
 const DropdownButton = memo(({ label, isActive, onClick }) => (
   <button
     onClick={onClick}
@@ -39,7 +40,7 @@ const DropdownButton = memo(({ label, isActive, onClick }) => (
 ));
 DropdownButton.displayName = 'DropdownButton';
 
-// Memoized DropdownItem component
+// memoized DropdownItem component
 const DropdownItem = memo(({ item, index, onClose }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -62,7 +63,7 @@ const DropdownItem = memo(({ item, index, onClose }) => (
 ));
 DropdownItem.displayName = 'DropdownItem';
 
-// Memoized MobileMenuItem component
+// memoized MobileMenuItem component
 const MobileMenuItem = memo(({ item, onClose }) => (
   <Link
     href={item.href}
@@ -74,7 +75,7 @@ const MobileMenuItem = memo(({ item, onClose }) => (
 ));
 MobileMenuItem.displayName = 'MobileMenuItem';
 
-// Language Switcher Component
+// language Switcher Component
 const LanguageSwitcher = memo(({ language, onToggle }) => (
   <button
     onClick={onToggle}
@@ -88,7 +89,7 @@ const LanguageSwitcher = memo(({ language, onToggle }) => (
 ));
 LanguageSwitcher.displayName = 'LanguageSwitcher';
 
-// Main Navbar Component
+// main navbar component
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -96,7 +97,7 @@ export default function Navbar() {
   const [mobileExpandedMenu, setMobileExpandedMenu] = useState(null);
   const [language, setLanguage] = useState('en');
 
-  // Initialize language from localStorage
+  // initialize language from localStorage
   useEffect(() => {
     const savedLang = localStorage.getItem('language') || 'en'; // Default to 'en'
     if (savedLang !== language) {
@@ -104,13 +105,13 @@ export default function Navbar() {
     }
   }, []);
 
-  // Toggle language
+  // toggle language
   const toggleLanguage = useCallback(() => {
     setLanguage(prev => {
       const newLang = prev === 'en' ? 'id' : 'en';
       localStorage.setItem('language', newLang);
       
-      // Dispatch custom event to notify Home page and other components
+      // dispatch custom event to notify Home page and other components
       window.dispatchEvent(new CustomEvent('languageChange', { 
         detail: newLang,
         bubbles: true 
@@ -122,7 +123,7 @@ export default function Navbar() {
     });
   }, []);
 
-  // Memoized menu items with translations
+  // memoized menu items with translations
   const menuItems = useMemo(() => ({
     about: [
       { 
@@ -192,7 +193,7 @@ export default function Navbar() {
     ]
   }), [language]);
 
-  // Optimized scroll handler with throttling
+  // optimized scroll handler with throttling
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -209,7 +210,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close dropdown when clicking outside
+  // close dropdown when clicking outside
   useEffect(() => {
     if (!activeDropdown) return;
     
@@ -218,7 +219,7 @@ export default function Navbar() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [activeDropdown]);
 
-  // Prevent body scroll when mobile menu is open
+  // prevent body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMobileOpen ? 'hidden' : 'unset';
     return () => {
@@ -226,7 +227,7 @@ export default function Navbar() {
     };
   }, [isMobileOpen]);
 
-  // Memoized callbacks
+  // memoized callbacks
   const handleDropdownClick = useCallback((e, dropdown) => {
     e.stopPropagation();
     setActiveDropdown(prev => prev === dropdown ? null : dropdown);
@@ -248,13 +249,13 @@ export default function Navbar() {
     setIsMobileOpen(prev => !prev);
   }, []);
 
-  // Get current dropdown items
+  // get current dropdown items
   const currentDropdownItems = useMemo(() => {
     if (!activeDropdown) return [];
     return menuItems[activeDropdown] || [];
   }, [activeDropdown, menuItems]);
 
-  // Translated labels
+  // translated labels
   const t = useMemo(() => ({
     home: language === 'en' ? 'Home' : 'Beranda',
     aboutUs: language === 'en' ? 'About Us' : 'Tentang Kami',
@@ -280,14 +281,21 @@ export default function Navbar() {
       >
         <div className="container mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo */}
+            {/* icon navbar */}
             <Link href="/" className="flex items-center z-50">
-              <motion.span className="text-2xl font-semibold text-gray-900">
+              <Image
+                src="/barcomp_primarylogo-blacktransp.svg"
+                alt="Barcomp Logo"
+                width={40}
+                height={40}
+                className="w-12 h-12 object-contain"
+              />
+              <span className="text-2xl font-semibold text-gray-900">
                 Barcomp
-              </motion.span>
+              </span>
             </Link>
 
-            {/* Desktop Navigation - Center */}
+            {/* desktop center navbar */}
             <div className="hidden lg:flex items-center space-x-1">
               <NavLink href="/">{t.home}</NavLink>
               
@@ -318,7 +326,7 @@ export default function Navbar() {
               <NavLink href="/contact">{t.contact}</NavLink>
             </div>
 
-            {/* Desktop Auth Buttons & Language Switcher - Right */}
+            {/* desktop right navbar (login/signup) */}
             <div className="hidden lg:flex items-center gap-4">
               <LanguageSwitcher language={language} onToggle={toggleLanguage} />
               
@@ -337,7 +345,7 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Mobile Menu Toggle & Language Switcher */}
+            {/* mobile menu button & lang switcher */}
             <div className="lg:hidden flex items-center gap-3 z-50">
               <LanguageSwitcher language={language} onToggle={toggleLanguage} />
               
@@ -353,7 +361,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Desktop Full-Screen Dropdown Overlay */}
+      {/* desktop fullscreen dropdown overlay */}
       <AnimatePresence>
         {activeDropdown && (
           <>
@@ -415,7 +423,7 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Menu Full-Screen Overlay */}
+      {/* mobile menu fullscreen overlay */}
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
@@ -436,7 +444,7 @@ export default function Navbar() {
                   {t.home}
                 </Link>
 
-                {/* About Us Accordion */}
+                {/* about us  accordion*/}
                 <div className="border-b border-gray-200">
                   <button
                     onClick={() => toggleMobileMenu('about')}
@@ -469,7 +477,7 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
 
-                {/* Services Accordion */}
+                {/* services accordion */}
                 <div className="border-b border-gray-200">
                   <button
                     onClick={() => toggleMobileMenu('services')}
@@ -502,7 +510,7 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
 
-                {/* Resources Accordion */}
+                {/* resources accordion */}
                 <div className="border-b border-gray-200">
                   <button
                     onClick={() => toggleMobileMenu('resources')}
@@ -544,7 +552,7 @@ export default function Navbar() {
                 </Link>
               </nav>
 
-              {/* Mobile Auth Buttons */}
+              {/* mobile login/signup button */}
               <div className="p-6 border-t border-gray-200 space-y-3">
                 <Link href="/login" onClick={closeMobileMenu}>
                   <Button 

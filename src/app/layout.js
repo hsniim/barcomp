@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "YourCompany - Innovative Digital Solutions",
+  title: "Barcomp",
   description: "Leading provider of web development, mobile apps, and digital transformation services",
 };
 
