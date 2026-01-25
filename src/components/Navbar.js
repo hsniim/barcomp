@@ -128,22 +128,22 @@ export default function Navbar() {
     about: [
       { 
         label: language === 'en' ? 'Profile' : 'Profil', 
-        description: language === 'en' ? 'Learn about our company' : 'Pelajari tentang perusahaan kami', 
+        description: language === 'en' ? 'Learn about our company' : 'Mengenal kami lebih dekat', 
         href: '/about/profile' 
       },
       { 
         label: language === 'en' ? 'Vision & Mission' : 'Visi & Misi', 
-        description: language === 'en' ? 'The future we see' : 'Masa depan yang kami lihat', 
+        description: language === 'en' ? 'Our goals and aspirations' : 'Aspirasi dan langkah nyata kami', 
         href: '/about/vision' 
       },
       { 
-        label: language === 'en' ? 'Values & Experience' : 'Nilai & Pengalaman', 
-        description: language === 'en' ? 'What we stand for' : 'Apa yang kami perjuangkan', 
+        label: language === 'en' ? 'Culture & Ethos' : 'Budaya & Etos', 
+        description: language === 'en' ? 'What drives our work' : 'Prinsip dan dedikasi yang mendasari', 
         href: '/about/values' 
       },
       { 
-        label: language === 'en' ? 'Our Clients' : 'Klien Kami', 
-        description: language === 'en' ? 'Trusted by our partners' : 'Dipercaya oleh mitra kami', 
+        label: language === 'en' ? 'Our Partners' : 'Mitra Kami', 
+        description: language === 'en' ? 'Success with our partners' : 'Kolabrorasi sukses bersama mitra-mitra', 
         href: '/about/clients' 
       },
     ],
@@ -284,7 +284,7 @@ export default function Navbar() {
             {/* icon navbar */}
             <Link href="/" className="flex items-center z-50">
               <Image
-                src="/barcomp_primarylogo-blacktransp.svg"
+                src="/logos/barcomp_primarylogo-blacktransp.svg"
                 alt="Barcomp Logo"
                 width={40}
                 height={40}
