@@ -3,17 +3,28 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, ChevronDown, X, Globe } from 'lucide-react';
+import { 
+  Menu, 
+  ChevronDown, 
+  X, 
+  Globe,
+  LogOut,
+  Settings,
+  UserCircle,
+  LayoutDashboard
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 // memoized NavLink component
 const NavLink = memo(({ href, children }) => (
-  <Link href={href}>
-    <span className="inline-block px-4 py-2 text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200">
-      {children}
-    </span>
+  <Link 
+    href={href}
+    className="inline-block px-4 py-2 text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+  >
+    {children}
   </Link>
 ));
 NavLink.displayName = 'NavLink';
@@ -89,21 +100,171 @@ const LanguageSwitcher = memo(({ language, onToggle }) => (
 ));
 LanguageSwitcher.displayName = 'LanguageSwitcher';
 
+// User Menu Component
+const UserMenu = memo(({ user, onLogout }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleLogout = () => {
+    onLogout();
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+      >
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center text-white font-semibold overflow-hidden">
+          {user.avatar ? (
+            <Image src={user.avatar} alt={user.fullName} width={40} height={40} className="object-cover" />
+          ) : (
+            user.fullName?.charAt(0).toUpperCase()
+          )}
+        </div>
+        <ChevronDown className={cn(
+          "w-4 h-4 transition-transform duration-200",
+          isOpen && "rotate-180"
+        )} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-30"
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-40"
+            >
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+                {user.role !== 'user' && (
+                  <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 uppercase">
+                    {user.role}
+                  </span>
+                )}
+              </div>
+
+              <div className="py-1">
+                <Link
+                  href="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <UserCircle className="w-4 h-4" />
+                  Profil Saya
+                </Link>
+
+                {(user.role === 'admin' || user.role === 'super_admin' || user.role === 'editor') && (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Admin Panel
+                  </Link>
+                )}
+
+                <Link
+                  href="/settings"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <Settings className="w-4 h-4" />
+                  Pengaturan
+                </Link>
+              </div>
+
+              <div className="border-t border-gray-100 py-1">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Keluar
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+UserMenu.displayName = 'UserMenu';
+
 // main navbar component
 export default function Navbar() {
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileExpandedMenu, setMobileExpandedMenu] = useState(null);
   const [language, setLanguage] = useState('en');
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // initialize language from localStorage
   useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en'; // Default to 'en'
+    const savedLang = localStorage.getItem('language') || 'en';
     if (savedLang !== language) {
       setLanguage(savedLang);
     }
   }, []);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth_token');
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user');
+        }
+      }
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
+
+  // Logout handler
+  const handleLogout = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
+      router.push('/');
+    }
+  }, [router]);
 
   // toggle language
   const toggleLanguage = useCallback(() => {
@@ -117,7 +278,7 @@ export default function Navbar() {
         bubbles: true 
       }));
       
-      console.log('Language changed to:', newLang); // Debug log
+      console.log('Language changed to:', newLang);
       
       return newLang;
     });
@@ -290,9 +451,9 @@ export default function Navbar() {
                 height={40}
                 className="w-12 h-12 object-contain"
               />
-              <span className="text-2xl font-semibold text-gray-900">
+              <h2 className="text-3xl font-semibold text-gray-900">
                 Barcomp
-              </span>
+              </h2>
             </Link>
 
             {/* desktop center navbar */}
@@ -326,23 +487,29 @@ export default function Navbar() {
               <NavLink href="/contact">{t.contact}</NavLink>
             </div>
 
-            {/* desktop right navbar (login/signup) */}
+            {/* desktop right navbar (login/signup or user menu) */}
             <div className="hidden lg:flex items-center gap-4">
               <LanguageSwitcher language={language} onToggle={toggleLanguage} />
               
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-indigo-600 font-medium"
-                >
-                  {t.login}
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6">
-                  {t.signup}
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <UserMenu user={user} onLogout={handleLogout} />
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button
+                      variant="ghost"
+                      className="text-gray-700 hover:text-indigo-600 font-medium"
+                    >
+                      {t.login}
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6">
+                      {t.signup}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* mobile menu button & lang switcher */}
@@ -435,6 +602,25 @@ export default function Navbar() {
             style={{ paddingTop: 'var(--navbar-height, 64px)' }}
           >
             <div className="flex flex-col h-full">
+              {/* User Info (if logged in) */}
+              {isAuthenticated && user && (
+                <div className="p-6 bg-gradient-to-br from-[#0066FF] to-[#0052CC] text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-semibold overflow-hidden">
+                      {user.avatar ? (
+                        <Image src={user.avatar} alt={user.fullName} width={48} height={48} className="object-cover rounded-full" />
+                      ) : (
+                        user.fullName?.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{user.fullName}</p>
+                      <p className="text-sm opacity-90">{user.email}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <nav className="flex-1 px-6 py-8 space-y-1">
                 <Link
                   href="/"
@@ -444,7 +630,7 @@ export default function Navbar() {
                   {t.home}
                 </Link>
 
-                {/* about us  accordion*/}
+                {/* about us accordion */}
                 <div className="border-b border-gray-200">
                   <button
                     onClick={() => toggleMobileMenu('about')}
@@ -552,21 +738,50 @@ export default function Navbar() {
                 </Link>
               </nav>
 
-              {/* mobile login/signup button */}
+              {/* mobile login/signup button or user menu */}
               <div className="p-6 border-t border-gray-200 space-y-3">
-                <Link href="/login" onClick={closeMobileMenu}>
-                  <Button 
-                    variant="ghost"
-                    className="w-full h-12 text-gray-700 hover:text-indigo-600 font-medium text-base"
-                  >
-                    {t.login}
-                  </Button>
-                </Link>
-                <Link href="/register" onClick={closeMobileMenu}>
-                  <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-base">
-                    {t.signup}
-                  </Button>
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link href="/profile" onClick={closeMobileMenu}>
+                      <Button variant="outline" className="w-full h-12">
+                        <UserCircle className="mr-2 h-5 w-5" />
+                        Profil Saya
+                      </Button>
+                    </Link>
+                    {(user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'editor') && (
+                      <Link href="/admin/dashboard" onClick={closeMobileMenu}>
+                        <Button variant="outline" className="w-full h-12">
+                          <LayoutDashboard className="mr-2 h-5 w-5" />
+                          Admin Panel
+                        </Button>
+                      </Link>
+                    )}
+                    <Button 
+                      onClick={() => { closeMobileMenu(); handleLogout(); }} 
+                      variant="outline" 
+                      className="w-full h-12 text-red-600 hover:text-red-700"
+                    >
+                      <LogOut className="mr-2 h-5 w-5" />
+                      Keluar
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={closeMobileMenu}>
+                      <Button 
+                        variant="ghost"
+                        className="w-full h-12 text-gray-700 hover:text-indigo-600 font-medium text-base"
+                      >
+                        {t.login}
+                      </Button>
+                    </Link>
+                    <Link href="/register" onClick={closeMobileMenu}>
+                      <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-base">
+                        {t.signup}
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
