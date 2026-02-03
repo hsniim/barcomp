@@ -1,12 +1,34 @@
-// lib/prisma.js
+// src/lib/prisma.js
 import { PrismaClient } from '@prisma/client';
+import { createPool } from 'mariadb';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';  // ← ini yang benar!
 
-const globalForPrisma = global;
+const globalForPrisma = globalThis;  // lebih aman di Next.js / browser-like env
 
-export const prisma = globalForPrisma.prisma || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+// Connection pool dari DATABASE_URL di .env
+const pool = createPool({
+  uri: process.env.DATABASE_URL,
+  connectionLimit: 10,
+  connectTimeout: 15000
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+const adapter = new PrismaMariaDb(pool);
+
+let prisma;
+
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient({
+    adapter,
+    log: ['error'],
+  });
+} else {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = new PrismaClient({
+      adapter,
+      log: ['query', 'info', 'warn', 'error'],
+    });
+  }
+  prisma = globalForPrisma.prisma;
 }
+
+export { prisma };

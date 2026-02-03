@@ -38,6 +38,14 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const userMenuRef = useRef(null);
 
+  // Check if current page is login page
+  const isLoginPage = pathname === '/admin/login';
+
+  // If login page, render without admin layout
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
   // Close user menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {

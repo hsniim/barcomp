@@ -1,342 +1,671 @@
-// app/admin/users/page.js
+// app/admin/gallery/page.js
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-// Try to import Radix UI components - use fallback if not available
-let AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent;
-let AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle;
-let Select, SelectContent, SelectItem, SelectTrigger, SelectValue;
-let DropdownMenu, DropdownMenuContent, DropdownMenuItem;
-let DropdownMenuSeparator, DropdownMenuTrigger;
-
-try {
-  const alertDialogModule = require('@/components/ui/alert-dialog');
-  AlertDialog = alertDialogModule.AlertDialog;
-  AlertDialogAction = alertDialogModule.AlertDialogAction;
-  AlertDialogCancel = alertDialogModule.AlertDialogCancel;
-  AlertDialogContent = alertDialogModule.AlertDialogContent;
-  AlertDialogDescription = alertDialogModule.AlertDialogDescription;
-  AlertDialogFooter = alertDialogModule.AlertDialogFooter;
-  AlertDialogHeader = alertDialogModule.AlertDialogHeader;
-  AlertDialogTitle = alertDialogModule.AlertDialogTitle;
-} catch (e) {
-  console.warn('Alert Dialog components not found, using fallback');
-}
-
-try {
-  const selectModule = require('@/components/ui/select');
-  Select = selectModule.Select;
-  SelectContent = selectModule.SelectContent;
-  SelectItem = selectModule.SelectItem;
-  SelectTrigger = selectModule.SelectTrigger;
-  SelectValue = selectModule.SelectValue;
-} catch (e) {
-  console.warn('Select components not found, using fallback');
-}
-
-try {
-  const dropdownModule = require('@/components/ui/dropdown-menu');
-  DropdownMenu = dropdownModule.DropdownMenu;
-  DropdownMenuContent = dropdownModule.DropdownMenuContent;
-  DropdownMenuItem = dropdownModule.DropdownMenuItem;
-  DropdownMenuSeparator = dropdownModule.DropdownMenuSeparator;
-  DropdownMenuTrigger = dropdownModule.DropdownMenuTrigger;
-} catch (e) {
-  console.warn('Dropdown components not found, using fallback');
-}
-
 import {
-  Users as UsersIcon,
-  UserPlus,
+  Image as ImageIcon,
+  Upload,
   Search,
-  Shield,
-  Edit3,
+  Filter,
   Trash2,
-  MoreHorizontal,
-  Crown,
-  Mail,
-  Calendar,
+  Eye,
+  Star,
+  X,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
-  CheckCircle2,
-  User,
-  Activity,
-  TrendingUp,
-  MessageSquare,
-  FileText,
-  X
+  Check,
+  Plus,
+  Loader2,
+  Camera,
+  Tag,
+  Calendar,
+  Maximize2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn, formatDateTime, getStatusColor } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
-// FIXED: JSDoc type definition based on Prisma schema (snake_case fields)
-/**
- * @typedef {Object} User
- * @property {string} id
- * @property {string} full_name
- * @property {string} [username]
- * @property {string} email
- * @property {string} role - Enum: super_admin, admin, editor, user
- * @property {string} status - Enum: active, inactive, suspended, banned
- * @property {string} [avatar]
- * @property {string} [phone]
- * @property {string} [company]
- * @property {string} [job_title]
- * @property {string} created_at
- * @property {string} [last_login_at]
- * @property {number} [login_count]
- * @property {boolean} [email_verified]
- * @property {Object} [_count]
- * @property {number} [_count.articles]
- * @property {number} [_count.comments]
- */
+// ============================================================================
+// MOTION VARIANTS — copied verbatim from users/page.js
+// ============================================================================
 
-export default function UsersPage() {
-  /** @type {[User[], Function]} */
-  const [users, setUsers] = useState([]);
-  /** @type {[User | null, Function]} */
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    superAdmins: 0,
-    activeUsers: 0,
-    totalArticles: 0
-  });
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
 
-  // Alert Dialog states
-  const [deleteDialog, setDeleteDialog] = useState({ open: false, user: null });
-  
-  // Edit Role states
-  const [editingRole, setEditingRole] = useState({ userId: null, currentRole: '' });
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
 
+// ============================================================================
+// LIGHTBOX MODAL
+// Keyboard-trapped: Escape closes. Prev / Next arrows navigate siblings.
+// Renders image_url (full-res) — thumbnail_url is only for the grid.
+// All displayed fields map 1-to-1 to the gallery Prisma model.
+// ============================================================================
+
+function Lightbox({ photo, photos, onClose }) {
+  const [currentIndex, setCurrentIndex] = useState(
+    () => photos.findIndex((p) => p.id === photo.id)
+  );
+  const current = photos[currentIndex];
+
+  // ── keyboard nav ────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchCurrentUser();
-    fetchUsers();
-  }, [pagination.page, roleFilter, statusFilter, search]);
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') setCurrentIndex((i) => Math.max(0, i - 1));
+      if (e.key === 'ArrowRight') setCurrentIndex((i) => Math.min(photos.length - 1, i + 1));
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose, photos.length]);
 
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+  // ── parsed tags (Json field — may be array or null) ─────────────────────
+  const tags = Array.isArray(current.tags) ? current.tags : [];
 
-      const data = await response.json();
-      if (data.success) {
-        // FIXED: Assume API returns snake_case fields from Prisma
-        setCurrentUser(data.user);
-      }
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-    }
-  };
+  return (
+    <AnimatePresence>
+      {/* backdrop */}
+      <motion.div
+        key="backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="fixed inset-0 z-[40] bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-  // FIXED: Assume API returns snake_case fields from Prisma
-  // TODO: Backend should send stats in response untuk performa lebih baik
-  const fetchUsers = async () => {
+      {/* panel */}
+      <motion.div
+        key="panel"
+        initial={{ opacity: 0, scale: 0.93 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.93 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed inset-0 z-[50] flex items-center justify-center p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative w-full max-w-5xl max-h-full flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+          {/* ── top bar ─────────────────────────────────────────────────── */}
+          <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex-shrink-0">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              {currentIndex + 1} / {photos.length}
+            </span>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+
+          {/* ── image + prev/next ───────────────────────────────────────── */}
+          <div className="relative flex-1 flex items-center justify-center bg-gray-950 overflow-hidden" style={{ minHeight: 320 }}>
+            <img
+              key={current.id}
+              src={current.image_url}
+              alt={current.title}
+              className="max-w-full max-h-[62vh] object-contain"
+            />
+
+            {/* prev */}
+            {currentIndex > 0 && (
+              <button
+                onClick={() => setCurrentIndex((i) => i - 1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow transition-all duration-150"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-800" />
+              </button>
+            )}
+            {/* next */}
+            {currentIndex < photos.length - 1 && (
+              <button
+                onClick={() => setCurrentIndex((i) => i + 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow transition-all duration-150"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-800" />
+              </button>
+            )}
+
+            {/* featured star overlay */}
+            {current.featured && (
+              <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 rounded-full">
+                <Star className="w-3.5 h-3.5 text-white fill-white" />
+                <span className="text-xs font-bold text-white">Unggulan</span>
+              </div>
+            )}
+          </div>
+
+          {/* ── meta strip ──────────────────────────────────────────────── */}
+          <div className="flex-shrink-0 px-5 py-4 border-t border-gray-200 bg-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-bold text-gray-900 truncate">{current.title}</h3>
+                {current.description && (
+                  <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">{current.description}</p>
+                )}
+              </div>
+
+              {/* dimension badge */}
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-600 flex-shrink-0">
+                <Maximize2 className="w-3 h-3" />
+                {current.width}×{current.height}
+              </span>
+            </div>
+
+            {/* row of small pills */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
+              {current.photographer && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>{current.photographer}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>
+                  {new Date(current.captured_at).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700">
+                <Tag className="w-3 h-3" />
+                {current.category}
+              </span>
+              {current.event_id && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-xs font-semibold text-purple-700">
+                  Event linked
+                </span>
+              )}
+            </div>
+
+            {/* tags row */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex px-2.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-600"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ============================================================================
+// BULK ACTION BAR
+// Slides in from the top when ≥ 1 checkbox is selected.
+// Mirrors the sticky-style action bar pattern common in admin panels.
+// ============================================================================
+
+function BulkActionBar({ selectedCount, onSelectAll, onClear, onDeleteSelected, totalCount }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-[10] bg-white/95 backdrop-blur border border-[#0066FF] rounded-xl shadow-lg px-5 py-3 flex items-center justify-between flex-wrap gap-3"
+    >
+      <div className="flex items-center gap-3">
+        {/* master checkbox */}
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={selectedCount === totalCount && totalCount > 0}
+            onChange={onSelectAll}
+            className="sr-only peer"
+          />
+          <div className={cn(
+            'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-150',
+            selectedCount === totalCount && totalCount > 0
+              ? 'bg-[#0066FF] border-[#0066FF]'
+              : selectedCount > 0
+              ? 'bg-[#0066FF]/20 border-[#0066FF]'
+              : 'border-gray-300'
+          )}>
+            {selectedCount === totalCount && totalCount > 0 ? (
+              <Check className="w-3 h-3 text-white" />
+            ) : selectedCount > 0 ? (
+              <span className="w-2.5 h-0.5 bg-[#0066FF] rounded-sm" />
+            ) : null}
+          </div>
+        </label>
+
+        <span className="text-sm font-semibold text-gray-900">
+          <span className="text-[#0066FF]">{selectedCount}</span> foto dipilih
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onClear}
+          className="px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+        >
+          Batalkan
+        </button>
+        <button
+          onClick={onDeleteSelected}
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow transition-all duration-200"
+        >
+          <Trash2 className="w-4 h-4" />
+          Hapus {selectedCount} Foto
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================================================
+// BULK-DELETE CONFIRMATION DIALOG
+// Layout & copy mirrors the AlertDialog inside users/page.js exactly:
+// red icon circle → bold title → description with item list → footer buttons.
+// ============================================================================
+
+function BulkDeleteDialog({ count, onCancel, onConfirm, loading }) {
+  // Escape-to-close
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onCancel]);
+
+  return (
+    <>
+      {/* backdrop */}
+      <div className="fixed inset-0 z-[40] bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+
+      {/* dialog */}
+      <div className="fixed inset-0 z-[50] flex items-center justify-center p-4">
+        <div
+          className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-6">
+            {/* icon + title row */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Hapus Foto Pilihan</h2>
+            </div>
+
+            {/* body */}
+            <p className="text-base text-gray-600 leading-relaxed">
+              Anda akan menghapus <span className="font-semibold text-gray-900">{count} foto</span> secara permanen.
+              Tindakan ini tidak dapat dibatalkan dan akan menghapus:
+            </p>
+            <ul className="mt-3 space-y-1.5 list-disc list-inside text-sm text-gray-600">
+              <li>Semua file foto dan thumbnail</li>
+              <li>Metadata, tag, dan keterangan foto</li>
+              <li>Relasi ke event (jika ada)</li>
+            </ul>
+          </div>
+
+          {/* footer */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+            >
+              Batalkan
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {loading ? 'Menghapus…' : `Ya, Hapus ${count} Foto`}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ============================================================================
+// SINGLE-DELETE CONFIRMATION (same pattern, lighter copy)
+// ============================================================================
+
+function SingleDeleteDialog({ photo, onCancel, onConfirm, loading }) {
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onCancel]);
+
+  return (
+    <>
+      <div className="fixed inset-0 z-[40] bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="fixed inset-0 z-[50] flex items-center justify-center p-4">
+        <div
+          className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Hapus Foto</h2>
+            </div>
+            <p className="text-base text-gray-600 leading-relaxed">
+              Hapus <span className="font-semibold text-gray-900">"{photo?.title}"</span> secara permanen?
+              Tindakan ini tidak dapat dibatalkan.
+            </p>
+          </div>
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+            >
+              Batalkan
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {loading ? 'Menghapus…' : 'Ya, Hapus'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ============================================================================
+// PHOTO CARD
+// layout + layoutId for Framer Motion smooth reflow on grid changes.
+// Checkbox lives in the top-left corner and is always visible when any item
+// in the entire grid is already selected — otherwise it only appears on hover.
+// Hover overlay brings up View (Eye) and Delete (Trash2) action buttons.
+// Featured star badge is absolutely positioned just like the email_verified
+// green dot on the user avatar in users/page.js.
+// ============================================================================
+
+function PhotoCard({ photo, isSelected, anySelected, onSelect, onView, onDelete }) {
+  const tags = Array.isArray(photo.tags) ? photo.tags : [];
+
+  return (
+    <motion.div
+      layout
+      layoutId={photo.id}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.92 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-[#0066FF] transition-all duration-300 cursor-pointer"
+    >
+      {/* ── thumbnail ───────────────────────────────────────────────── */}
+      <div className="relative aspect-square overflow-hidden bg-gray-100" onClick={() => onView(photo)}>
+        <img
+          src={photo.thumbnail_url}
+          alt={photo.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+
+        {/* ── featured star (absolute, top-right) ─────────────────── */}
+        {photo.featured && (
+          <div className="absolute top-2 right-2 z-[2] flex items-center gap-0.5 px-2 py-0.5 bg-amber-500/90 rounded-full shadow-sm">
+            <Star className="w-3 h-3 text-white fill-white" />
+            <span className="text-xs font-bold text-white">Featured</span>
+          </div>
+        )}
+
+        {/* ── hover overlay with action buttons ───────────────────── */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-all duration-300 flex flex-col items-center justify-center gap-2">
+          <div className="opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onView(photo); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 hover:bg-white text-gray-800 text-xs font-semibold rounded-lg shadow transition-all duration-150"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Lihat
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(photo); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/95 hover:bg-red-600 text-white text-xs font-semibold rounded-lg shadow transition-all duration-150"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── checkbox overlay (top-left, always visible when bulk mode active) */}
+      <div
+        className={cn(
+          'absolute top-2 left-2 z-[3] transition-opacity duration-200',
+          anySelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        )}
+        onClick={(e) => { e.stopPropagation(); onSelect(photo.id); }}
+      >
+        <div
+          className={cn(
+            'w-5.5 h-5.5 rounded-md border-2 flex items-center justify-center shadow-sm transition-colors duration-150 cursor-pointer',
+            isSelected
+              ? 'bg-[#0066FF] border-[#0066FF]'
+              : 'bg-white/90 border-gray-300 hover:border-[#0066FF]'
+          )}
+        >
+          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+        </div>
+      </div>
+
+      {/* ── title strip (bottom) ──────────────────────────────────── */}
+      <div className="px-3 py-2.5 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-gray-900 truncate">{photo.title}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{photo.category}</p>
+        </div>
+        {tags.length > 0 && (
+          <Tag className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================================================
+// PAGE ROOT
+// ============================================================================
+
+export default function GalleryPage() {
+  // ── data ──────────────────────────────────────────────────────────────────
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ── filters ───────────────────────────────────────────────────────────────
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [featuredFilter, setFeaturedFilter] = useState('all'); // all | featured | not-featured
+  const [categories, setCategories] = useState([]);
+
+  // ── pagination ────────────────────────────────────────────────────────────
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+
+  // ── selection (bulk) ──────────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // ── modals ────────────────────────────────────────────────────────────────
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);   // single photo
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // display_order: managed server-side (e.g. drag-sort endpoint) — not exposed here.
+
+  // ── stats (derived from current page — backend should ideally send totals) ─
+  const [stats, setStats] = useState({ total: 0, categories: 0, featured: 0, thisMonth: 0 });
+
+  // ── fetch ─────────────────────────────────────────────────────────────────
+  const fetchPhotos = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        page: pagination.page,
-        limit: '20',
-        ...(roleFilter !== 'all' && { role: roleFilter }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(search && { search })
+        page: String(pagination.page),
+        limit: '24',
+        ...(categoryFilter !== 'all' && { category: categoryFilter }),
+        ...(featuredFilter === 'featured' && { featured: 'true' }),
+        ...(featuredFilter === 'not-featured' && { featured: 'false' }),
+        ...(search && { search }),
       });
 
-      const response = await fetch(`/api/admin/users?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const res = await fetch(`/api/admin/gallery?${params}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+      const data = await res.json();
 
-      const data = await response.json();
       if (data.success) {
-        // FIXED: users already have snake_case fields from Prisma
-        setUsers(data.users);
+        setPhotos(data.photos);
         setPagination(data.pagination);
-        
-        // Calculate stats from data (or use response stats if API provides it)
-        // TODO: Backend should include stats in response for better performance
-        const superAdmins = data.users.filter(u => u.role === 'super_admin').length;
-        const activeUsers = data.users.filter(u => u.status === 'active').length;
-        const totalArticles = data.users.reduce((sum, u) => sum + (u._count?.articles || 0), 0);
-        
+
+        // derive stats from current payload (replace with server stats if available)
+        const uniqueCats = new Set(data.photos.map((p) => p.category));
+        const featuredCount = data.photos.filter((p) => p.featured).length;
+        const now = new Date();
+        const thisMonthCount = data.photos.filter((p) => {
+          const d = new Date(p.uploaded_at);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }).length;
+
         setStats({
-          totalUsers: data.pagination.total || data.users.length,
-          superAdmins,
-          activeUsers,
-          totalArticles
+          total: data.pagination.total || data.photos.length,
+          categories: uniqueCats.size,
+          featured: featuredCount,
+          thisMonth: thisMonthCount,
+        });
+
+        // populate category filter options (dedupe)
+        setCategories((prev) => {
+          const merged = new Set([...prev, ...uniqueCats]);
+          return Array.from(merged).sort();
         });
       }
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-      toast.error('Failed to load users');
+    } catch {
+      toast.error('Gagal memuat galeri');
     } finally {
       setLoading(false);
     }
+  }, [pagination.page, categoryFilter, featuredFilter, search]);
+
+  useEffect(() => { fetchPhotos(); }, [fetchPhotos]);
+
+  // ── selection helpers ─────────────────────────────────────────────────────
+  const toggleSelect = (id) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const selectAll = () =>
+    setSelectedIds(new Set(photos.map((p) => p.id)));
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // ── single delete ─────────────────────────────────────────────────────────
+  const handleSingleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/admin/gallery/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Foto berhasil dihapus');
+        setDeleteTarget(null);
+        fetchPhotos();
+      } else {
+        toast.error(data.error || 'Hapus gagal');
+      }
+    } catch {
+      toast.error('Terjadi kesalahan');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
-  const handleUpdateRole = async (userId, newRole) => {
+  // ── bulk delete ───────────────────────────────────────────────────────────
+  const handleBulkDelete = async () => {
+    setDeleteLoading(true);
     try {
-      const response = await fetch(`/api/admin/users/${userId}/role`, {
-        method: 'PATCH',
+      const res = await fetch('/api/admin/gallery/bulk', {
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ role: newRole })
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
       });
-
-      const data = await response.json();
+      const data = await res.json();
       if (data.success) {
-        toast.success('User role updated successfully');
-        fetchUsers();
-        setEditingRole({ userId: null, currentRole: '' });
+        toast.success(`${selectedIds.size} foto berhasil dihapus`);
+        setBulkDeleteOpen(false);
+        clearSelection();
+        fetchPhotos();
       } else {
-        toast.error(data.error || 'Failed to update role');
+        toast.error(data.error || 'Hapus massal gagal');
       }
-    } catch (error) {
-      console.error('Failed to update role:', error);
-      toast.error('Failed to update role');
+    } catch {
+      toast.error('Terjadi kesalahan');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
-  // TODO: Consider soft-delete (set deleted_at) instead of hard delete for audit trail
-  // Backend should handle cascade delete: articles, comments, sessions, activity logs
-  const handleDeleteUser = async () => {
-    if (!deleteDialog.user) return;
-
-    try {
-      const response = await fetch(`/api/admin/users/${deleteDialog.user.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        toast.success('User deleted successfully');
-        setDeleteDialog({ open: false, user: null });
-        fetchUsers();
-      } else {
-        toast.error(data.error || 'Failed to delete user');
-      }
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-      toast.error('Failed to delete user');
-    }
-  };
-
-  const handleDeleteUserFallback = (user) => {
-    if (currentUser?.id === user.id) {
-      toast.error("You cannot delete your own account");
-      return;
-    }
-    if (user.role === 'super_admin') {
-      toast.error("Cannot delete Super Admin users");
-      return;
-    }
-    
-    // FIXED: Use full_name from schema
-    if (confirm(`Are you sure you want to delete ${user.full_name}? This will permanently remove their account, articles, and comments.`)) {
-      fetch(`/api/admin/users/${user.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            toast.success('User deleted successfully');
-            fetchUsers();
-          } else {
-            toast.error(data.error || 'Failed to delete user');
-          }
-        })
-        .catch(error => {
-          console.error('Failed to delete user:', error);
-          toast.error('Failed to delete user');
-        });
-    }
-  };
-
+  // ── search submit ─────────────────────────────────────────────────────────
   const handleSearch = (e) => {
     e.preventDefault();
-    setPagination({ ...pagination, page: 1 });
-    fetchUsers();
+    setPagination((p) => ({ ...p, page: 1 }));
+    fetchPhotos();
   };
 
-  // FIXED: Role mapping sesuai enum dari schema
-  const getRoleBadge = (role) => {
-    const roleConfig = {
-      super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Crown },
-      admin: { label: 'Admin', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Shield },
-      editor: { label: 'Editor', color: 'bg-green-100 text-green-700 border-green-200', icon: Edit3 },
-      user: { label: 'User', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: User }
-    };
-    return roleConfig[role] || roleConfig.user;
-  };
+  // ── search debounce reset pagination ──────────────────────────────────────
+  useEffect(() => { setPagination((p) => ({ ...p, page: 1 })); }, [search, categoryFilter, featuredFilter]);
 
-  // FIXED: Status mapping sesuai enum dari schema
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      active: { label: 'Active', color: 'bg-green-100 text-green-700 border-green-200' },
-      inactive: { label: 'Inactive', color: 'bg-gray-100 text-gray-700 border-gray-200' },
-      suspended: { label: 'Suspended', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-      banned: { label: 'Banned', color: 'bg-red-100 text-red-700 border-red-200' }
-    };
-    return statusConfig[status] || statusConfig.inactive;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      return formatDateTime(dateString);
-    } catch {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('id-ID', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: 'easeOut' }
-    }
-  };
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
+
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -344,18 +673,18 @@ export default function UsersPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">User Management</h1>
-          <p className="mt-1 text-base text-gray-600">Manage user accounts and permissions</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Galeri Foto</h1>
+          <p className="mt-1 text-base text-gray-600">Kelola koleksi foto dan album</p>
         </div>
-        <Link href="/admin/users/create">
+        <Link href="/admin/gallery/create">
           <Button className="flex items-center gap-2 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-lg transition-all duration-300">
-            <UserPlus className="w-4 h-4" />
-            Add New User
+            <Upload className="w-4 h-4" />
+            Upload Foto
           </Button>
         </Link>
       </motion.div>
 
-      {/* Stats Cards */}
+      {/* ── Stats Cards ─────────────────────────────────────────────────────── */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -363,12 +692,12 @@ export default function UsersPage() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         {[
-          { label: 'Total Users', value: stats.totalUsers, icon: UsersIcon, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-          { label: 'Super Admins', value: stats.superAdmins, icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Active Users', value: stats.activeUsers, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Total Articles', value: stats.totalArticles, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50' }
-        ].map((stat, index) => (
-          <motion.div key={index} variants={itemVariants}>
+          { label: 'Total Foto',   value: stats.total,      icon: ImageIcon, color: 'text-[#0066FF]',  bg: 'bg-blue-50' },
+          { label: 'Kategori',     value: stats.categories, icon: Tag,       color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Unggulan',     value: stats.featured,   icon: Star,      color: 'text-amber-600',  bg: 'bg-amber-50' },
+          { label: 'Bulan Ini',    value: stats.thisMonth,  icon: Calendar,  color: 'text-green-600',  bg: 'bg-green-50' },
+        ].map((stat, i) => (
+          <motion.div key={i} variants={itemVariants}>
             <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -386,471 +715,210 @@ export default function UsersPage() {
         ))}
       </motion.div>
 
-      {/* Search & Filter Bar */}
-      <motion.div
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Card className="border-gray-200 shadow-md">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search */}
-              <form onSubmit={handleSearch} className="flex-1">
+      {/* ── Search & Filter Bar ─────────────────────────────────────────────── */}
+      <motion.div variants={itemVariants} initial="hidden" animate="visible">
+        <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300">
+          <CardContent className="p-6">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+              {/* search */}
+              <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-300" />
                   <input
                     type="text"
-                    placeholder="Search users by name or email..."
+                    placeholder="Cari judul atau photographer…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all duration-200"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-gray-400 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all duration-200"
                   />
                 </div>
-              </form>
+              </div>
 
-              {/* Filter by Role */}
-              {Select ? (
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-full sm:w-40 border-gray-300">
-                    <SelectValue placeholder="All Roles" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full sm:w-40 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
-                >
-                  <option value="all">All Roles</option>
-                  <option value="super_admin">Super Admin</option>
-                  <option value="admin">Admin</option>
-                  <option value="editor">Editor</option>
-                  <option value="user">User</option>
-                </select>
-              )}
+              {/* category + featured filters + submit */}
+              <div className="flex gap-3">
+                {/* category filter */}
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value);
+                      setPagination((p) => ({ ...p, page: 1 }));
+                    }}
+                    className="pl-9 pr-8 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-transparent appearance-none bg-white cursor-pointer transition-all duration-200"
+                  >
+                    <option value="all">Semua Kategori</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Filter by Status */}
-              {Select ? (
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-40 border-gray-300">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                    <SelectItem value="banned">Banned</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full sm:w-40 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+                {/* featured filter */}
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={featuredFilter}
+                    onChange={(e) => {
+                      setFeaturedFilter(e.target.value);
+                      setPagination((p) => ({ ...p, page: 1 }));
+                    }}
+                    className="pl-9 pr-8 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-transparent appearance-none bg-white cursor-pointer transition-all duration-200"
+                  >
+                    <option value="all">Semua Status</option>
+                    <option value="featured">Unggulan</option>
+                    <option value="not-featured">Biasa</option>
+                  </select>
+                </div>
+
+                {/* search button */}
+                <Button
+                  type="submit"
+                  className="bg-[#0066FF] hover:bg-[#0052CC] text-white px-6 transition-colors shadow-lg duration-200"
                 >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="banned">Banned</option>
-                </select>
-              )}
-            </div>
+                  Cari
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Users Table */}
-      <motion.div
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Card className="border-gray-200 shadow-md overflow-hidden">
-          <CardContent className="p-0">
+      {/* ── Bulk Action Bar ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <BulkActionBar
+            selectedCount={selectedIds.size}
+            totalCount={photos.length}
+            onSelectAll={selectAll}
+            onClear={clearSelection}
+            onDeleteSelected={() => setBulkDeleteOpen(true)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Photo Grid ──────────────────────────────────────────────────────── */}
+      <motion.div variants={itemVariants} initial="hidden" animate="visible">
+        <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+          <CardContent className="p-4">
             {loading ? (
-              <div className="p-12 text-center">
-                <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-[#0066FF]"></div>
-                <p className="mt-4 text-sm text-gray-600 font-medium">Loading users...</p>
+              /* ── double-ring spinner (articles pattern) ─── */
+              <div className="flex flex-col items-center justify-center h-96 gap-4">
+                <div className="relative w-16 h-16">
+                  <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
+                </div>
+                <p className="text-sm font-semibold text-gray-600">Memuat galeri…</p>
               </div>
-            ) : users.length === 0 ? (
-              <div className="p-12 text-center">
-                <UsersIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No Users Found</h3>
-                <p className="text-gray-600 mb-6">
-                  {search || roleFilter !== 'all' || statusFilter !== 'all'
-                    ? "Try adjusting your search or filter criteria"
-                    : "Get started by adding your first user"}
+            ) : photos.length === 0 ? (
+              /* ── empty state (articles pattern) ─── */
+              <div className="flex flex-col items-center justify-center py-20 px-6">
+                <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
+                  <ImageIcon className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Belum Ada Foto</h3>
+                <p className="text-gray-600 text-center mb-6 max-w-sm">
+                  {search || categoryFilter !== 'all' || featuredFilter !== 'all'
+                    ? 'Coba ubah filter pencarian Anda.'
+                    : 'Mulai upload foto pertama Anda.'}
                 </p>
-                <Link href="/admin/users/create">
-                  <Button className="bg-[#0066FF] hover:bg-[#0052CC]">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add User
-                  </Button>
-                </Link>
+                {!search && categoryFilter === 'all' && featuredFilter === 'all' && (
+                  <Link href="/admin/gallery/create">
+                    <Button className="bg-[#0066FF] hover:bg-[#0052CC] shadow-lg text-white">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Foto Pertama
+                    </Button>
+                  </Link>
+                )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-gray-50 to-white border-b-2 border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Last Login
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Activity
-                      </th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    <AnimatePresence mode="popLayout">
-                      {users.map((user, index) => {
-                        const roleBadge = getRoleBadge(user.role);
-                        const statusBadge = getStatusBadge(user.status);
-
-                        return (
-                          <motion.tr
-                            key={user.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="hover:bg-blue-50/50 transition-colors duration-200 group"
-                          >
-                            {/* User Info - FIXED: Use full_name, username, avatar from schema */}
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="relative">
-                                  {user.avatar ? (
-                                    <img
-                                      src={user.avatar}
-                                      alt={user.full_name}
-                                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200"
-                                    />
-                                  ) : (
-                                    <div className="w-10 h-10 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200">
-                                      <span className="text-white font-semibold text-sm">
-                                        {user.full_name?.charAt(0).toUpperCase()}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {/* FIXED: Show email_verified badge if available */}
-                                  {user.email_verified && (
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                                      <CheckCircle2 className="w-2.5 h-2.5 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="text-sm font-bold text-gray-900 group-hover:text-[#0066FF] transition-colors duration-200 truncate">
-                                    {user.full_name}
-                                  </div>
-                                  <div className="text-xs text-gray-500 truncate">
-                                    {user.username ? `@${user.username}` : user.email}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Role - FIXED: Use role from schema */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {editingRole.userId === user.id ? (
-                                <div className="flex items-center gap-2">
-                                  {Select ? (
-                                    <Select 
-                                      value={editingRole.currentRole} 
-                                      onValueChange={(value) => setEditingRole({ ...editingRole, currentRole: value })}
-                                    >
-                                      <SelectTrigger className="w-32 h-8">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="super_admin">Super Admin</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
-                                        <SelectItem value="editor">Editor</SelectItem>
-                                        <SelectItem value="user">User</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <select
-                                      value={editingRole.currentRole}
-                                      onChange={(e) => setEditingRole({ ...editingRole, currentRole: e.target.value })}
-                                      className="w-32 h-8 px-2 text-xs border border-gray-300 rounded"
-                                    >
-                                      <option value="super_admin">Super Admin</option>
-                                      <option value="admin">Admin</option>
-                                      <option value="editor">Editor</option>
-                                      <option value="user">User</option>
-                                    </select>
-                                  )}
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleUpdateRole(user.id, editingRole.currentRole)}
-                                    className="h-8 px-2 bg-[#0066FF] hover:bg-[#0052CC]"
-                                  >
-                                    <CheckCircle2 className="w-3 h-3" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setEditingRole({ userId: null, currentRole: '' })}
-                                    className="h-8 px-2"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className={cn(
-                                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border",
-                                  roleBadge.color
-                                )}>
-                                  <roleBadge.icon className="w-3.5 h-3.5" />
-                                  {roleBadge.label}
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Status - FIXED: Use status from schema */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={cn(
-                                "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border",
-                                statusBadge.color
-                              )}>
-                                {statusBadge.label}
-                              </span>
-                            </td>
-
-                            {/* FIXED: Use last_login_at and login_count from schema */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                {user.last_login_at ? (
-                                  <>
-                                    <div className="flex items-center gap-1 text-gray-900">
-                                      <Calendar className="w-3 h-3" />
-                                      {formatDate(user.last_login_at)}
-                                    </div>
-                                    {user.login_count !== undefined && (
-                                      <div className="text-xs text-gray-500 mt-0.5">
-                                        {user.login_count} logins
-                                      </div>
-                                    )}
-                                  </>
-                                ) : (
-                                  <span className="text-xs text-gray-400">Never logged in</span>
-                                )}
-                              </div>
-                            </td>
-
-                            {/* Activity */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                {user._count?.articles > 0 && (
-                                  <div className="flex items-center gap-1 text-gray-900">
-                                    <FileText className="w-3 h-3" />
-                                    {user._count.articles} articles
-                                  </div>
-                                )}
-                                {user._count?.comments > 0 && (
-                                  <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-                                    <MessageSquare className="w-3 h-3" />
-                                    {user._count.comments} comments
-                                  </div>
-                                )}
-                                {!user._count?.articles && !user._count?.comments && (
-                                  <span className="text-xs text-gray-400">No activity</span>
-                                )}
-                              </div>
-                            </td>
-
-                            {/* Actions */}
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              {DropdownMenu ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      className="h-9 w-9 p-0 hover:bg-blue-100 hover:text-[#0066FF]"
-                                    >
-                                      <MoreHorizontal className="w-5 h-5" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
-                                      onClick={() => setEditingRole({ userId: user.id, currentRole: user.role })}
-                                      className="cursor-pointer"
-                                    >
-                                      <Edit3 className="w-4 h-4 mr-2" />
-                                      <span>Edit Role</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                      <Link 
-                                        href={`/admin/users/edit/${user.id}`}
-                                        className="flex items-center cursor-pointer"
-                                      >
-                                        <User className="w-4 h-4 mr-2" />
-                                        <span>Edit Profile</span>
-                                      </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        if (AlertDialog) {
-                                          setDeleteDialog({ open: true, user });
-                                        } else {
-                                          setDeleteDialog({ open: false, user });
-                                          handleDeleteUserFallback(user);
-                                        }
-                                      }}
-                                      disabled={currentUser?.id === user.id || user.role === 'super_admin'}
-                                      className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      <span>Delete User</span>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              ) : (
-                                <div className="flex items-center justify-end gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingRole({ userId: user.id, currentRole: user.role })}
-                                    className="hover:bg-blue-100 hover:text-[#0066FF]"
-                                  >
-                                    <Edit3 className="w-4 h-4" />
-                                  </Button>
-                                  <Link href={`/admin/users/edit/${user.id}`}>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="hover:bg-gray-100"
-                                    >
-                                      <User className="w-4 h-4" />
-                                    </Button>
-                                  </Link>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setDeleteDialog({ open: false, user });
-                                      handleDeleteUserFallback(user);
-                                    }}
-                                    disabled={currentUser?.id === user.id || user.role === 'super_admin'}
-                                    className="text-red-600 hover:bg-red-50 disabled:opacity-50"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              )}
-                            </td>
-                          </motion.tr>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
+              /* ── grid ─── */
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <AnimatePresence mode="popLayout">
+                  {photos.map((photo) => (
+                    <PhotoCard
+                      key={photo.id}
+                      photo={photo}
+                      isSelected={selectedIds.has(photo.id)}
+                      anySelected={selectedIds.size > 0}
+                      onSelect={toggleSelect}
+                      onView={setLightboxPhoto}
+                      onDelete={setDeleteTarget}
+                    />
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Pagination */}
+      {/* ── Pagination ──────────────────────────────────────────────────────── */}
       {pagination.totalPages > 1 && (
         <motion.div
           variants={itemVariants}
           initial="hidden"
           animate="visible"
-          className="flex items-center justify-between flex-wrap gap-4"
+          className="flex items-center justify-between"
         >
           <div className="text-sm text-gray-700 font-medium">
-            Showing page <span className="font-bold text-gray-900">{pagination.page}</span> of{' '}
+            Halaman <span className="font-bold text-gray-900">{pagination.page}</span> dari{' '}
             <span className="font-bold text-gray-900">{pagination.totalPages}</span>
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+              onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
               disabled={pagination.page === 1}
               className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
-              Previous
+              Sebelumnya
             </Button>
             <Button
               variant="outline"
-              onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+              onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
               disabled={pagination.page === pagination.totalPages}
               className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              Next
+              Berikutnya
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </motion.div>
       )}
 
-      {/* Delete User Alert Dialog - FIXED: Use full_name, username from schema */}
-      {AlertDialog && (
-        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, user: null })}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-                <AlertDialogTitle className="text-xl font-bold text-gray-900">
-                  Delete User Account
-                </AlertDialogTitle>
-              </div>
-              <AlertDialogDescription className="text-base text-gray-600 leading-relaxed">
-                Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteDialog.user?.full_name}</span>
-                {deleteDialog.user?.username && <span> (@{deleteDialog.user.username})</span>}? 
-                This action cannot be undone and will permanently remove:
-                <ul className="mt-3 space-y-2 list-disc list-inside">
-                  <li>User account and credentials</li>
-                  <li>All published articles ({deleteDialog.user?._count?.articles || 0})</li>
-                  <li>All comments ({deleteDialog.user?._count?.comments || 0})</li>
-                  <li>Activity history and login records</li>
-                </ul>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-6">
-              <AlertDialogCancel className="border-gray-300 hover:bg-gray-100">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteUser}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Yes, Delete User
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      {/* ════════════════════════════════════════════════════════════════════════
+          MODALS
+          ════════════════════════════════════════════════════════════════════════ */}
+
+      {/* Lightbox */}
+      {lightboxPhoto && (
+        <Lightbox
+          photo={lightboxPhoto}
+          photos={photos}
+          onClose={() => setLightboxPhoto(null)}
+        />
+      )}
+
+      {/* Single-delete confirmation */}
+      {deleteTarget && (
+        <SingleDeleteDialog
+          photo={deleteTarget}
+          loading={deleteLoading}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleSingleDelete}
+        />
+      )}
+
+      {/* Bulk-delete confirmation */}
+      {bulkDeleteOpen && (
+        <BulkDeleteDialog
+          count={selectedIds.size}
+          loading={deleteLoading}
+          onCancel={() => setBulkDeleteOpen(false)}
+          onConfirm={handleBulkDelete}
+        />
       )}
     </div>
   );
