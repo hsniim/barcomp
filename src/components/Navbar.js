@@ -312,7 +312,7 @@ export default function Navbar() {
       { 
         label: language === 'en' ? 'Web Development' : 'Pengembangan Web', 
         description: language === 'en' ? 'Modern web applications' : 'Aplikasi web modern', 
-        href: '/services/web-development' 
+        href: '/services/web' 
       },
       { 
         label: language === 'en' ? 'Mobile App Development' : 'Pengembangan Aplikasi Mobile', 
@@ -322,7 +322,7 @@ export default function Navbar() {
       { 
         label: language === 'en' ? 'UI/UX Design' : 'Desain UI/UX', 
         description: language === 'en' ? 'Beautiful user experiences' : 'Pengalaman pengguna yang indah', 
-        href: '/services/ui-ux' 
+        href: '/services/ux' 
       },
       { 
         label: language === 'en' ? 'Digital Marketing' : 'Pemasaran Digital', 
