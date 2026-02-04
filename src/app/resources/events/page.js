@@ -422,7 +422,7 @@ export default function EventsPage() {
           title: 'Web Development Masterclass 2026',
           slug: 'web-development-masterclass-2026',
           description: 'Intensive workshop covering modern web development with Next.js, React, and cutting-edge tools.',
-          coverImage: '/images/events/web-masterclass.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop',
           eventType: 'workshop',
           location: {
             type: 'hybrid',
@@ -440,12 +440,12 @@ export default function EventsPage() {
             {
               name: 'John Doe',
               title: 'Senior Full-Stack Developer',
-              avatar: '/images/speakers/john.jpg'
+              avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop'
             },
             {
               name: 'Jane Smith',
               title: 'UX Engineer',
-              avatar: '/images/speakers/jane.jpg'
+              avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop'
             }
           ],
           registrationUrl: '/events/register/web-masterclass-2026',
@@ -460,7 +460,7 @@ export default function EventsPage() {
           title: 'Cloud Computing Fundamentals',
           slug: 'cloud-computing-fundamentals',
           description: 'Learn the basics of cloud infrastructure, deployment strategies, and best practices.',
-          coverImage: '/images/events/cloud-fundamentals.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop',
           eventType: 'webinar',
           location: {
             type: 'online',
@@ -476,7 +476,7 @@ export default function EventsPage() {
             {
               name: 'Michael Chen',
               title: 'Cloud Architect',
-              avatar: '/images/speakers/michael.jpg'
+              avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop'
             }
           ],
           registrationUrl: '/events/register/cloud-fundamentals',
@@ -491,7 +491,7 @@ export default function EventsPage() {
           title: 'Digital Marketing Strategy Summit 2026',
           slug: 'digital-marketing-strategy-summit-2026',
           description: 'Join industry leaders discussing the latest trends and strategies in digital marketing.',
-          coverImage: '/images/events/marketing-summit.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=800&h=600&fit=crop',
           eventType: 'conference',
           location: {
             type: 'onsite',
@@ -509,17 +509,17 @@ export default function EventsPage() {
             {
               name: 'Sarah Williams',
               title: 'Marketing Director',
-              avatar: '/images/speakers/sarah.jpg'
+              avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop'
             },
             {
               name: 'David Lee',
               title: 'SEO Specialist',
-              avatar: '/images/speakers/david.jpg'
+              avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'
             },
             {
               name: 'Lisa Anderson',
               title: 'Content Strategist',
-              avatar: '/images/speakers/lisa.jpg'
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'
             }
           ],
           registrationUrl: '/events/register/marketing-summit-2026',
@@ -538,7 +538,7 @@ export default function EventsPage() {
           title: 'React Performance Optimization Workshop',
           slug: 'react-performance-optimization-workshop',
           description: 'Deep dive into React performance optimization techniques and best practices.',
-          coverImage: '/images/events/react-workshop-past.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop',
           eventType: 'workshop',
           location: {
             type: 'hybrid',
@@ -554,7 +554,7 @@ export default function EventsPage() {
           title: 'AI & Machine Learning Seminar',
           slug: 'ai-machine-learning-seminar',
           description: 'Exploring the future of AI and practical machine learning applications.',
-          coverImage: '/images/events/ai-seminar-past.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=600&fit=crop',
           eventType: 'seminar',
           location: {
             type: 'online',

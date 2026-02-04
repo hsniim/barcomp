@@ -266,7 +266,7 @@ export default function ProfilePage() {
       subtitle: language === 'en'
         ? 'Meet the talented professionals who bring innovation and excellence to every project.'
         : 'Kenali para profesional berbakat yang membawa inovasi dan keunggulan ke setiap proyek.',
-      imagePlaceholder: '/images/team/team-photo.jpg' // User should replace this
+      imagePlaceholder: '/images/team-photo.webp',
     },
     leadership: {
       badge: language === 'en' ? 'Leadership Team' : 'Tim Kepemimpinan',
@@ -276,7 +276,7 @@ export default function ProfilePage() {
         : 'Pemimpin berpengalaman yang memandu visi kami dan mendorong inovasi di seluruh organisasi.',
       members: [
         {
-          name: language === 'en' ? 'Ahmad Subianto' : 'Nama CEO Anda',
+          name: language === 'en' ? 'Agus Subianto' : 'Agus Subianto',
           position: language === 'en' ? 'Chief Executive Officer' : 'Chief Executive Officer',
           image: '/images/ceo.webp',
           bio: language === 'en'
@@ -287,9 +287,9 @@ export default function ProfilePage() {
           instagram: 'https://instagram.com/your-ceo-handle'
         },
         {
-          name: language === 'en' ? 'Your CTO Name' : 'Nama CTO Anda',
+          name: language === 'en' ? 'Ahmad Suhandi' : 'Ahmad Suhandi',
           position: language === 'en' ? 'Chief Technology Officer' : 'Chief Technology Officer',
-          image: '/images/team/cto.jpg', // User should replace
+          image: '/images/cto.webp',
           bio: language === 'en'
             ? 'Driving technical excellence and innovation strategy with expertise in cloud architecture and AI.'
             : 'Mendorong keunggulan teknis dan strategi inovasi dengan keahlian dalam arsitektur cloud dan AI.',
@@ -298,9 +298,9 @@ export default function ProfilePage() {
           instagram: 'https://instagram.com/your-cto-handle'
         },
         {
-          name: language === 'en' ? 'Your COO Name' : 'Nama COO Anda',
+          name: language === 'en' ? 'Medina Putri' : 'Medina Putri',
           position: language === 'en' ? 'Chief Operating Officer' : 'Chief Operating Officer',
-          image: '/images/team/coo.jpg', // User should replace
+          image: '/images/coo.webp',
           bio: language === 'en'
             ? 'Ensuring operational excellence and client satisfaction across all projects and teams.'
             : 'Memastikan keunggulan operasional dan kepuasan klien di semua proyek dan tim.',
@@ -317,7 +317,7 @@ export default function ProfilePage() {
         ? 'Our modern workspace in Jakarta, designed to foster creativity, collaboration, and productivity.'
         : 'Ruang kerja modern kami di Jakarta, dirancang untuk mendorong kreativitas, kolaborasi, dan produktivitas.',
       address: 'Jakarta, Indonesia',
-      imagePlaceholder: '/images/office/workspace.jpg' // User should replace
+      imagePlaceholder: '/images/off.webp'
     },
     legal: {
       title: language === 'en' ? 'Legal Foundation & Credibility' : 'Landasan Legal & Kredibilitas',
@@ -505,20 +505,29 @@ export default function ProfilePage() {
 
             <FadeInSection delay={0.2}>
               <div className="relative h-96 sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                  {/* Placeholder - Replace with actual team photo */}
-                  <div className="text-center">
-                    <Users className="w-24 h-24 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 font-medium">
-                      {language === 'en' ? 'Team Photo Placeholder' : 'Placeholder Foto Tim'}
-                    </p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      {language === 'en' 
-                        ? 'Replace with: /images/team/team-photo.jpg'
-                        : 'Ganti dengan: /images/team/team-photo.jpg'}
-                    </p>
+                {t.teamPhoto.imagePlaceholder ? (
+                  <Image
+                    src={t.teamPhoto.imagePlaceholder}
+                    alt={t.teamPhoto.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <div className="text-center">
+                      <Users className="w-24 h-24 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium">
+                        {language === 'en' ? 'Team Photo Placeholder' : 'Placeholder Foto Tim'}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        {language === 'en' 
+                          ? 'Replace with: /images/team/team-photo.jpg'
+                          : 'Ganti dengan: /images/team/team-photo.jpg'}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </FadeInSection>
           </div>
@@ -693,20 +702,28 @@ export default function ProfilePage() {
 
             <FadeInSection delay={0.2}>
               <div className="relative h-96 sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  {/* Placeholder - Replace with actual office photo */}
-                  <div className="text-center">
-                    <Building2 className="w-24 h-24 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 font-medium">
-                      {language === 'en' ? 'Office Photo Placeholder' : 'Placeholder Foto Kantor'}
-                    </p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      {language === 'en' 
-                        ? 'Replace with: /images/office/workspace.jpg'
-                        : 'Ganti dengan: /images/office/workspace.jpg'}
-                    </p>
+                {t.office.imagePlaceholder ? (
+                  <Image
+                    src={t.office.imagePlaceholder}
+                    alt={t.office.title}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                    <div className="text-center">
+                      <Building2 className="w-24 h-24 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium">
+                        {language === 'en' ? 'Office Photo Placeholder' : 'Placeholder Foto Kantor'}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        {language === 'en' 
+                          ? 'Replace with: /images/office/workspace.jpg'
+                          : 'Ganti dengan: /images/office/workspace.jpg'}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </FadeInSection>
           </div>

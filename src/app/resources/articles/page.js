@@ -337,10 +337,10 @@ export default function ArticlesPage() {
           title: 'Transformasi Digital: Kunci Kesuksesan Bisnis di Era Modern',
           slug: 'transformasi-digital-kunci-kesuksesan-bisnis',
           excerpt: 'Pelajari bagaimana transformasi digital dapat mengoptimalkan operasional bisnis dan meningkatkan daya saing di pasar global.',
-          coverImage: '/images/articles/digital-transformation.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop',
           author: {
             name: 'Budi Santoso',
-            avatar: '/images/team/budi.jpg',
+            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
             role: 'Digital Strategy Lead'
           },
           category: 'technology',
@@ -358,10 +358,10 @@ export default function ArticlesPage() {
           title: 'Cloud Computing Solutions for Growing Businesses',
           slug: 'cloud-computing-solutions-for-growing-businesses',
           excerpt: 'Discover how cloud infrastructure can scale with your business needs while optimizing costs and performance.',
-          coverImage: '/images/articles/cloud-computing.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop',
           author: {
             name: 'Sarah Johnson',
-            avatar: '/images/team/sarah.jpg',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
             role: 'Cloud Architect'
           },
           category: 'technology',
@@ -375,10 +375,10 @@ export default function ArticlesPage() {
           title: 'Membangun Strategi Digital Marketing yang Efektif',
           slug: 'membangun-strategi-digital-marketing-efektif',
           excerpt: 'Panduan lengkap untuk merancang dan mengimplementasikan strategi digital marketing yang menghasilkan ROI tinggi.',
-          coverImage: '/images/articles/digital-marketing.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
           author: {
             name: 'Ahmad Rizki',
-            avatar: '/images/team/ahmad.jpg',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
             role: 'Marketing Strategist'
           },
           category: 'business',
@@ -392,10 +392,10 @@ export default function ArticlesPage() {
           title: 'Tutorial: Building Modern Web Apps with Next.js 14',
           slug: 'tutorial-building-modern-web-apps-nextjs-14',
           excerpt: 'Step-by-step guide to build high-performance web applications using Next.js 14 and React Server Components.',
-          coverImage: '/images/articles/nextjs-tutorial.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=600&fit=crop',
           author: {
             name: 'David Chen',
-            avatar: '/images/team/david.jpg',
+            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
             role: 'Senior Developer'
           },
           category: 'tutorial',
@@ -409,10 +409,10 @@ export default function ArticlesPage() {
           title: 'Cybersecurity Best Practices for 2026',
           slug: 'cybersecurity-best-practices-2026',
           excerpt: 'Essential security measures and best practices to protect your business from emerging cyber threats.',
-          coverImage: '/images/articles/cybersecurity.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=600&fit=crop',
           author: {
             name: 'Lisa Anderson',
-            avatar: '/images/team/lisa.jpg',
+            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
             role: 'Security Consultant'
           },
           category: 'technology',
@@ -426,10 +426,10 @@ export default function ArticlesPage() {
           title: 'Case Study: Transformasi Digital di Industri Manufaktur',
           slug: 'case-study-transformasi-digital-manufaktur',
           excerpt: 'Bagaimana kami membantu perusahaan manufaktur meningkatkan efisiensi operasional hingga 45% melalui digitalisasi.',
-          coverImage: '/images/articles/case-study-manufacturing.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop',
           author: {
             name: 'Michael Tan',
-            avatar: '/images/team/michael.jpg',
+            avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
             role: 'Solutions Architect'
           },
           category: 'case-study',
