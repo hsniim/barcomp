@@ -9,6 +9,10 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    // Allow SVG images to be used with Next.js Image component
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   reactCompiler: true,
 };

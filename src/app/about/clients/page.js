@@ -120,15 +120,20 @@ const ClientLogoCard = memo(({ name, logo, industry, delay = 0 }) => {
   return (
     <FadeInSection delay={delay}>
       <Card className="h-full border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300 group bg-white">
-        <CardContent className="p-6 flex flex-col items-center justify-center h-32">
+        <CardContent className="p-6 flex flex-col items-center justify-center min-h-[140px]">
           {logo ? (
-            <div className="relative w-full h-20 grayscale group-hover:grayscale-0 transition-all duration-300">
-              <Image
-                src={logo}
-                alt={name}
-                fill
-                className="object-contain"
-              />
+            <div className="flex flex-col items-center justify-center w-full">
+              <div className="relative w-full h-16 grayscale group-hover:grayscale-0 transition-all duration-300 mb-3">
+                <Image
+                  src={logo}
+                  alt={name}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <p className="text-sm font-medium text-gray-600 group-hover:text-[#0066FF] transition-colors duration-300 text-center">
+                {name}
+              </p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center">
@@ -266,7 +271,7 @@ const TrustBadge = memo(({ icon: Icon, title, description }) => {
 TrustBadge.displayName = 'TrustBadge';
 
 // Case Study Card Component
-const CaseStudyCard = memo(({ client, industry, challenge, solution, results, icon: Icon, color = 'blue' }) => {
+const CaseStudyCard = memo(({ client, industry, challenge, solution, results, icon, color = 'blue' }) => {
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600',
     purple: 'from-purple-500 to-purple-600',
@@ -276,6 +281,10 @@ const CaseStudyCard = memo(({ client, industry, challenge, solution, results, ic
     indigo: 'from-indigo-500 to-indigo-600'
   };
 
+  // Check if icon is a string (SVG path) or a component (Lucide React)
+  const isIconString = typeof icon === 'string';
+  const IconComponent = !isIconString ? icon : null;
+
   return (
     <Card className="h-full border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300 overflow-hidden group bg-white p-0">
       {/* Header with Gradient - No extra space */}
@@ -284,8 +293,19 @@ const CaseStudyCard = memo(({ client, industry, challenge, solution, results, ic
         colorClasses[color]
       )}>
         <div className="relative flex items-start gap-4">
-          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-            <Icon className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {isIconString ? (
+              <img
+                src={icon}
+                alt={client}
+                className="w-6 h-6 object-contain"
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
+            ) : IconComponent ? (
+              <IconComponent className="w-6 h-6 text-white" />
+            ) : (
+              <Briefcase className="w-6 h-6 text-white" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-xl font-bold text-white mb-1 leading-tight">{client}</h3>
@@ -475,19 +495,18 @@ export default function ClientsPage() {
         title: "Mitra yang Telah Mempercayai Kami",
         subtitle: "Beberapa perusahaan terkemuka yang telah berkolaborasi dengan Barcomp",
         featured: [
-          // Placeholder data - ganti dengan logo klien asli
-          { name: "PT. Technology Indonesia", logo: null, industry: "Technology" },
-          { name: "PT. Retail Nusantara", logo: null, industry: "Retail" },
-          { name: "Bank Digital Indonesia", logo: null, industry: "Finance" },
-          { name: "PT. Logistik Prima", logo: null, industry: "Logistics" },
-          { name: "Medika Healthcare Group", logo: null, industry: "Healthcare" },
-          { name: "EduTech Indonesia", logo: null, industry: "Education" },
-          { name: "PT. Properti Sejahtera", logo: null, industry: "Real Estate" },
-          { name: "StartupHub Indonesia", logo: null, industry: "Technology" },
-          { name: "PT. Manufacturing Asia", logo: null, industry: "Manufacturing" },
-          { name: "E-Commerce Indonesia", logo: null, industry: "E-Commerce" },
-          { name: "Finance Solutions Ltd", logo: null, industry: "Finance" },
-          { name: "Smart Education Platform", logo: null, industry: "Education" }
+          { name: "Aetheric Systems", logo: "/logos/aetheric.svg", industry: "Technology" },
+          { name: "Velocart Global", logo: "/logos/velocart.svg", industry: "Retail" },
+          { name: "Zenith Capital Trust", logo: "/logos/zenith.svg", industry: "Finance" },
+          { name: "IronPath Logistics", logo: "/logos/ironpath.svg", industry: "Logistics" },
+          { name: "BioGenix Laboratories", logo: "/logos/biogenix.svg", industry: "Healthcare" },
+          { name: "Veridian Academy", logo: "/logos/veridian.svg", industry: "Education" },
+          { name: "Skyline Heritage Group", logo: "/logos/skyline.svg", industry: "Real Estate" },
+          { name: "Bloom Catalyst", logo: "/logos/bloom.svg", industry: "Startup" },
+          { name: "Apex Global Manufacturing", logo: "/logos/apex.svg", industry: "Manufacturing" },
+          { name: "Urban Retail Collective", logo: "/logos/urban.svg", industry: "E-Commerce" },
+          { name: "Fortis Digital Bank", logo: "/logos/fortis.svg", industry: "Finance" },
+          { name: "EduPulse Global", logo: "/logos/edupulse.svg", industry: "Education" }
         ]
       },
       testimonials: {
@@ -499,7 +518,7 @@ export default function ClientsPage() {
             quote: "Barcomp tidak hanya mengembangkan aplikasi, tetapi benar-benar memahami kebutuhan bisnis kami. Tim mereka responsif dan solusinya selalu tepat waktu dengan kualitas terbaik.",
             author: "Budi Santoso",
             position: "CTO",
-            company: "PT. Technology Indonesia",
+            company: "Aetheric Systems",
             image: null,
             rating: 5
           },
@@ -507,7 +526,7 @@ export default function ClientsPage() {
             quote: "Transformasi digital kami tidak akan berhasil tanpa Barcomp. Mereka membimbing kami dari konsep hingga implementasi dengan sangat profesional. ROI yang kami dapatkan melebihi ekspektasi.",
             author: "Sarah Wijaya",
             position: "Head of Digital",
-            company: "Bank Digital Indonesia",
+            company: "Zenith Capital Trust",
             image: null,
             rating: 5
           },
@@ -515,7 +534,7 @@ export default function ClientsPage() {
             quote: "Platform e-learning yang dikembangkan Barcomp meningkatkan engagement siswa kami hingga 85%. User interface-nya intuitif dan scalable untuk pertumbuhan kami ke depan.",
             author: "Dr. Ahmad Rizki",
             position: "Direktur Teknologi",
-            company: "EduTech Indonesia",
+            company: "Veridian Academy",
             image: null,
             rating: 5
           },
@@ -523,7 +542,7 @@ export default function ClientsPage() {
             quote: "Sebagai startup, kami membutuhkan partner yang agile dan understand our vision. Barcomp delivered beyond expectations. Mereka seperti extension dari tim kami sendiri.",
             author: "Linda Kusuma",
             position: "Co-Founder & CEO",
-            company: "StartupHub Indonesia",
+            company: "Bloom Catalyst",
             image: null,
             rating: 5
           },
@@ -531,7 +550,7 @@ export default function ClientsPage() {
             quote: "Sistem ERP yang dibangun Barcomp mengintegrasikan seluruh operasional kami dengan sempurna. Efisiensi meningkat 40% dalam 6 bulan pertama implementasi.",
             author: "Ir. Hendra Gunawan",
             position: "Operations Director",
-            company: "PT. Manufacturing Asia",
+            company: "Apex Global Manufacturing",
             image: null,
             rating: 5
           },
@@ -539,7 +558,7 @@ export default function ClientsPage() {
             quote: "Partnership dengan Barcomp adalah keputusan terbaik kami. Mereka tidak hanya deliver project, tapi juga provide continuous support dan innovation recommendations.",
             author: "Michelle Tan",
             position: "VP of Technology",
-            company: "E-Commerce Indonesia",
+            company: "Velocart Global",
             image: null,
             rating: 5
           }
@@ -551,16 +570,16 @@ export default function ClientsPage() {
         subtitle: "Lihat bagaimana kami membantu klien mengatasi tantangan bisnis mereka dengan solusi digital yang tepat",
         items: [
           {
-            client: "Bank Digital Indonesia",
+            client: "Fortis Digital Bank",
             industry: "Fintech & Perbankan",
             challenge: "Proses onboarding nasabah memakan waktu 3-5 hari dengan banyak dokumen fisik, menyebabkan tingkat konversi rendah dan biaya operasional tinggi.",
             solution: "Mengembangkan aplikasi mobile banking dengan fitur e-KYC, digital signature, dan OCR untuk verifikasi dokumen otomatis.",
             results: "Waktu onboarding turun 90% menjadi 15 menit, konversi meningkat 65%, dan biaya operasional berkurang 40%.",
-            icon: Landmark,
+            icon: "/logos/fortis.svg",
             color: 'blue'
           },
           {
-            client: "EduTech Indonesia",
+            client: "EduPulse Global",
             industry: "Pendidikan & E-Learning",
             challenge: "Platform pembelajaran online yang ada tidak dapat menangani 10,000+ siswa bersamaan, sering crash saat jam sibuk dengan tingkat engagement siswa hanya 35%.",
             solution: "Membangun cloud-based LMS dengan arsitektur microservices, kolaborasi real-time, gamifikasi, dan personalisasi berbasis AI.",
@@ -569,7 +588,7 @@ export default function ClientsPage() {
             color: 'orange'
           },
           {
-            client: "E-Commerce Indonesia",
+            client: "Urban Retail Collective",
             industry: "Retail & E-Commerce",
             challenge: "Tingkat pembatalan checkout mencapai 68% karena proses pembayaran yang rumit, integrasi payment gateway terbatas, dan waktu loading lama di mobile.",
             solution: "Redesain UX dengan one-click checkout, integrasi 15+ metode pembayaran, implementasi PWA, dan optimasi performa.",
@@ -578,7 +597,7 @@ export default function ClientsPage() {
             color: 'green'
           },
           {
-            client: "Medika Healthcare Group",
+            client: "Lumina Healthcare Int.",
             industry: "Kesehatan & Medis",
             challenge: "Sistem rekam medis manual menyebabkan data pasien tercecer, resep sering salah terbaca, dan koordinasi antar dokter tidak efisien.",
             solution: "Mengimplementasikan Hospital Information System (HIS) terintegrasi dengan EMR, e-prescription, dan modul telemedicine.",
@@ -587,7 +606,7 @@ export default function ClientsPage() {
             color: 'pink'
           },
           {
-            client: "PT. Manufacturing Asia",
+            client: "IronPath Logistics",
             industry: "Manufaktur & Logistik",
             challenge: "Manajemen inventori manual menyebabkan ketidaksesuaian stok 15%, sering kehabisan stok produk populer, dan kelebihan stok produk yang lambat terjual.",
             solution: "Mengembangkan sistem ERP dengan pelacakan inventori real-time, analitik prediktif, pemesanan ulang otomatis, dan manajemen gudang.",
@@ -596,7 +615,7 @@ export default function ClientsPage() {
             color: 'purple'
           },
           {
-            client: "StartupHub Indonesia",
+            client: "SwiftScale Hub",
             industry: "Technology Startup",
             challenge: "Startup membutuhkan MVP marketplace dalam 2 bulan untuk presentasi investor dengan anggaran terbatas, namun memerlukan fitur lengkap dan dapat berkembang.",
             solution: "Pengembangan agile dengan sprint 2 minggu, menggunakan teknologi modern, fokus pada fitur inti, dan infrastruktur cloud.",
@@ -719,18 +738,18 @@ export default function ClientsPage() {
         title: "Partners Who Trust Us",
         subtitle: "Some leading companies that have collaborated with Barcomp",
         featured: [
-          { name: "PT. Technology Indonesia", logo: null, industry: "Technology" },
-          { name: "PT. Retail Nusantara", logo: null, industry: "Retail" },
-          { name: "Bank Digital Indonesia", logo: null, industry: "Finance" },
-          { name: "PT. Logistik Prima", logo: null, industry: "Logistics" },
-          { name: "Medika Healthcare Group", logo: null, industry: "Healthcare" },
-          { name: "EduTech Indonesia", logo: null, industry: "Education" },
-          { name: "PT. Properti Sejahtera", logo: null, industry: "Real Estate" },
-          { name: "StartupHub Indonesia", logo: null, industry: "Technology" },
-          { name: "PT. Manufacturing Asia", logo: null, industry: "Manufacturing" },
-          { name: "E-Commerce Indonesia", logo: null, industry: "E-Commerce" },
-          { name: "Finance Solutions Ltd", logo: null, industry: "Finance" },
-          { name: "Smart Education Platform", logo: null, industry: "Education" }
+          { name: "Aetheric Systems", logo: null, industry: "Technology" },
+          { name: "Velocart Global", logo: null, industry: "Retail" },
+          { name: "Zenith Capital Trust", logo: null, industry: "Finance" },
+          { name: "IronPath Logistics", logo: null, industry: "Logistics" },
+          { name: "BioGenix Laboratories", logo: null, industry: "Healthcare" },
+          { name: "Veridian Academy", logo: null, industry: "Education" },
+          { name: "Skyline Heritage Group", logo: null, industry: "Real Estate" },
+          { name: "Bloom Catalyst", logo: null, industry: "Startup" },
+          { name: "Apex Global Manufacturing", logo: null, industry: "Manufacturing" },
+          { name: "Urban Retail Collective", logo: null, industry: "E-Commerce" },
+          { name: "Fortis Digital Bank", logo: null, industry: "Finance" },
+          { name: "EduPulse Global", logo: null, industry: "Education" }
         ]
       },
       testimonials: {
@@ -742,7 +761,7 @@ export default function ClientsPage() {
             quote: "Barcomp doesn't just develop applications, they truly understand our business needs. Their team is responsive and solutions are always delivered on time with the best quality.",
             author: "Budi Santoso",
             position: "CTO",
-            company: "PT. Technology Indonesia",
+            company: "Aetheric Systems",
             image: null,
             rating: 5
           },
@@ -750,7 +769,7 @@ export default function ClientsPage() {
             quote: "Our digital transformation wouldn't have succeeded without Barcomp. They guided us from concept to implementation very professionally. The ROI we achieved exceeded expectations.",
             author: "Sarah Wijaya",
             position: "Head of Digital",
-            company: "Bank Digital Indonesia",
+            company: "Zenith Capital Trust",
             image: null,
             rating: 5
           },
@@ -758,7 +777,7 @@ export default function ClientsPage() {
             quote: "The e-learning platform developed by Barcomp increased our student engagement by 85%. The user interface is intuitive and scalable for our future growth.",
             author: "Dr. Ahmad Rizki",
             position: "Technology Director",
-            company: "EduTech Indonesia",
+            company: "Veridian Academy",
             image: null,
             rating: 5
           },
@@ -766,7 +785,7 @@ export default function ClientsPage() {
             quote: "As a startup, we needed an agile partner who understands our vision. Barcomp delivered beyond expectations. They're like an extension of our own team.",
             author: "Linda Kusuma",
             position: "Co-Founder & CEO",
-            company: "StartupHub Indonesia",
+            company: "Bloom Catalyst",
             image: null,
             rating: 5
           },
@@ -774,7 +793,7 @@ export default function ClientsPage() {
             quote: "The ERP system built by Barcomp integrated our entire operations seamlessly. Efficiency increased by 40% in the first 6 months of implementation.",
             author: "Ir. Hendra Gunawan",
             position: "Operations Director",
-            company: "PT. Manufacturing Asia",
+            company: "Apex Global Manufacturing",
             image: null,
             rating: 5
           },
@@ -782,7 +801,7 @@ export default function ClientsPage() {
             quote: "Partnership with Barcomp was our best decision. They don't just deliver projects, but also provide continuous support and innovation recommendations.",
             author: "Michelle Tan",
             position: "VP of Technology",
-            company: "E-Commerce Indonesia",
+            company: "Velocart Global",
             image: null,
             rating: 5
           }
@@ -794,57 +813,57 @@ export default function ClientsPage() {
         subtitle: "See how we help clients overcome their business challenges with the right digital solutions",
         items: [
           {
-            client: "Bank Digital Indonesia",
+            client: "Fortis Digital Bank",
             industry: "Fintech & Banking",
             challenge: "Customer onboarding took 3-5 days with physical documents, causing low conversion rates and high operational costs.",
             solution: "Developed mobile banking app with e-KYC, digital signature, and OCR for automatic document verification.",
             results: "Onboarding time reduced 90% to 15 minutes, conversion increased 65%, and operational costs decreased 40%.",
-            icon: Landmark,
+            icon: "/logos/fortis.svg",
             color: 'blue'
           },
           {
-            client: "EduTech Indonesia",
+            client: "EduPulse Global",
             industry: "Education & E-Learning",
             challenge: "Existing online learning platform not scalable for 10,000+ simultaneous students, frequent crashes during peak hours with only 35% student engagement.",
             solution: "Built cloud-based LMS with microservices architecture, real-time collaboration, gamification, and AI-powered personalization.",
             results: "Platform handles 50,000+ concurrent users stably, engagement increased 85%, and completion rate rose 120%.",
-            icon: GraduationCap,
+            icon: "/logos/edupulse.svg",
             color: 'orange'
           },
           {
-            client: "E-Commerce Indonesia",
+            client: "Urban Retail Collective",
             industry: "Retail & E-Commerce",
             challenge: "68% checkout abandonment rate due to complicated payment process, limited payment gateway integrations, and slow mobile loading times.",
             solution: "Redesigned UX with one-click checkout, integrated 15+ payment methods, implemented PWA, and optimized performance.",
             results: "Checkout abandonment dropped to 22%, mobile transactions increased 180%, and revenue grew 210% in 6 months.",
-            icon: ShoppingCart,
+            icon: "/logos/urban.svg",
             color: 'green'
           },
           {
-            client: "Medika Healthcare Group",
+            client: "Lumina Healthcare Int.",
             industry: "Healthcare & Medical",
             challenge: "Manual medical records caused scattered patient data, prescription reading errors, and inefficient doctor coordination.",
             solution: "Implemented integrated Hospital Information System (HIS) with EMR, e-prescription, and telemedicine modules.",
             results: "Medication errors reduced 95%, administrative time decreased 60%, and patient satisfaction increased from 72% to 94%.",
-            icon: HeartPulse,
+            icon: "/logos/lumina.svg",
             color: 'pink'
           },
           {
-            client: "PT. Manufacturing Asia",
+            client: "IronPath Logistics",
             industry: "Manufacturing & Logistics",
             challenge: "Manual inventory management caused 15% stock discrepancy, frequent stockouts of popular products, and excess slow-moving inventory.",
             solution: "Developed ERP system with real-time inventory tracking, predictive analytics, automated reordering, and warehouse management.",
             results: "Stock accuracy 99.5%, stockouts decreased 88%, inventory carrying cost reduced 35%, and operational efficiency increased 45%.",
-            icon: Factory,
+            icon: "/logos/ironpath.svg",
             color: 'purple'
           },
           {
-            client: "StartupHub Indonesia",
+            client: "SwiftScale Hub",
             industry: "Technology Startup",
             challenge: "Startup needed MVP marketplace in 2 months for investor pitch with limited budget, but required complete and scalable features.",
             solution: "Agile development with 2-week sprints, using modern tech stack, focusing on core features, and cloud infrastructure.",
             results: "MVP launched on time, successfully raised $500K seed funding, and platform scaled from 100 to 10,000 users without refactoring.",
-            icon: Cpu,
+            icon: "/logos/swift.svg",
             color: 'indigo'
           }
         ]
