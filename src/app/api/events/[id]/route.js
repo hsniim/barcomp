@@ -1,198 +1,51 @@
 // app/api/events/[id]/route.js
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { requireSuperAdmin } from '@/lib/auth';
+import pool from '@/lib/db';
+import { verifyToken } from '@/lib/auth';
 
-// GET - Get single event by ID
 export async function GET(request, { params }) {
+  const { id } = params;
+
   try {
-    const { id } = params;
-
-    const event = await prisma.event.findUnique({
-      where: { id },
-      include: {
-        registrations: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                phone: true,
-                avatar: true
-              }
-            }
-          },
-          orderBy: { registeredAt: 'desc' }
-        }
-      }
-    });
-
-    if (!event) {
-      return NextResponse.json(
-        { success: false, error: 'Event not found' },
-        { status: 404 }
-      );
+    const [rows] = await pool.query('SELECT * FROM events WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return Response.json({ error: 'Event tidak ditemukan' }, { status: 404 });
     }
-
-    return NextResponse.json({
-      success: true,
-      event
-    });
-
+    return Response.json(rows[0]);
   } catch (error) {
-    console.error('Get event error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch event' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
-// PUT - Update event (Super Admin only)
 export async function PUT(request, { params }) {
-  // Check authentication and authorization
-  const { user, error } = requireSuperAdmin(request);
-  if (error) return error;
+  const auth = verifyToken();
+  if (!auth || auth.role !== 'super_admin') {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = params;
+  const body = await request.json();
 
   try {
-    const { id } = params;
-    const body = await request.json();
-    const {
-      title,
-      slug,
-      description,
-      featuredImage,
-      category,
-      startDate,
-      endDate,
-      location,
-      venue,
-      maxParticipants,
-      registrationDeadline,
-      status,
-      featured,
-      tags
-    } = body;
-
-    // Check if event exists
-    const existingEvent = await prisma.event.findUnique({
-      where: { id }
-    });
-
-    if (!existingEvent) {
-      return NextResponse.json(
-        { success: false, error: 'Event not found' },
-        { status: 404 }
-      );
-    }
-
-    // If slug is changed, check if new slug already exists
-    if (slug && slug !== existingEvent.slug) {
-      const slugExists = await prisma.event.findUnique({
-        where: { slug }
-      });
-
-      if (slugExists) {
-        return NextResponse.json(
-          { success: false, error: 'Event with this slug already exists' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Prepare update data
-    const updateData = {
-      ...(title && { title }),
-      ...(slug && { slug }),
-      ...(description && { description }),
-      ...(featuredImage !== undefined && { featuredImage }),
-      ...(category && { category }),
-      ...(startDate && { startDate: new Date(startDate) }),
-      ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
-      ...(location && { location }),
-      ...(venue !== undefined && { venue }),
-      ...(maxParticipants !== undefined && { maxParticipants }),
-      ...(registrationDeadline !== undefined && { 
-        registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null 
-      }),
-      ...(status && { status }),
-      ...(featured !== undefined && { featured }),
-      ...(tags !== undefined && { tags }),
-      updatedAt: new Date()
-    };
-
-    // Update event
-    const event = await prisma.event.update({
-      where: { id },
-      data: updateData
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Event updated successfully',
-      event
-    });
-
+    // Update hanya field yang dikirim (simple way)
+    await pool.query('UPDATE events SET ? WHERE id = ?', [body, id]);
+    return Response.json({ success: true });
   } catch (error) {
-    console.error('Update event error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update event' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'Gagal update event' }, { status: 500 });
   }
 }
 
-// DELETE - Delete event (Super Admin only)
 export async function DELETE(request, { params }) {
-  // Check authentication and authorization
-  const { user, error } = requireSuperAdmin(request);
-  if (error) return error;
+  const auth = verifyToken();
+  if (!auth || auth.role !== 'super_admin') {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = params;
 
   try {
-    const { id } = params;
-
-    // Check if event exists
-    const event = await prisma.event.findUnique({
-      where: { id },
-      include: {
-        registrations: true
-      }
-    });
-
-    if (!event) {
-      return NextResponse.json(
-        { success: false, error: 'Event not found' },
-        { status: 404 }
-      );
-    }
-
-    // Check if event has registrations
-    if (event.registrations.length > 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Cannot delete event with existing registrations. Please cancel all registrations first.' 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Delete event
-    await prisma.event.delete({
-      where: { id }
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Event deleted successfully'
-    });
-
+    await pool.query('DELETE FROM events WHERE id = ?', [id]);
+    return Response.json({ success: true });
   } catch (error) {
-    console.error('Delete event error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete event' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'Gagal hapus event' }, { status: 500 });
   }
 }
