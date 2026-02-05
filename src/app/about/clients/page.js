@@ -584,7 +584,7 @@ export default function ClientsPage() {
             challenge: "Platform pembelajaran online yang ada tidak dapat menangani 10,000+ siswa bersamaan, sering crash saat jam sibuk dengan tingkat engagement siswa hanya 35%.",
             solution: "Membangun cloud-based LMS dengan arsitektur microservices, kolaborasi real-time, gamifikasi, dan personalisasi berbasis AI.",
             results: "Platform stabil menangani 50,000+ pengguna bersamaan, engagement meningkat 85%, dan tingkat penyelesaian naik 120%.",
-            icon: GraduationCap,
+            icon: "/logos/edupulse.svg",
             color: 'orange'
           },
           {
@@ -593,7 +593,7 @@ export default function ClientsPage() {
             challenge: "Tingkat pembatalan checkout mencapai 68% karena proses pembayaran yang rumit, integrasi payment gateway terbatas, dan waktu loading lama di mobile.",
             solution: "Redesain UX dengan one-click checkout, integrasi 15+ metode pembayaran, implementasi PWA, dan optimasi performa.",
             results: "Pembatalan checkout turun ke 22%, transaksi mobile naik 180%, dan pendapatan meningkat 210% dalam 6 bulan.",
-            icon: ShoppingCart,
+            icon: "/logos/urban.svg",
             color: 'green'
           },
           {
@@ -602,7 +602,7 @@ export default function ClientsPage() {
             challenge: "Sistem rekam medis manual menyebabkan data pasien tercecer, resep sering salah terbaca, dan koordinasi antar dokter tidak efisien.",
             solution: "Mengimplementasikan Hospital Information System (HIS) terintegrasi dengan EMR, e-prescription, dan modul telemedicine.",
             results: "Kesalahan pengobatan turun 95%, waktu administrasi berkurang 60%, dan kepuasan pasien meningkat dari 72% ke 94%.",
-            icon: HeartPulse,
+            icon: "/logos/lumina.svg",
             color: 'pink'
           },
           {
@@ -611,7 +611,7 @@ export default function ClientsPage() {
             challenge: "Manajemen inventori manual menyebabkan ketidaksesuaian stok 15%, sering kehabisan stok produk populer, dan kelebihan stok produk yang lambat terjual.",
             solution: "Mengembangkan sistem ERP dengan pelacakan inventori real-time, analitik prediktif, pemesanan ulang otomatis, dan manajemen gudang.",
             results: "Akurasi stok 99.5%, kehabisan stok turun 88%, biaya penyimpanan inventori berkurang 35%, dan efisiensi operasional naik 45%.",
-            icon: Factory,
+            icon: "/logos/ironpath.svg",
             color: 'purple'
           },
           {
@@ -620,7 +620,7 @@ export default function ClientsPage() {
             challenge: "Startup membutuhkan MVP marketplace dalam 2 bulan untuk presentasi investor dengan anggaran terbatas, namun memerlukan fitur lengkap dan dapat berkembang.",
             solution: "Pengembangan agile dengan sprint 2 minggu, menggunakan teknologi modern, fokus pada fitur inti, dan infrastruktur cloud.",
             results: "MVP diluncurkan tepat waktu, berhasil mendapat pendanaan awal $500K, dan platform berkembang dari 100 ke 10,000 pengguna tanpa perlu refactor.",
-            icon: Cpu,
+            icon: "/logos/swift.svg",
             color: 'indigo'
           }
         ]
