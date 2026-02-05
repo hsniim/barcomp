@@ -25,7 +25,10 @@ CREATE TABLE articles (
     excerpt TEXT NOT NULL,
     content LONGTEXT NOT NULL,
     cover_image VARCHAR(500),
-    category VARCHAR(50),
+    category ENUM(
+        'teknologi', 'kesehatan', 'finansial', 'bisnis', 
+        'inovasi', 'karir', 'keberlanjutan', 'lainnya'
+    ) NULL DEFAULT NULL,
     tags JSON,
     featured BOOLEAN DEFAULT FALSE,
     status ENUM('draft', 'published') DEFAULT 'draft',
@@ -82,3 +85,27 @@ CREATE TABLE event_registrations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- 6. Gallery (photo)
+DROP TABLE IF EXISTS gallery;
+CREATE TABLE gallery (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    image_url VARCHAR(500) NOT NULL,
+    thumbnail_url VARCHAR(500),
+    category ENUM(
+        'teknologi', 'kesehatan', 'finansial', 'bisnis', 
+        'inovasi', 'karir', 'keberlanjutan', 'lainnya',
+        'kantor', 'acara'
+    ) NULL DEFAULT NULL,
+    tags JSON,
+    event_id VARCHAR(36),             -- bisa link ke event jika foto dari acara tertentu
+    captured_at DATETIME,
+    featured BOOLEAN DEFAULT FALSE,
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,        -- soft delete jika perlu
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
