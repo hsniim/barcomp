@@ -55,7 +55,7 @@ export async function POST(request) {
       size: blob.size,
       type: blob.contentType,
     });
-  } catch (error) {
+  } catch (error) { 
     console.error('Upload error:', error);
     return NextResponse.json(
       { error: 'Gagal upload gambar: ' + (error.message || 'Unknown error') },

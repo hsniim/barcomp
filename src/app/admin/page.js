@@ -2,71 +2,137 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   FileText, 
   Calendar, 
   Image, 
-  Users, 
   TrendingUp,
   Activity,
   Plus,
-  ArrowUpRight
+  ArrowUpRight,
+  MessageSquare,
+  UserCheck
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5
+    }
+  }
+};
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState({
-    articles: { total: 0, published: 0 },
-    events: { total: 0, upcoming: 0 },
-    gallery: { total: 0 },
-    users: { total: 0, active: 0 }
+    articles: { total: 0, published: 0, draft: 0 },
+    events: { total: 0, upcoming: 0, ongoing: 0 },
+    gallery: { total: 0, featured: 0 },
+    comments: { total: 0, pending: 0 },
+    registrations: { total: 0 }
   });
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        router.push('/admin/login');
+        return;
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      await fetchStats();
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      router.push('/admin/login');
+    }
+  };
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
+      // Fetch articles stats
+      const articlesRes = await fetch('/api/articles', {
+        credentials: 'include'
+      });
+      const articlesData = await articlesRes.json();
       
-      const [articlesRes, eventsRes, galleryRes, usersRes] = await Promise.all([
-        fetch('/api/articles?limit=1'),
-        fetch('/api/events?limit=1'),
-        fetch('/api/gallery?limit=1'),
-        fetch('/api/admin/users?limit=1', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
+      // Fetch events stats
+      const eventsRes = await fetch('/api/events', {
+        credentials: 'include'
+      });
+      const eventsData = await eventsRes.json();
+      
+      // Fetch gallery stats
+      const galleryRes = await fetch('/api/gallery', {
+        credentials: 'include'
+      });
+      const galleryData = await galleryRes.json();
 
-      const [articles, events, gallery, users] = await Promise.all([
-        articlesRes.json(),
-        eventsRes.json(),
-        galleryRes.json(),
-        usersRes.json()
-      ]);
+      // Fetch comments stats
+      const commentsRes = await fetch('/api/comments', {
+        credentials: 'include'
+      });
+      const commentsData = await commentsRes.json();
+
+      // Calculate stats
+      const articles = articlesData.data || [];
+      const events = eventsData.data || [];
+      const gallery = galleryData.data || [];
+      const comments = commentsData.data || [];
 
       setStats({
         articles: {
-          total: articles.pagination?.total || 0,
-          published: articles.pagination?.total || 0
+          total: articles.length,
+          published: articles.filter(a => a.status === 'published').length,
+          draft: articles.filter(a => a.status === 'draft').length
         },
         events: {
-          total: events.pagination?.total || 0,
-          upcoming: events.pagination?.total || 0
+          total: events.length,
+          upcoming: events.filter(e => e.status === 'upcoming').length,
+          ongoing: events.filter(e => e.status === 'ongoing').length
         },
         gallery: {
-          total: gallery.pagination?.total || 0
+          total: gallery.filter(g => !g.deleted_at).length,
+          featured: gallery.filter(g => g.featured && !g.deleted_at).length
         },
-        users: {
-          total: users.pagination?.total || 0,
-          active: users.pagination?.total || 0
+        comments: {
+          total: comments.length,
+          pending: comments.filter(c => c.status === 'pending').length
+        },
+        registrations: {
+          total: 0 // Will be calculated if we have registrations endpoint
         }
       });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      toast.error('Gagal memuat statistik');
     } finally {
       setLoading(false);
     }
@@ -76,7 +142,7 @@ export default function AdminDashboard() {
     {
       title: 'Total Articles',
       value: stats.articles.total,
-      subtitle: `${stats.articles.published} published`,
+      subtitle: `${stats.articles.published} published, ${stats.articles.draft} draft`,
       icon: FileText,
       color: 'text-[#0066FF]',
       bgColor: 'bg-blue-50',
@@ -88,7 +154,7 @@ export default function AdminDashboard() {
     {
       title: 'Total Events',
       value: stats.events.total,
-      subtitle: `${stats.events.upcoming} upcoming`,
+      subtitle: `${stats.events.upcoming} upcoming, ${stats.events.ongoing} ongoing`,
       icon: Calendar,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
@@ -100,7 +166,7 @@ export default function AdminDashboard() {
     {
       title: 'Gallery Items',
       value: stats.gallery.total,
-      subtitle: 'Total photos',
+      subtitle: `${stats.gallery.featured} featured photos`,
       icon: Image,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
@@ -110,16 +176,16 @@ export default function AdminDashboard() {
       href: '/admin/gallery'
     },
     {
-      title: 'Total Users',
-      value: stats.users.total,
-      subtitle: `${stats.users.active} active`,
-      icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      title: 'Comments',
+      value: stats.comments.total,
+      subtitle: `${stats.comments.pending} pending approval`,
+      icon: MessageSquare,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
       borderColor: 'border-gray-200',
-      trend: '+5%',
+      trend: '+15%',
       trendUp: true,
-      href: '/admin/users'
+      href: '/admin/articles'
     }
   ];
 
@@ -155,97 +221,22 @@ export default function AdminDashboard() {
       href: '/admin/gallery/create'
     },
     {
-      title: 'Tambah User',
-      description: 'Buat user baru',
-      icon: Users,
+      title: 'Kelola Profil',
+      description: 'Edit profil admin',
+      icon: UserCheck,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       hoverBg: 'hover:bg-green-100',
       borderColor: 'border-gray-200',
-      href: '/admin/users/create'
+      href: '/admin/profile'
     }
   ];
-
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'article',
-      title: 'Artikel "Panduan Lengkap Next.js 16" dipublikasikan',
-      user: 'Admin',
-      time: '5 menit yang lalu',
-      icon: FileText,
-      color: 'text-[#0066FF]',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      id: 2,
-      type: 'event',
-      title: 'Event "Workshop React 2026" ditambahkan',
-      user: 'Admin',
-      time: '15 menit yang lalu',
-      icon: Calendar,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50'
-    },
-    {
-      id: 3,
-      type: 'gallery',
-      title: '12 foto baru ditambahkan ke galeri',
-      user: 'Admin',
-      time: '1 jam yang lalu',
-      icon: Image,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
-    },
-    {
-      id: 4,
-      type: 'user',
-      title: 'User baru "johndoe" terdaftar',
-      user: 'System',
-      time: '2 jam yang lalu',
-      icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
-    },
-    {
-      id: 5,
-      type: 'article',
-      title: 'Artikel "Tips & Trik Tailwind CSS" diperbarui',
-      user: 'Admin',
-      time: '3 jam yang lalu',
-      icon: FileText,
-      color: 'text-[#0066FF]',
-      bgColor: 'bg-blue-50'
-    }
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: 'easeOut'
-      }
-    }
-  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative w-16 h-16">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
             <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
             <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
           </div>
@@ -265,7 +256,9 @@ export default function AdminDashboard() {
         className="space-y-1"
       >
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
-        <p className="text-base text-gray-600">Welcome back! Here's what's happening with your site.</p>
+        <p className="text-base text-gray-600">
+          Welcome back, {user?.full_name || 'Admin'}! Here's what's happening with your site.
+        </p>
       </motion.div>
 
       {/* Stats Grid */}
@@ -365,62 +358,6 @@ export default function AdminDashboard() {
         </Card>
       </motion.div>
 
-      {/* Recent Activity */}
-      <motion.div
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300">
-          <CardHeader className="border-b bg-gradient-to-r from-gray-50 to-white pb-3 pt-4 px-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="inline-block px-3 py-1.5 bg-indigo-100 rounded-full">
-                  <Activity className="w-3.5 h-3.5 text-indigo-600 inline mr-1.5" />
-                  <span className="text-xs font-semibold text-indigo-600">Activity Log</span>
-                </div>
-                <CardTitle className="text-lg text-gray-900">Recent Activity</CardTitle>
-              </div>
-              <a 
-                href="/admin/activity" 
-                className="text-xs font-semibold text-[#0066FF] hover:text-[#0052CC] flex items-center gap-1 group transition-colors"
-              >
-                View all
-                <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </a>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="space-y-2.5">
-              {recentActivities.map((activity, index) => (
-                <motion.div
-                  key={activity.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ x: 4 }}
-                  className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-[#0066FF] hover:shadow-md transition-all duration-300 cursor-pointer group"
-                >
-                  <div className={`w-9 h-9 ${activity.bgColor} rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                    <activity.icon className={`w-4 h-4 ${activity.color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 mb-1 group-hover:text-[#0066FF] transition-colors">
-                      {activity.title}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span className="font-medium">{activity.user}</span>
-                      <span className="text-gray-400">•</span>
-                      <span>{activity.time}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
       {/* System Status */}
       <motion.div
         variants={itemVariants}
@@ -457,6 +394,57 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Pending Approvals */}
+      {stats.comments.pending > 0 && (
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <Card className="border-orange-200 hover:border-orange-500 hover:shadow-xl transition-all duration-300 bg-orange-50/30">
+            <CardHeader className="border-b border-orange-200 bg-gradient-to-r from-orange-50 to-white pb-3 pt-4 px-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="inline-block px-3 py-1.5 bg-orange-100 rounded-full">
+                    <MessageSquare className="w-3.5 h-3.5 text-orange-600 inline mr-1.5" />
+                    <span className="text-xs font-semibold text-orange-600">Needs Attention</span>
+                  </div>
+                  <CardTitle className="text-lg text-gray-900">Pending Approvals</CardTitle>
+                </div>
+                <a 
+                  href="/admin/articles" 
+                  className="text-xs font-semibold text-[#0066FF] hover:text-[#0052CC] flex items-center gap-1 group transition-colors"
+                >
+                  View all
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </a>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-orange-200 hover:border-orange-300 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-base mb-0.5">
+                      {stats.comments.pending} Comment{stats.comments.pending > 1 ? 's' : ''} Waiting
+                    </p>
+                    <p className="text-xs text-gray-600">Review and approve new comments</p>
+                  </div>
+                </div>
+                <a 
+                  href="/admin/articles"
+                  className="px-4 py-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all duration-300"
+                >
+                  Review
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </div>
   );
-} 
+}

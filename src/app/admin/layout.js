@@ -28,6 +28,11 @@ const navigation = [
 ];
 
 export default function AdminLayout({ children }) {
+  const pathname = usePathname();
+  
+  // Check if current page is login page BEFORE any other hooks
+  const isLoginPage = pathname === '/admin/login';
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState({
@@ -35,16 +40,7 @@ export default function AdminLayout({ children }) {
     email: 'admin@barcomp.com',
     initials: 'SA'
   });
-  const pathname = usePathname();
   const userMenuRef = useRef(null);
-
-  // Check if current page is login page
-  const isLoginPage = pathname === '/admin/login';
-
-  // If login page, render without admin layout
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -60,17 +56,17 @@ export default function AdminLayout({ children }) {
     };
   }, []);
 
-  // Load user info from token
+  // Load user info from localStorage
   useEffect(() => {
     try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.email) {
-          const name = payload.fullName || payload.username || 'Admin';
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.email) {
+          const name = user.full_name || user.name || 'Admin';
           setCurrentUser({
             name: name,
-            email: payload.email,
+            email: user.email,
             initials: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
           });
         }
@@ -80,13 +76,29 @@ export default function AdminLayout({ children }) {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('token');
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      window.location.href = '/admin/login';
+      try {
+        // Call logout API
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        // Clear localStorage
+        localStorage.removeItem('user');
+        // Redirect to login
+        window.location.href = '/admin/login';
+      }
     }
   };
+
+  // If login page, render children without layout
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -206,7 +218,7 @@ export default function AdminLayout({ children }) {
             <Menu className="w-6 h-6" />
           </button>
           
-          {/* Page title will be here - can be customized per page */}
+          {/* Page title */}
           <div className="ml-4 lg:ml-0">
             <h1 className="text-lg font-semibold text-gray-900">
               {navigation.find(item => pathname.startsWith(item.href))?.name || 'Admin Panel'}
