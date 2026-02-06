@@ -3,14 +3,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   FileText,
   Calendar,
   Image,
-  Users,
   Settings,
   LogOut,
   Menu,
@@ -18,17 +17,18 @@ import {
   User,
   ChevronUp
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Articles', href: '/admin/articles', icon: FileText },
   { name: 'Events', href: '/admin/events', icon: Calendar },
   { name: 'Gallery', href: '/admin/gallery', icon: Image },
-  { name: 'Users', href: '/admin/users', icon: Users },
 ];
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
   
   // Check if current page is login page BEFORE any other hooks
   const isLoginPage = pathname === '/admin/login';
@@ -38,7 +38,8 @@ export default function AdminLayout({ children }) {
   const [currentUser, setCurrentUser] = useState({
     name: 'Super Admin',
     email: 'admin@barcomp.com',
-    initials: 'SA'
+    initials: 'SA',
+    avatar: '/images/superadmin_avatar.jpg'
   });
   const userMenuRef = useRef(null);
 
@@ -56,43 +57,81 @@ export default function AdminLayout({ children }) {
     };
   }, []);
 
-  // Load user info from localStorage
+  // Load user info from API
   useEffect(() => {
+    if (!isLoginPage) {
+      fetchUserInfo();
+    }
+  }, [isLoginPage]);
+
+  const fetchUserInfo = async () => {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user.email) {
-          const name = user.full_name || user.name || 'Admin';
-          setCurrentUser({
-            name: name,
-            email: user.email,
-            initials: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-          });
-        }
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        // Not authenticated, redirect to login
+        router.push('/admin/login');
+        return;
+      }
+
+      const data = await response.json();
+      if (data.user) {
+        const name = data.user.full_name || 'Admin';
+        const initials = name
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+        
+        setCurrentUser({
+          name: name,
+          email: data.user.email,
+          initials: initials,
+          avatar: data.user.avatar || '/images/superadmin_avatar.jpg'
+        });
       }
     } catch (error) {
       console.error('Error loading user info:', error);
+      // Don't redirect on error, might be network issue
     }
-  }, []);
+  };
 
   const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
+    if (confirm('Apakah Anda yakin ingin logout?')) {
       try {
-        // Call logout API
-        await fetch('/api/auth/logout', {
+        const response = await fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include'
         });
+
+        if (response.ok) {
+          toast.success('Berhasil logout');
+          router.push('/admin/login');
+        } else {
+          throw new Error('Logout failed');
+        }
       } catch (error) {
         console.error('Logout error:', error);
-      } finally {
-        // Clear localStorage
-        localStorage.removeItem('user');
-        // Redirect to login
-        window.location.href = '/admin/login';
+        toast.error('Gagal logout, silakan coba lagi');
+        // Force redirect anyway
+        router.push('/admin/login');
       }
     }
+  };
+
+  // FIXED: Logika active route yang BENAR
+  const isActiveRoute = (itemHref) => {
+    // Dashboard: HANYA active jika exact match /admin
+    if (itemHref === '/admin') {
+      return pathname === '/admin';
+    }
+    
+    // Route lain: active jika pathname sama ATAU dimulai dengan href + '/'
+    // Contoh: /admin/articles dan /admin/articles/create keduanya active untuk Articles
+    return pathname === itemHref || pathname.startsWith(itemHref + '/');
   };
 
   // If login page, render children without layout
@@ -120,14 +159,14 @@ export default function AdminLayout({ children }) {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <Link href="/admin" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-lg flex items-center justify-center shadow-md">
               <span className="text-white font-bold text-lg">B</span>
             </div>
             <span className="text-xl font-bold text-gray-900">Barcomp</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-500 hover:text-gray-700"
+            className="lg:hidden text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -136,20 +175,23 @@ export default function AdminLayout({ children }) {
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const isActive = isActiveRoute(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200',
                   isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-50 text-[#0066FF] shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 )}
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="w-5 h-5 mr-3" />
+                <item.icon className={cn(
+                  "w-5 h-5 mr-3 transition-colors",
+                  isActive ? "text-[#0066FF]" : "text-gray-400"
+                )} />
                 {item.name}
               </Link>
             );
@@ -162,9 +204,17 @@ export default function AdminLayout({ children }) {
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-medium text-sm">{currentUser.initials}</span>
-            </div>
+            {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
+              <img 
+                src={currentUser.avatar} 
+                alt={currentUser.name}
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center flex-shrink-0 shadow-md">
+                <span className="text-white font-medium text-sm">{currentUser.initials}</span>
+              </div>
+            )}
             <div className="flex-1 ml-3 text-left">
               <p className="text-sm font-medium text-gray-900 truncate">{currentUser.name}</p>
               <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
@@ -183,7 +233,7 @@ export default function AdminLayout({ children }) {
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                 onClick={() => setUserMenuOpen(false)}
               >
-                <User className="w-4 h-4 mr-3" />
+                <User className="w-4 h-4 mr-3 text-gray-400" />
                 Profile
               </Link>
               <Link
@@ -191,7 +241,7 @@ export default function AdminLayout({ children }) {
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                 onClick={() => setUserMenuOpen(false)}
               >
-                <Settings className="w-4 h-4 mr-3" />
+                <Settings className="w-4 h-4 mr-3 text-gray-400" />
                 Settings
               </Link>
               <div className="border-t border-gray-200 my-1"></div>
@@ -210,19 +260,36 @@ export default function AdminLayout({ children }) {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 flex items-center h-16 px-6 bg-white border-b border-gray-200">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-500 hover:text-gray-700 lg:hidden"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          
-          {/* Page title */}
-          <div className="ml-4 lg:ml-0">
-            <h1 className="text-lg font-semibold text-gray-900">
-              {navigation.find(item => pathname.startsWith(item.href))?.name || 'Admin Panel'}
-            </h1>
+        <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="text-gray-500 hover:text-gray-700 lg:hidden transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            
+            {/* Page title */}
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {navigation.find(item => isActiveRoute(item.href))?.name || 'Admin Panel'}
+              </h1>
+            </div>
+          </div>
+
+          {/* Top bar user info - Mobile */}
+          <div className="lg:hidden">
+            {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
+              <img 
+                src={currentUser.avatar} 
+                alt={currentUser.name}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center shadow-md">
+                <span className="text-white font-medium text-xs">{currentUser.initials}</span>
+              </div>
+            )}
           </div>
         </div>
 

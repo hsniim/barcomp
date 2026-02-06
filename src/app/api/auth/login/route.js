@@ -67,7 +67,8 @@ export async function POST(request) {
 
     console.log('Password cocok! Melanjutkan generate token...');
 
-    const token = signToken(user);
+    // Pass rememberMe ke signToken
+    const token = signToken(user, rememberMe);
     console.log('Token berhasil dibuat (panjang):', token.length);
 
     console.log(`Set cookie dengan rememberMe = ${rememberMe}`);
