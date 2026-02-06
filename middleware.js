@@ -16,7 +16,17 @@ export async function middleware(request) {
       // Ambil token dari cookie (konsisten 'auth_token')
       const token = request.cookies.get('auth_token')?.value;
 
+      console.log(`[Middleware] ${pathname} → token exists? ${!!token}`);
+      if (token) {
+        console.log(`[Middleware] token preview: ${token.substring(0, 20)}...`);
+      } else {
+        // Coba manual parse header (fallback debug)
+        const cookieHeader = request.headers.get('cookie') || '';
+        console.log(`[Middleware] Raw cookie header: ${cookieHeader}`);
+      }
+
       if (!token) {
+        console.log(`[Middleware] No token → redirect to login from ${pathname}`);
         return NextResponse.redirect(new URL('/admin/login', request.url));
       }
 
@@ -24,13 +34,14 @@ export async function middleware(request) {
       const user = verifyTokenSync(token);
 
       if (!user) {
+        console.log('[Middleware] Invalid token → clear & redirect');
         const response = NextResponse.redirect(new URL('/admin/login', request.url));
         // Clear invalid cookie
         response.cookies.delete('auth_token');
         return response;
       }
 
-      if (user.role !== 'SUPER_ADMIN') {
+      if (user.role !== 'super_admin') {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
       }
 

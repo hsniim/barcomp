@@ -1,4 +1,4 @@
-// app/admin/layout.js
+// app/admin/layout.js  (atau layout.tsx)
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -9,13 +9,14 @@ import {
   LayoutDashboard,
   FileText,
   Calendar,
-  Image,
+  Image as LucideImage,
   Settings,
   LogOut,
   Menu,
   X,
   User,
-  ChevronUp
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,128 +24,148 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Articles', href: '/admin/articles', icon: FileText },
   { name: 'Events', href: '/admin/events', icon: Calendar },
-  { name: 'Gallery', href: '/admin/gallery', icon: Image },
+  { name: 'Gallery', href: '/admin/gallery', icon: LucideImage },
 ];
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   
-  // Check if current page is login page BEFORE any other hooks
-  const isLoginPage = pathname === '/admin/login';
+  const isLoginPage = pathname === '/admin/login' || pathname.startsWith('/admin/login/');
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Super Admin',
-    email: 'admin@barcomp.com',
-    initials: 'SA',
-    avatar: '/images/superadmin_avatar.jpg'
-  });
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null); // null = belum load
+
   const userMenuRef = useRef(null);
 
-  // Close user menu when clicking outside
+  // Close user menu on outside click
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
         setUserMenuOpen(false);
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Load user info from API
+  // Fetch user info
   useEffect(() => {
-    if (!isLoginPage) {
-      fetchUserInfo();
+    if (isLoginPage) {
+      setIsLoadingUser(false);
+      return;
     }
-  }, [isLoginPage]);
 
-  const fetchUserInfo = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
+    const fetchUserInfo = async () => {
+      setIsLoadingUser(true);
+      try {
+        const res = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store', // penting agar selalu fresh
+        });
 
-      if (!response.ok) {
-        // Not authenticated, redirect to login
-        router.push('/admin/login');
-        return;
-      }
+        if (!res.ok) {
+          if (res.status === 401) {
+            toast.error('Sesi telah berakhir. Silakan login kembali.');
+            router.replace('/admin/login');
+            return;
+          }
+          throw new Error(`HTTP ${res.status}`);
+        }
 
-      const data = await response.json();
-      if (data.user) {
-        const name = data.user.full_name || 'Admin';
+        const data = await res.json();
+
+        if (!data.authenticated || !data.user) {
+          router.replace('/admin/login');
+          return;
+        }
+
+        // Validasi role (sesuaikan dengan yang ada di database kamu)
+        if (data.user.role !== 'super_admin') {
+          toast.error('Akses ditolak: Hanya Super Admin yang diizinkan.');
+          router.replace('/unauthorized');
+          return;
+        }
+
+        const name = data.user.fullName || data.user.full_name || 'Super Admin';
         const initials = name
           .split(' ')
-          .map(n => n[0])
+          .map((n) => n[0])
           .join('')
           .toUpperCase()
           .slice(0, 2);
-        
+
         setCurrentUser({
-          name: name,
+          name,
           email: data.user.email,
-          initials: initials,
-          avatar: data.user.avatar || '/images/superadmin_avatar.jpg'
+          initials,
+          avatar: data.user.avatar || '/images/superadmin_avatar.jpg',
         });
+      } catch (err) {
+        console.error('Gagal memuat info user:', err);
+        toast.error('Gagal memuat data pengguna');
+        // Jangan langsung redirect agar tidak loop jika network bermasalah
+      } finally {
+        setIsLoadingUser(false);
       }
-    } catch (error) {
-      console.error('Error loading user info:', error);
-      // Don't redirect on error, might be network issue
-    }
-  };
+    };
+
+    fetchUserInfo();
+  }, [isLoginPage, router]);
 
   const handleLogout = async () => {
-    if (confirm('Apakah Anda yakin ingin logout?')) {
-      try {
-        const response = await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include'
-        });
+    if (!confirm('Apakah Anda yakin ingin logout?')) return;
 
-        if (response.ok) {
-          toast.success('Berhasil logout');
-          router.push('/admin/login');
-        } else {
-          throw new Error('Logout failed');
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-        toast.error('Gagal logout, silakan coba lagi');
-        // Force redirect anyway
-        router.push('/admin/login');
+    try {
+      const res = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        toast.success('Berhasil logout');
+        router.replace('/admin/login');
+      } else {
+        throw new Error('Logout gagal');
       }
+    } catch (err) {
+      console.error('Logout error:', err);
+      toast.error('Gagal logout, mencoba redirect...');
+      router.replace('/admin/login');
     }
   };
 
-  // FIXED: Logika active route yang BENAR
-  const isActiveRoute = (itemHref) => {
-    // Dashboard: HANYA active jika exact match /admin
-    if (itemHref === '/admin') {
-      return pathname === '/admin';
-    }
-    
-    // Route lain: active jika pathname sama ATAU dimulai dengan href + '/'
-    // Contoh: /admin/articles dan /admin/articles/create keduanya active untuk Articles
-    return pathname === itemHref || pathname.startsWith(itemHref + '/');
+  const isActiveRoute = (href) => {
+    if (href === '/admin') return pathname === '/admin';
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  // If login page, render children without layout
+  // Jika halaman login → render children tanpa layout
   if (isLoginPage) {
     return <>{children}</>;
   }
 
+  // Jika masih loading user → tampilkan skeleton / loading
+  if (isLoadingUser || !currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-[#0066FF]" />
+          <p className="text-gray-600">Memuat panel admin...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile sidebar backdrop */}
+      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
+          className="fixed inset-0 z-40 bg-gray-600/75 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -152,11 +173,11 @@ export default function AdminLayout({ children }) {
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col',
+          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 lg:translate-x-0 flex flex-col',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Logo */}
+        {/* Header sidebar */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <Link href="/admin" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-lg flex items-center justify-center shadow-md">
@@ -166,68 +187,71 @@ export default function AdminLayout({ children }) {
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-500 hover:text-gray-700 transition-colors"
+            className="lg:hidden text-gray-500 hover:text-gray-700"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigasi */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
-            const isActive = isActiveRoute(item.href);
+            const active = isActiveRoute(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200',
-                  isActive
+                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all',
+                  active
                     ? 'bg-blue-50 text-[#0066FF] shadow-sm'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 )}
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className={cn(
-                  "w-5 h-5 mr-3 transition-colors",
-                  isActive ? "text-[#0066FF]" : "text-gray-400"
-                )} />
+                <item.icon
+                  className={cn(
+                    'w-5 h-5 mr-3',
+                    active ? 'text-[#0066FF]' : 'text-gray-400'
+                  )}
+                />
                 {item.name}
               </Link>
             );
           })}
         </nav>
 
-        {/* User Menu */}
-        <div className="p-4 border-t border-gray-200 flex-shrink-0" ref={userMenuRef}>
+        {/* User section */}
+        <div className="relative p-4 border-t border-gray-200" ref={userMenuRef}>
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
-              <img 
-                src={currentUser.avatar} 
+              <img
+                src={currentUser.avatar}
                 alt={currentUser.name}
-                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center flex-shrink-0 shadow-md">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center shadow-md">
                 <span className="text-white font-medium text-sm">{currentUser.initials}</span>
               </div>
             )}
-            <div className="flex-1 ml-3 text-left">
+            <div className="flex-1 ml-3 text-left min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{currentUser.name}</p>
               <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
             </div>
-            <ChevronUp className={cn(
-              "w-4 h-4 text-gray-400 transition-transform",
-              userMenuOpen && "transform rotate-180"
-            )} />
+            <ChevronUp
+              className={cn(
+                'w-4 h-4 text-gray-400 transition-transform',
+                userMenuOpen && 'rotate-180'
+              )}
+            />
           </button>
 
-          {/* Dropdown Menu */}
           {userMenuOpen && (
-            <div className="mt-2 py-2 bg-white border border-gray-200 rounded-lg shadow-lg">
+            <div className="absolute bottom-full left-4 right-4 mb-2 py-2 bg-white border border-gray-200 rounded-lg shadow-lg">
               <Link
                 href="/admin/profile"
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
@@ -244,10 +268,10 @@ export default function AdminLayout({ children }) {
                 <Settings className="w-4 h-4 mr-3 text-gray-400" />
                 Settings
               </Link>
-              <div className="border-t border-gray-200 my-1"></div>
+              <div className="border-t border-gray-200 my-1" />
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut className="w-4 h-4 mr-3" />
                 Logout
@@ -257,46 +281,40 @@ export default function AdminLayout({ children }) {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200 shadow-sm">
+      {/* Main content area */}
+      <div className="lg:pl-64 flex flex-col min-h-screen">
+        {/* Topbar */}
+        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm h-16 px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
+              className="lg:hidden text-gray-600 hover:text-gray-900"
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-500 hover:text-gray-700 lg:hidden transition-colors"
             >
               <Menu className="w-6 h-6" />
             </button>
-            
-            {/* Page title */}
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {navigation.find(item => isActiveRoute(item.href))?.name || 'Admin Panel'}
-              </h1>
-            </div>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {navigation.find((item) => isActiveRoute(item.href))?.name || 'Admin Panel'}
+            </h1>
           </div>
 
-          {/* Top bar user info - Mobile */}
+          {/* Mobile user avatar */}
           <div className="lg:hidden">
             {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
-              <img 
-                src={currentUser.avatar} 
+              <img
+                src={currentUser.avatar}
                 alt={currentUser.name}
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center shadow-md">
-                <span className="text-white font-medium text-xs">{currentUser.initials}</span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center">
+                <span className="text-white text-xs font-medium">{currentUser.initials}</span>
               </div>
             )}
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
-        <main className="p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   );

@@ -2,10 +2,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,90 +30,95 @@ import {
   User,
   TrendingUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+const CATEGORIES = [
+  'teknologi',
+  'kesehatan',
+  'finansial',
+  'bisnis',
+  'inovasi',
+  'karir',
+  'keberlanjutan',
+  'lainnya'
+];
+
+const STATUSES = ['draft', 'published'];
+
 export default function ArticlesPage() {
+  const router = useRouter();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchArticles();
-  }, [pagination.page, statusFilter, categoryFilter]);
+  }, []);
 
   const fetchArticles = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: pagination.page,
-        limit: '10',
-        ...(statusFilter && { status: statusFilter }),
-        ...(categoryFilter && { category: categoryFilter }),
-        ...(search && { search })
+      const response = await fetch('/api/articles', {
+        credentials: 'include'
       });
 
-      const response = await fetch(`/api/articles?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/admin/login');
+          return;
         }
-      });
+        throw new Error('Failed to fetch articles');
+      }
 
       const data = await response.json();
-      if (data.success) {
-        setArticles(data.articles);
-        setPagination(data.pagination);
+      if (data.data) {
+        setArticles(data.data);
       }
     } catch (error) {
       console.error('Failed to fetch articles:', error);
-      toast.error('Failed to load articles');
+      toast.error('Gagal memuat artikel');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id, title) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus "${title}"? Tindakan ini tidak dapat dibatalkan.`)) {
       return;
     }
 
     try {
       const response = await fetch(`/api/articles/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        credentials: 'include'
       });
 
-      const data = await response.json();
-      if (data.success) {
-        toast.success('Article deleted successfully');
-        fetchArticles();
-      } else {
-        toast.error(data.error || 'Failed to delete article');
+      if (!response.ok) {
+        throw new Error('Failed to delete article');
       }
+
+      const data = await response.json();
+      toast.success('Artikel berhasil dihapus');
+      fetchArticles();
     } catch (error) {
       console.error('Failed to delete article:', error);
-      toast.error('Failed to delete article');
+      toast.error('Gagal menghapus artikel');
     }
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPagination({ ...pagination, page: 1 });
-    fetchArticles();
   };
 
   const getStatusBadge = (status) => {
     const styles = {
       published: 'bg-green-100 text-green-700 border-green-200',
-      draft: 'bg-gray-100 text-gray-700 border-gray-200',
-      archived: 'bg-amber-100 text-amber-700 border-amber-200'
+      draft: 'bg-gray-100 text-gray-700 border-gray-200'
     };
     return styles[status] || styles.draft;
   };
@@ -123,6 +131,36 @@ export default function ArticlesPage() {
       month: 'short', 
       day: 'numeric' 
     });
+  };
+
+  // Filter articles
+  const filteredArticles = articles.filter(article => {
+    const matchSearch = search === '' || 
+      article.title.toLowerCase().includes(search.toLowerCase()) ||
+      article.slug.toLowerCase().includes(search.toLowerCase());
+    
+    const matchStatus = statusFilter === 'all' || article.status === statusFilter;
+    const matchCategory = categoryFilter === 'all' || article.category === categoryFilter;
+
+    return matchSearch && matchStatus && matchCategory;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedArticles = filteredArticles.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, categoryFilter]);
+
+  const stats = {
+    total: articles.length,
+    published: articles.filter(a => a.status === 'published').length,
+    draft: articles.filter(a => a.status === 'draft').length,
+    featured: articles.filter(a => a.featured).length
   };
 
   const containerVariants = {
@@ -156,7 +194,7 @@ export default function ArticlesPage() {
           <p className="mt-1 text-base text-gray-600">Manage and organize your blog articles</p>
         </div>
         <Link href="/admin/articles/create">
-          <Button className="flex items-center gap-2 bg-[#0066FF] hover:bg-[#0052CC]   text-white shadow-lg transition-all duration-300">
+          <Button className="flex items-center gap-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white transition-all duration-300">
             <Plus className="w-4 h-4" />
             New Article
           </Button>
@@ -171,10 +209,10 @@ export default function ArticlesPage() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         {[
-          { label: 'Total Articles', value: pagination.total || 0, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-          { label: 'Published', value: articles.filter(a => a.status === 'published').length, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Draft', value: articles.filter(a => a.status === 'draft').length, icon: Edit, color: 'text-gray-600', bg: 'bg-gray-50' },
-          { label: 'Total Views', value: articles.reduce((sum, a) => sum + (a.viewCount || 0), 0), icon: Eye, color: 'text-purple-600', bg: 'bg-purple-50' }
+          { label: 'Total Articles', value: stats.total, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
+          { label: 'Published', value: stats.published, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Draft', value: stats.draft, icon: Edit, color: 'text-gray-600', bg: 'bg-gray-50' },
+          { label: 'Featured', value: stats.featured, icon: Star, color: 'text-orange-600', bg: 'bg-orange-50' }
         ].map((stat, index) => (
           <motion.div key={index} variants={itemVariants}>
             <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
@@ -200,46 +238,56 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300">
+        <Card className="border-gray-200">
           <CardContent className="p-6">
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-300" />
-                  <input
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
                     type="text"
                     placeholder="Search articles by title or content..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-gray-400 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all duration-200"
+                    className="pl-10 border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]"
                   />
                 </div>
               </div>
-              <div className="flex gap-3">
-                <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      setPagination({ ...pagination, page: 1 });
-                    }}
-                    className="pl-9 pr-8 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-transparent appearance-none bg-white cursor-pointer transition-all duration-200"
-                  >
-                    <option value="">All Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </div>
-                <Button 
-                  type="submit"
-                  className="bg-[#0066FF] hover:bg-[#0052CC] text-white px-6 transition-colors shadow-lg duration-200"
-                >
-                  Search
-                </Button>
+
+              {/* Status Filter */}
+              <div className="w-full lg:w-48">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]">
+                    <Filter className="w-4 h-4 mr-2 text-gray-400" />
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </form>
+
+              {/* Category Filter */}
+              <div className="w-full lg:w-48">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]">
+                    <Filter className="w-4 h-4 mr-2 text-gray-400" />
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {CATEGORIES.map(cat => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -250,31 +298,32 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300">
+        <Card className="border-gray-200 overflow-hidden">
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-96 gap-4">
-                <div className="relative w-16 h-16">
-                  <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center space-y-4">
+                  <div className="relative w-16 h-16 mx-auto">
+                    <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-600">Loading articles...</p>
                 </div>
-                <p className="text-sm font-semibold text-gray-600">Loading articles...</p>
               </div>
-            ) : articles.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-6">
-                <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                  <FileText className="w-10 h-10 text-gray-400" />
+            ) : paginatedArticles.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                  <FileText className="w-10 h-10 text-[#0066FF]" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No articles found</h3>
-                <p className="text-gray-600 text-center mb-6 max-w-sm">
-                  {search || statusFilter || categoryFilter 
-                    ? "Try adjusting your filters or search terms"
-                    : "Get started by creating your first article"
-                  }
+                <h3 className="text-lg font-bold text-gray-900 mb-2">No articles found</h3>
+                <p className="text-gray-600 mb-6">
+                  {search || statusFilter !== 'all' || categoryFilter !== 'all' 
+                    ? 'Try adjusting your filters' 
+                    : 'Get started by creating your first article'}
                 </p>
-                {!search && !statusFilter && !categoryFilter && (
+                {!search && statusFilter === 'all' && categoryFilter === 'all' && (
                   <Link href="/admin/articles/create">
-                    <Button className="bg-[#0066FF] hover:bg-[#0052CC] shadow-lg text-white">
+                    <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Your First Article
                     </Button>
@@ -290,16 +339,13 @@ export default function ArticlesPage() {
                         Article
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Author
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Category
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Views
+                        Featured
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Published
@@ -310,7 +356,7 @@ export default function ArticlesPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {articles.map((article, index) => (
+                    {paginatedArticles.map((article, index) => (
                       <motion.tr 
                         key={article.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -320,9 +366,9 @@ export default function ArticlesPage() {
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            {article.featuredImage ? (
+                            {article.cover_image ? (
                               <img
-                                src={article.featuredImage}
+                                src={article.cover_image}
                                 alt={article.title}
                                 className="w-16 h-16 rounded-xl object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200"
                               />
@@ -342,19 +388,13 @@ export default function ArticlesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-lg flex items-center justify-center">
-                              <User className="w-4 h-4 text-white" />
-                            </div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {article.author?.fullName || 'Unknown'}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            {article.category || 'Uncategorized'}
-                          </span>
+                          {article.category ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={cn(
@@ -365,15 +405,19 @@ export default function ArticlesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                            <Eye className="w-4 h-4 text-gray-400" />
-                            <span>{article.viewCount || 0}</span>
-                          </div>
+                          {article.featured ? (
+                            <div className="flex items-center gap-2">
+                              <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
+                              <span className="text-xs font-semibold text-orange-600">Yes</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">No</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>{formatDate(article.publishedAt)}</span>
+                            <span>{formatDate(article.published_at)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -390,8 +434,9 @@ export default function ArticlesPage() {
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem asChild>
                                 <Link 
-                                  href={`/articles/${article.slug}`}
+                                  href={`/resources/articles/${article.slug}`}
                                   className="flex items-center gap-2 cursor-pointer"
+                                  target="_blank"
                                 >
                                   <Eye className="w-4 h-4" />
                                   <span>View Article</span>
@@ -404,6 +449,15 @@ export default function ArticlesPage() {
                                 >
                                   <Edit className="w-4 h-4" />
                                   <span>Edit Article</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link 
+                                  href={`/admin/articles/${article.id}/comments`}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                  <span>Manage Comments</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -428,7 +482,7 @@ export default function ArticlesPage() {
       </motion.div>
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
+      {totalPages > 1 && (
         <motion.div
           variants={itemVariants}
           initial="hidden"
@@ -436,14 +490,15 @@ export default function ArticlesPage() {
           className="flex items-center justify-between"
         >
           <div className="text-sm text-gray-700 font-medium">
-            Showing page <span className="font-bold text-gray-900">{pagination.page}</span> of{' '}
-            <span className="font-bold text-gray-900">{pagination.totalPages}</span>
+            Showing <span className="font-bold text-gray-900">{startIndex + 1}</span> to{' '}
+            <span className="font-bold text-gray-900">{Math.min(endIndex, filteredArticles.length)}</span> of{' '}
+            <span className="font-bold text-gray-900">{filteredArticles.length}</span> results
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-              disabled={pagination.page === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
               className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -451,8 +506,8 @@ export default function ArticlesPage() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-              disabled={pagination.page === pagination.totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
               className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Next
