@@ -1,0 +1,677 @@
+'use client';
+
+import { useState, useEffect, useRef, memo, useMemo } from 'react';
+import Link from 'next/link';
+import { 
+  Code2,
+  Smartphone,
+  ShoppingCart,
+  Shield,
+  Zap,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
+  TrendingUp,
+  Layers,
+  Globe,
+  Server,
+  Palette,
+  Search,
+  Lock,
+  Gauge,
+  Users,
+  ChevronRight,
+  Star,
+  Award,
+  Database,
+  Cloud,
+  Cpu
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+
+// Fade-in Section Component
+const FadeInSection = memo(({ children, delay = 0 }) => {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setIsVisible(true), delay * 1000);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '-50px' }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [delay]);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'transition-all duration-700 ease-out',
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+      )}
+    >
+      {children}
+    </div>
+  );
+});
+
+FadeInSection.displayName = 'FadeInSection';
+
+// Value Card Component
+const ValueCard = memo(({ icon: Icon, title, description, accent }) => {
+  return (
+    <Card className="h-full border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300 group overflow-hidden">
+      <CardContent className="p-8 relative">
+        <div className={cn(
+          "absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500",
+          accent === 'blue' && 'bg-blue-500',
+          accent === 'purple' && 'bg-purple-500',
+          accent === 'green' && 'bg-green-500',
+          accent === 'orange' && 'bg-orange-500'
+        )} />
+        
+        <div className="relative">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+            <Icon className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-[#0066FF] transition-colors duration-300">
+            {title}
+          </h3>
+          <p className="text-gray-600 leading-relaxed">
+            {description}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+ValueCard.displayName = 'ValueCard';
+
+// Stat Card Component
+const StatCard = memo(({ value, label, icon: Icon, suffix = '' }) => {
+  return (
+    <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300 group">
+      <CardContent className="p-8 text-center">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-[#0066FF] transition-colors duration-300">
+            <Icon className="w-8 h-8 text-[#0066FF] group-hover:text-white transition-colors duration-300" />
+          </div>
+        </div>
+        <div className="text-4xl sm:text-5xl font-bold text-[#0066FF] mb-2">
+          {value}{suffix}
+        </div>
+        <div className="text-gray-600 font-medium">{label}</div>
+      </CardContent>
+    </Card>
+  );
+});
+
+StatCard.displayName = 'StatCard';
+
+// Tech Badge Component
+const TechBadge = memo(({ name, icon: Icon, category }) => {
+  return (
+    <div className="group">
+      <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <Icon className="w-6 h-6 text-[#0066FF]" />
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 group-hover:text-[#0066FF] transition-colors duration-300">
+              {name}
+            </h4>
+            <p className="text-sm text-gray-500">{category}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+TechBadge.displayName = 'TechBadge';
+
+// Process Step Component
+const ProcessStep = memo(({ number, title, description, icon: Icon }) => {
+  return (
+    <FadeInSection>
+      <div className="flex gap-6 group">
+        <div className="flex-shrink-0">
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Icon className="w-8 h-8 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-[#0066FF] font-bold text-sm">
+              {number}
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 pt-2">
+          <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#0066FF] transition-colors duration-300">
+            {title}
+          </h4>
+          <p className="text-gray-600 leading-relaxed">
+            {description}
+          </p>
+        </div>
+      </div>
+    </FadeInSection>
+  );
+});
+
+ProcessStep.displayName = 'ProcessStep';
+
+export default function WebDevelopmentPage() {
+  const [language, setLanguage] = useState('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('language') || 'en';
+    setLanguage(savedLang);
+
+    const handleLanguageChange = (e) => {
+      setLanguage(e.detail);
+    };
+
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  const t = useMemo(() => ({
+    hero: {
+      badge: language === 'en' ? 'Web Development Excellence' : 'Keunggulan Pengembangan Web',
+      title: language === 'en' ? 'High-Performance Web Solutions' : 'Solusi Web Berkinerja Tinggi',
+      subtitle: language === 'en' 
+        ? 'Built for Scale, Optimized for Success'
+        : 'Dibangun untuk Skala, Dioptimalkan untuk Sukses',
+      description: language === 'en'
+        ? 'We create modern, scalable web applications that deliver exceptional user experiences and drive business growth. From custom platforms to e-commerce solutions, our expertise ensures your digital presence stands out.'
+        : 'Kami menciptakan aplikasi web modern dan scalable yang memberikan pengalaman pengguna luar biasa dan mendorong pertumbuhan bisnis. Dari platform custom hingga solusi e-commerce, keahlian kami memastikan kehadiran digital Anda menonjol.',
+      cta: {
+        primary: language === 'en' ? 'Start Your Project' : 'Mulai Proyek Anda',
+        secondary: language === 'en' ? 'View Portfolio' : 'Lihat Portfolio'
+      }
+    },
+    features: {
+      badge: language === 'en' ? 'Key Features' : 'Fitur Utama',
+      title: language === 'en' ? 'Comprehensive Web Solutions' : 'Solusi Web Komprehensif',
+      subtitle: language === 'en'
+        ? 'Everything you need to build and scale your digital presence'
+        : 'Semua yang Anda butuhkan untuk membangun dan menskalakan kehadiran digital Anda',
+      items: [
+        {
+          icon: Code2,
+          title: language === 'en' ? 'Custom Web Applications' : 'Aplikasi Web Custom',
+          description: language === 'en'
+            ? 'Tailored solutions built from the ground up to meet your unique business requirements. We leverage modern frameworks and best practices to deliver robust, maintainable applications.'
+            : 'Solusi yang disesuaikan dibangun dari awal untuk memenuhi kebutuhan bisnis unik Anda. Kami memanfaatkan framework modern dan praktik terbaik untuk menghasilkan aplikasi yang robust dan mudah dipelihara.',
+          accent: 'blue'
+        },
+        {
+          icon: Smartphone,
+          title: language === 'en' ? 'Responsive Design' : 'Desain Responsif',
+          description: language === 'en'
+            ? 'Seamless experiences across all devices. Our mobile-first approach ensures your website looks and performs beautifully on smartphones, tablets, and desktops.'
+            : 'Pengalaman mulus di semua perangkat. Pendekatan mobile-first kami memastikan website Anda terlihat dan berkinerja indah di smartphone, tablet, dan desktop.',
+          accent: 'purple'
+        },
+        {
+          icon: ShoppingCart,
+          title: language === 'en' ? 'E-commerce Solutions' : 'Solusi E-commerce',
+          description: language === 'en'
+            ? 'Complete e-commerce platforms with secure payment integration, inventory management, and analytics. Turn your online store into a revenue-generating machine.'
+            : 'Platform e-commerce lengkap dengan integrasi pembayaran aman, manajemen inventori, dan analitik. Ubah toko online Anda menjadi mesin penghasil pendapatan.',
+          accent: 'green'
+        },
+        {
+          icon: Shield,
+          title: language === 'en' ? 'Web Security' : 'Keamanan Web',
+          description: language === 'en'
+            ? 'Enterprise-grade security measures to protect your data and users. We implement SSL/TLS, secure authentication, data encryption, and regular security audits.'
+            : 'Langkah keamanan tingkat enterprise untuk melindungi data dan pengguna Anda. Kami menerapkan SSL/TLS, otentikasi aman, enkripsi data, dan audit keamanan rutin.',
+          accent: 'orange'
+        }
+      ]
+    },
+    techStack: {
+      badge: language === 'en' ? 'Technology Stack' : 'Stack Teknologi',
+      title: language === 'en' ? 'Modern Web Technologies' : 'Teknologi Web Modern',
+      subtitle: language === 'en'
+        ? 'Powered by industry-leading frameworks and tools'
+        : 'Didukung oleh framework dan tools terkemuka di industri',
+      items: [
+        { name: 'Next.js', icon: Layers, category: language === 'en' ? 'React Framework' : 'Framework React' },
+        { name: 'React', icon: Code2, category: language === 'en' ? 'UI Library' : 'Library UI' },
+        { name: 'Node.js', icon: Server, category: language === 'en' ? 'Backend Runtime' : 'Runtime Backend' },
+        { name: 'Tailwind CSS', icon: Palette, category: language === 'en' ? 'CSS Framework' : 'Framework CSS' },
+        { name: 'TypeScript', icon: Code2, category: language === 'en' ? 'Type Safety' : 'Keamanan Tipe' },
+        { name: 'PostgreSQL', icon: Database, category: language === 'en' ? 'Database' : 'Basis Data' },
+        { name: 'AWS/GCP', icon: Cloud, category: language === 'en' ? 'Cloud Infrastructure' : 'Infrastruktur Cloud' },
+        { name: 'Docker', icon: Cpu, category: language === 'en' ? 'Containerization' : 'Kontainerisasi' }
+      ]
+    },
+    performance: {
+      badge: language === 'en' ? 'Performance Metrics' : 'Metrik Performa',
+      title: language === 'en' ? 'Built for Speed & Reliability' : 'Dibangun untuk Kecepatan & Keandalan',
+      subtitle: language === 'en'
+        ? 'Real-world performance that drives results'
+        : 'Performa dunia nyata yang menghasilkan hasil',
+      stats: [
+        { 
+          value: '99.9', 
+          suffix: '%',
+          label: language === 'en' ? 'Uptime Guarantee' : 'Jaminan Uptime', 
+          icon: Server 
+        },
+        { 
+          value: '<2', 
+          suffix: 's',
+          label: language === 'en' ? 'Load Time' : 'Waktu Muat', 
+          icon: Zap 
+        },
+        { 
+          value: '95', 
+          suffix: '+',
+          label: language === 'en' ? 'PageSpeed Score' : 'Skor PageSpeed', 
+          icon: Gauge 
+        },
+        { 
+          value: '100', 
+          suffix: '%',
+          label: language === 'en' ? 'Mobile Optimized' : 'Optimasi Mobile', 
+          icon: Smartphone 
+        }
+      ]
+    },
+    process: {
+      badge: language === 'en' ? 'Our Process' : 'Proses Kami',
+      title: language === 'en' ? 'How We Build Your Success' : 'Bagaimana Kami Membangun Kesuksesan Anda',
+      subtitle: language === 'en'
+        ? 'A proven methodology from concept to launch'
+        : 'Metodologi terbukti dari konsep hingga peluncuran',
+      steps: [
+        {
+          number: '01',
+          icon: Search,
+          title: language === 'en' ? 'Discovery & Planning' : 'Penemuan & Perencanaan',
+          description: language === 'en'
+            ? 'We dive deep into understanding your business goals, target audience, and technical requirements to create a comprehensive project roadmap.'
+            : 'Kami menyelami pemahaman mendalam tentang tujuan bisnis, target audiens, dan persyaratan teknis Anda untuk membuat roadmap proyek yang komprehensif.'
+        },
+        {
+          number: '02',
+          icon: Palette,
+          title: language === 'en' ? 'Design & Prototyping' : 'Desain & Prototipe',
+          description: language === 'en'
+            ? 'Our design team creates intuitive, visually stunning interfaces with interactive prototypes for your feedback and validation.'
+            : 'Tim desain kami menciptakan antarmuka intuitif dan visual yang menakjubkan dengan prototipe interaktif untuk umpan balik dan validasi Anda.'
+        },
+        {
+          number: '03',
+          icon: Code2,
+          title: language === 'en' ? 'Development & Testing' : 'Pengembangan & Pengujian',
+          description: language === 'en'
+            ? 'We build your application using cutting-edge technologies with rigorous testing at every stage to ensure quality and performance.'
+            : 'Kami membangun aplikasi Anda menggunakan teknologi terdepan dengan pengujian ketat di setiap tahap untuk memastikan kualitas dan performa.'
+        },
+        {
+          number: '04',
+          icon: TrendingUp,
+          title: language === 'en' ? 'Launch & Optimization' : 'Peluncuran & Optimasi',
+          description: language === 'en'
+            ? 'After successful deployment, we monitor performance, gather user insights, and continuously optimize for better results.'
+            : 'Setelah deployment berhasil, kami memantau performa, mengumpulkan wawasan pengguna, dan terus mengoptimalkan untuk hasil yang lebih baik.'
+        }
+      ]
+    },
+    benefits: {
+      badge: language === 'en' ? 'Why Choose Us' : 'Mengapa Memilih Kami',
+      title: language === 'en' ? 'The Barcomp Advantage' : 'Keunggulan Barcomp',
+      subtitle: language === 'en'
+        ? 'What sets us apart in web development'
+        : 'Apa yang membedakan kami dalam pengembangan web',
+      items: [
+        {
+          icon: Search,
+          title: language === 'en' ? 'SEO Optimized' : 'SEO Teroptimasi',
+          description: language === 'en'
+            ? 'Built with search engine visibility in mind from day one'
+            : 'Dibangun dengan visibilitas mesin pencari sejak hari pertama'
+        },
+        {
+          icon: Zap,
+          title: language === 'en' ? 'Lightning Fast' : 'Sangat Cepat',
+          description: language === 'en'
+            ? 'Optimized performance for exceptional user experiences'
+            : 'Performa optimal untuk pengalaman pengguna yang luar biasa'
+        },
+        {
+          icon: Globe,
+          title: language === 'en' ? 'Scalable Architecture' : 'Arsitektur Scalable',
+          description: language === 'en'
+            ? 'Built to grow with your business needs'
+            : 'Dibangun untuk tumbuh dengan kebutuhan bisnis Anda'
+        },
+        {
+          icon: Lock,
+          title: language === 'en' ? 'Enterprise Security' : 'Keamanan Enterprise',
+          description: language === 'en'
+            ? 'Industry-standard security protocols and compliance'
+            : 'Protokol keamanan standar industri dan kepatuhan'
+        },
+        {
+          icon: Users,
+          title: language === 'en' ? 'Expert Team' : 'Tim Ahli',
+          description: language === 'en'
+            ? 'Experienced developers dedicated to your success'
+            : 'Developer berpengalaman yang berdedikasi untuk kesuksesan Anda'
+        },
+        {
+          icon: Award,
+          title: language === 'en' ? 'Proven Track Record' : 'Rekam Jejak Terbukti',
+          description: language === 'en'
+            ? 'Successfully delivered 500+ projects across industries'
+            : 'Berhasil menyelesaikan 500+ proyek di berbagai industri'
+        }
+      ]
+    },
+    cta: {
+      title: language === 'en' 
+        ? "Ready to Build Something Amazing?" 
+        : 'Siap Membangun Sesuatu yang Luar Biasa?',
+      subtitle: language === 'en'
+        ? "Let's discuss your web development needs and create a solution that exceeds expectations"
+        : 'Mari diskusikan kebutuhan pengembangan web Anda dan ciptakan solusi yang melampaui ekspektasi',
+      button: language === 'en' ? 'Get Started Today' : 'Mulai Hari Ini'
+    }
+  }), [language]);
+
+  return (
+    <>
+      <Navbar />
+      
+      <main className="min-h-screen">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))] opacity-30" />
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-20 w-72 h-72 bg-blue-400 rounded-full blur-3xl opacity-20 animate-pulse" />
+            <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }} />
+          </div>
+          
+          <div className="relative container mx-auto max-w-7xl px-6 lg:px-8 py-24 lg:py-32">
+            <FadeInSection>
+              <div className="max-w-4xl mx-auto text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-8 border border-gray-200 shadow-sm">
+                  <Sparkles className="w-4 h-4 text-[#0066FF]" />
+                  <span className="text-sm font-semibold text-gray-700">{t.hero.badge}</span>
+                </div>
+                
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                  <span className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+                    {t.hero.title}
+                  </span>
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#0066FF] to-[#0052CC] mt-2">
+                    {t.hero.subtitle}
+                  </span>
+                </h1>
+                
+                <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-10 max-w-3xl mx-auto">
+                  {t.hero.description}
+                </p>
+
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <Link href="/contact">
+                    <Button 
+                      size="lg"
+                      className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:shadow-xl hover:shadow-blue-500/50 px-8 py-6 text-lg font-semibold transition-all duration-300"
+                    >
+                      {t.hero.cta.primary}
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link href="/services/web/portfolio">
+                    <Button 
+                      size="lg"
+                      variant="outline"
+                      className="border-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 px-8 py-6 text-lg font-semibold transition-all duration-300"
+                    >
+                      {t.hero.cta.secondary}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </FadeInSection>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z" fill="white"/>
+            </svg>
+          </div>
+        </section>
+
+        {/* Key Features Section */}
+        <section className="py-20 lg:py-28 bg-white">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <FadeInSection>
+              <div className="text-center mb-16">
+                <div className="inline-block px-4 py-2 bg-blue-100 rounded-full text-sm font-semibold text-[#0066FF] mb-6">
+                  {t.features.badge}
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                  {t.features.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  {t.features.subtitle}
+                </p>
+              </div>
+            </FadeInSection>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {t.features.items.map((feature, index) => (
+                <FadeInSection key={index} delay={index * 0.1}>
+                  <ValueCard {...feature} />
+                </FadeInSection>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Tech Stack Section */}
+        <section className="py-20 lg:py-28 bg-gradient-to-b from-gray-50 to-white">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <FadeInSection>
+              <div className="text-center mb-16">
+                <div className="inline-block px-4 py-2 bg-indigo-100 rounded-full text-sm font-semibold text-indigo-600 mb-6">
+                  {t.techStack.badge}
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                  {t.techStack.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+                  {t.techStack.subtitle}
+                </p>
+              </div>
+            </FadeInSection>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {t.techStack.items.map((tech, index) => (
+                <FadeInSection key={index} delay={index * 0.05}>
+                  <TechBadge {...tech} />
+                </FadeInSection>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Performance Stats Section */}
+        <section className="py-20 lg:py-28 bg-white">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <FadeInSection>
+              <div className="text-center mb-16">
+                <div className="inline-block px-4 py-2 bg-green-100 rounded-full text-sm font-semibold text-green-600 mb-6">
+                  {t.performance.badge}
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                  {t.performance.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+                  {t.performance.subtitle}
+                </p>
+              </div>
+            </FadeInSection>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {t.performance.stats.map((stat, index) => (
+                <FadeInSection key={index} delay={index * 0.1}>
+                  <StatCard {...stat} />
+                </FadeInSection>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Process Section */}
+        <section className="py-20 lg:py-28 bg-gradient-to-b from-gray-50 to-white">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <FadeInSection>
+              <div className="text-center mb-16">
+                <div className="inline-block px-4 py-2 bg-purple-100 rounded-full text-sm font-semibold text-purple-600 mb-6">
+                  {t.process.badge}
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                  {t.process.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+                  {t.process.subtitle}
+                </p>
+              </div>
+            </FadeInSection>
+
+            <div className="max-w-4xl mx-auto space-y-12">
+              {t.process.steps.map((step, index) => (
+                <ProcessStep key={index} {...step} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits Grid Section */}
+        <section className="py-20 lg:py-28 bg-white">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <FadeInSection>
+              <div className="text-center mb-16">
+                <div className="inline-block px-4 py-2 bg-orange-100 rounded-full text-sm font-semibold text-orange-600 mb-6">
+                  {t.benefits.badge}
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                  {t.benefits.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+                  {t.benefits.subtitle}
+                </p>
+              </div>
+            </FadeInSection>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {t.benefits.items.map((benefit, index) => (
+                <FadeInSection key={index} delay={index * 0.05}>
+                  <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300 group h-full">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-[#0066FF] transition-colors duration-300 flex-shrink-0">
+                          <benefit.icon className="w-6 h-6 text-[#0066FF] group-hover:text-white transition-colors duration-300" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 mb-2 group-hover:text-[#0066FF] transition-colors duration-300">
+                            {benefit.title}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {benefit.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </FadeInSection>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="relative py-20 lg:py-28 bg-gradient-to-br from-[#0066FF] to-[#0052CC] overflow-hidden">
+          <div className="absolute inset-0 bg-grid-white/10" />
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-full blur-3xl" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-300 rounded-full blur-3xl" />
+          </div>
+          
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
+            <FadeInSection>
+              <div className="text-center max-w-3xl mx-auto">
+                <Code2 className="w-16 h-16 mx-auto mb-6 text-white" />
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
+                  {t.cta.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-blue-100 mb-8 leading-relaxed">
+                  {t.cta.subtitle}
+                </p>
+                <Link href="/contact">
+                  <Button 
+                    size="lg"
+                    className="bg-white text-[#0066FF] hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
+                  >
+                    {t.cta.button}
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
+            </FadeInSection>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+
+      <style jsx global>{`
+        .bg-grid-white\/10 {
+          background-image: linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+          background-size: 40px 40px;
+        }
+        
+        .bg-grid-slate-100 {
+          background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                            linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+          background-size: 32px 32px;
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.1;
+          }
+          50% {
+            opacity: 0.2;
+          }
+        }
+        
+        .animate-pulse {
+          animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
+    </>
+  );
+}
