@@ -2,9 +2,7 @@
 const nextConfig = {
   turbopack: {
     resolveAlias: {
-      '@': './src',                    // alias utama @ → src
-      '@/components': './src/components',  // spesifik untuk components (bisa tambah kalau perlu)
-      // tambahkan alias lain kalau ada, misal '@/lib': './src/lib'
+      '@/*': './src/*',                  
     },
   },
   images: {
