@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ContactForm from '@/components/ContactForm';
+import ContactForm from '@/components/ContactForm.js';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 
 export default function Contact() {
