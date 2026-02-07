@@ -1,28 +1,29 @@
 'use client';
 
 import { useState, useEffect, useRef, memo } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { 
-  BookOpen,
-  Calendar,
-  Clock,
-  Eye,
-  ArrowRight,
-  Search,
+  Search, 
+  Calendar, 
+  ArrowRight, 
   Filter,
-  TrendingUp,
   Sparkles,
-  ChevronRight,
-  User,
-  Tag
+  Tag,
+  Clock,
+  BookOpen,
+  TrendingUp,
+  ChevronRight
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { cn } from '@/lib/utils';
 
 // Fade-in Animation Component
 const FadeInSection = memo(({ children, delay = 0 }) => {
@@ -59,162 +60,118 @@ const FadeInSection = memo(({ children, delay = 0 }) => {
 
 FadeInSection.displayName = 'FadeInSection';
 
-// Featured Article Card Component
-const FeaturedArticleCard = memo(({ article }) => {
-  return (
-    <Card className="overflow-hidden border-2 border-[#0066FF] hover:shadow-2xl transition-all duration-300 group p-0">
-      <div className="relative h-[400px] overflow-hidden">
-        <Image
-          src={article.coverImage}
-          alt={article.title}
-          fill
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        
-        <div className="absolute top-4 left-4">
-          <span className="px-3 py-1 bg-[#0066FF] text-white text-xs font-semibold rounded-full flex items-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            Featured
-          </span>
-        </div>
+// Kategori sesuai ENUM di database
+const categories = [
+  { value: 'all', label: 'Semua Kategori' },
+  { value: 'teknologi', label: 'Teknologi' },
+  { value: 'kesehatan', label: 'Kesehatan' },
+  { value: 'finansial', label: 'Finansial' },
+  { value: 'bisnis', label: 'Bisnis' },
+  { value: 'inovasi', label: 'Inovasi' },
+  { value: 'karir', label: 'Karir' },
+  { value: 'keberlanjutan', label: 'Keberlanjutan' },
+  { value: 'lainnya', label: 'Lainnya' },
+];
 
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <div className="flex items-center gap-4 mb-3 text-sm">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {new Date(article.publishedAt).toLocaleDateString('id-ID', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {article.readTime} min read
-            </span>
-          </div>
-          
-          <h3 className="text-2xl font-bold mb-2 line-clamp-2">
-            {article.title}
-          </h3>
-          
-          <p className="text-gray-200 mb-4 line-clamp-2">
-            {article.excerpt}
-          </p>
+// Warna badge kategori
+const categoryColors = {
+  teknologi: 'bg-blue-100 text-blue-700 border-blue-200',
+  kesehatan: 'bg-green-100 text-green-700 border-green-200',
+  finansial: 'bg-purple-100 text-purple-700 border-purple-200',
+  bisnis: 'bg-orange-100 text-orange-700 border-orange-200',
+  inovasi: 'bg-pink-100 text-pink-700 border-pink-200',
+  karir: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  keberlanjutan: 'bg-teal-100 text-teal-700 border-teal-200',
+  lainnya: 'bg-gray-100 text-gray-700 border-gray-200',
+};
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden">
-                <Image
-                  src={article.author.avatar}
-                  alt={article.author.name}
-                  width={32}
-                  height={32}
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{article.author.name}</p>
-                <p className="text-xs text-gray-300">{article.author.role}</p>
-              </div>
-            </div>
+// Format tanggal Indonesia
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date);
+  } catch (error) {
+    return '';
+  }
+};
 
-            <Link href={`/resources/articles/${article.slug}`}>
-              <Button 
-                size="sm"
-                className="bg-white text-[#0066FF] hover:bg-gray-100"
-              >
-                Baca Artikel
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-});
-
-FeaturedArticleCard.displayName = 'FeaturedArticleCard';
+// Get badge class untuk kategori
+const getCategoryBadgeClass = (category) => {
+  return categoryColors[category] || categoryColors.lainnya;
+};
 
 // Article Card Component
-const ArticleCard = memo(({ article }) => {
+const ArticleCard = memo(({ article, featured = false }) => {
   return (
-    <Card className="overflow-hidden border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300 group h-full p-0">
-      <div className="relative h-48 overflow-hidden">
-        <Image
-          src={article.coverImage}
-          alt={article.title}
-          fill
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
-        />
-        <div className="absolute top-3 right-3">
-          <span className={cn(
-            "px-2 py-1 text-xs font-semibold rounded-full",
-            article.category === 'technology' && "bg-blue-100 text-blue-700",
-            article.category === 'business' && "bg-green-100 text-green-700",
-            article.category === 'tutorial' && "bg-purple-100 text-purple-700",
-            article.category === 'news' && "bg-red-100 text-red-700",
-            article.category === 'case-study' && "bg-yellow-100 text-yellow-700"
-          )}>
-            {article.category}
-          </span>
-        </div>
-      </div>
-
-      <CardContent className="p-0">
-        <div className="px-5 pt-5">
-          <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {new Date(article.publishedAt).toLocaleDateString('id-ID', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              })}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {article.readTime} min
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              {article.views.toLocaleString()}
-            </span>
+    <Card className={cn(
+      "overflow-hidden border-2 transition-all duration-300 group h-full p-0",
+      featured 
+        ? "border-[#0066FF] hover:shadow-2xl" 
+        : "border-gray-200 hover:border-[#0066FF] hover:shadow-xl"
+    )}>
+      <Link href={`/resources/articles/${article.slug}`}>
+        <div className="relative h-56 overflow-hidden">
+          <Image
+            src={article.cover_image || '/images/placeholder-article.jpg'}
+            alt={article.title}
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          
+          <div className="absolute top-4 left-4 flex gap-2">
+            {article.featured && (
+              <Badge className="bg-[#0066FF] text-white border-0 flex items-center gap-1 shadow-lg">
+                <Sparkles className="w-3 h-3" />
+                Featured
+              </Badge>
+            )}
           </div>
 
-          <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#0066FF] transition-colors duration-300">
+          {article.category && (
+            <div className="absolute bottom-4 left-4">
+              <span className={cn(
+                "inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize border",
+                getCategoryBadgeClass(article.category)
+              )}>
+                {categories.find(c => c.value === article.category)?.label || article.category}
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <CardContent className="p-6">
+        <Link href={`/resources/articles/${article.slug}`}>
+          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-[#0066FF] transition-colors duration-300">
             {article.title}
           </h3>
+        </Link>
 
-          <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-            {article.excerpt}
-          </p>
-        </div>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          {article.excerpt}
+        </p>
 
-        <div className="flex items-center justify-between px-5 pb-5 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gray-300 overflow-hidden">
-              <Image
-                src={article.author.avatar}
-                alt={article.author.name}
-                width={24}
-                height={24}
-                className="object-cover"
-              />
-            </div>
-            <span className="text-xs text-gray-600">{article.author.name}</span>
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Calendar className="w-4 h-4 text-[#0066FF]" />
+            <span>{formatDate(article.published_at)}</span>
           </div>
-
+          
           <Link href={`/resources/articles/${article.slug}`}>
             <Button 
               variant="ghost" 
-              size="sm"
-              className="text-[#0066FF] hover:text-[#0052CC] p-0 h-auto"
+              size="sm" 
+              className="text-[#0066FF] hover:text-[#0052CC] hover:bg-blue-50 group/btn p-0"
             >
               Baca
-              <ChevronRight className="ml-1 w-4 h-4" />
+              <ArrowRight className="ml-1 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
             </Button>
           </Link>
         </div>
@@ -225,248 +182,190 @@ const ArticleCard = memo(({ article }) => {
 
 ArticleCard.displayName = 'ArticleCard';
 
-// Category Filter Component
-const CategoryFilter = memo(({ categories, activeCategory, onCategoryChange }) => {
-  return (
-    <div className="flex flex-wrap gap-3">
-      <button
-        onClick={() => onCategoryChange('all')}
-        className={cn(
-          "px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300",
-          activeCategory === 'all'
-            ? "bg-[#0066FF] text-white shadow-lg"
-            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-        )}
-      >
-        Semua Artikel
-      </button>
-      {categories.map((category) => (
-        <button
-          key={category.slug}
-          onClick={() => onCategoryChange(category.slug)}
-          className={cn(
-            "px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300",
-            activeCategory === category.slug
-              ? "bg-[#0066FF] text-white shadow-lg"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          )}
-        >
-          {category.name} ({category.count})
-        </button>
-      ))}
+// Skeleton Loading Component
+const ArticleSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="bg-gray-200 h-56 rounded-t-lg" />
+    <div className="p-6 space-y-4">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-4 bg-gray-200 rounded w-1/2" />
+      <div className="h-20 bg-gray-200 rounded" />
     </div>
-  );
-});
+  </div>
+);
 
-CategoryFilter.displayName = 'CategoryFilter';
-
-// Main Articles Page Component
 export default function ArticlesPage() {
-  const [language, setLanguage] = useState('id');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
   const [articles, setArticles] = useState([]);
   const [featuredArticles, setFeaturedArticles] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const articlesPerPage = 9;
 
-  // Translations
-  const t = {
-    id: {
-      hero: {
-        badge: 'Wawasan & Berita',
-        title: 'Artikel & Berita Terkini',
-        subtitle: 'Temukan insights, tutorial, dan berita terbaru seputar teknologi, bisnis digital, dan inovasi dari tim Barcomp.',
-        searchPlaceholder: 'Cari artikel...'
-      },
-      featured: {
-        title: 'Artikel Unggulan'
-      },
-      filter: {
-        title: 'Jelajahi Berdasarkan Kategori'
-      },
-      articles: {
-        title: 'Semua Artikel',
-        noResults: 'Tidak ada artikel ditemukan',
-        loadMore: 'Muat Lebih Banyak'
-      },
-      cta: {
-        title: 'Ingin Berkontribusi?',
-        subtitle: 'Kami selalu terbuka untuk berbagi wawasan dan pengalaman. Hubungi kami jika Anda tertarik untuk berkontribusi menulis artikel.',
-        button: 'Hubungi Kami'
+  // Fetch articles dari API
+  useEffect(() => {
+    fetchArticles();
+  }, [currentPage, selectedCategory, searchQuery]);
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      
+      // Build query params
+      const params = new URLSearchParams();
+      params.append('status', 'published');
+      params.append('page', currentPage.toString());
+      params.append('limit', articlesPerPage.toString());
+      
+      if (selectedCategory && selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
       }
-    },
-    en: {
-      hero: {
-        badge: 'Insights & News',
-        title: 'Latest Articles & News',
-        subtitle: 'Discover insights, tutorials, and latest news about technology, digital business, and innovation from Barcomp team.',
-        searchPlaceholder: 'Search articles...'
-      },
-      featured: {
-        title: 'Featured Articles'
-      },
-      filter: {
-        title: 'Browse by Category'
-      },
-      articles: {
-        title: 'All Articles',
-        noResults: 'No articles found',
-        loadMore: 'Load More'
-      },
-      cta: {
-        title: 'Want to Contribute?',
-        subtitle: 'We are always open to share insights and experiences. Contact us if you are interested in contributing articles.',
-        button: 'Contact Us'
+      
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
       }
+
+      const response = await fetch(`/api/articles?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data artikel');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setArticles(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
+        
+        // Fetch featured articles (hanya di page 1 dan tanpa filter)
+        if (currentPage === 1 && selectedCategory === 'all' && !searchQuery) {
+          const featured = (data.data || []).filter(article => article.featured).slice(0, 3);
+          setFeaturedArticles(featured);
+        } else {
+          setFeaturedArticles([]);
+        }
+      } else {
+        throw new Error(data.message || 'Gagal mengambil data artikel');
+      }
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      toast.error(error.message || 'Terjadi kesalahan saat mengambil data artikel');
+      setArticles([]);
+      setFeaturedArticles([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const content = t[language];
+  // Handle search
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
 
-  // Mock data - Replace with actual API calls
-  useEffect(() => {
-    // Simulate API call
-    const fetchData = async () => {
-      setLoading(true);
-      
-      // Mock featured articles
-      const mockFeatured = [
-        {
-          id: 'art-001',
-          title: 'Transformasi Digital: Kunci Kesuksesan Bisnis di Era Modern',
-          slug: 'transformasi-digital-kunci-kesuksesan-bisnis',
-          excerpt: 'Pelajari bagaimana transformasi digital dapat mengoptimalkan operasional bisnis dan meningkatkan daya saing di pasar global.',
-          coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop',
-          author: {
-            name: 'Budi Santoso',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            role: 'Digital Strategy Lead'
-          },
-          category: 'technology',
-          readTime: 8,
-          views: 2340,
-          publishedAt: '2025-01-15T10:00:00Z',
-          featured: true
-        }
-      ];
+  // Handle category filter
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
+  };
 
-      // Mock articles
-      const mockArticles = [
-        {
-          id: 'art-002',
-          title: 'Cloud Computing Solutions for Growing Businesses',
-          slug: 'cloud-computing-solutions-for-growing-businesses',
-          excerpt: 'Discover how cloud infrastructure can scale with your business needs while optimizing costs and performance.',
-          coverImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop',
-          author: {
-            name: 'Sarah Johnson',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-            role: 'Cloud Architect'
-          },
-          category: 'technology',
-          readTime: 6,
-          views: 1850,
-          publishedAt: '2025-01-20T14:30:00Z',
-          featured: false
-        },
-        {
-          id: 'art-003',
-          title: 'Membangun Strategi Digital Marketing yang Efektif',
-          slug: 'membangun-strategi-digital-marketing-efektif',
-          excerpt: 'Panduan lengkap untuk merancang dan mengimplementasikan strategi digital marketing yang menghasilkan ROI tinggi.',
-          coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
-          author: {
-            name: 'Ahmad Rizki',
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-            role: 'Marketing Strategist'
-          },
-          category: 'business',
-          readTime: 7,
-          views: 1620,
-          publishedAt: '2025-01-18T09:15:00Z',
-          featured: false
-        },
-        {
-          id: 'art-004',
-          title: 'Tutorial: Building Modern Web Apps with Next.js 14',
-          slug: 'tutorial-building-modern-web-apps-nextjs-14',
-          excerpt: 'Step-by-step guide to build high-performance web applications using Next.js 14 and React Server Components.',
-          coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=600&fit=crop',
-          author: {
-            name: 'David Chen',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-            role: 'Senior Developer'
-          },
-          category: 'tutorial',
-          readTime: 12,
-          views: 3120,
-          publishedAt: '2025-01-22T11:00:00Z',
-          featured: false
-        },
-        {
-          id: 'art-005',
-          title: 'Cybersecurity Best Practices for 2026',
-          slug: 'cybersecurity-best-practices-2026',
-          excerpt: 'Essential security measures and best practices to protect your business from emerging cyber threats.',
-          coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=600&fit=crop',
-          author: {
-            name: 'Lisa Anderson',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-            role: 'Security Consultant'
-          },
-          category: 'technology',
-          readTime: 9,
-          views: 2890,
-          publishedAt: '2025-01-25T15:45:00Z',
-          featured: false
-        },
-        {
-          id: 'art-006',
-          title: 'Case Study: Transformasi Digital di Industri Manufaktur',
-          slug: 'case-study-transformasi-digital-manufaktur',
-          excerpt: 'Bagaimana kami membantu perusahaan manufaktur meningkatkan efisiensi operasional hingga 45% melalui digitalisasi.',
-          coverImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop',
-          author: {
-            name: 'Michael Tan',
-            avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-            role: 'Solutions Architect'
-          },
-          category: 'case-study',
-          readTime: 10,
-          views: 1450,
-          publishedAt: '2025-01-19T13:20:00Z',
-          featured: false
-        }
-      ];
+  // Handle pagination
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-      // Mock categories
-      const mockCategories = [
-        { id: 'cat-001', name: 'Technology', slug: 'technology', count: 24 },
-        { id: 'cat-002', name: 'Business', slug: 'business', count: 18 },
-        { id: 'cat-003', name: 'Tutorial', slug: 'tutorial', count: 32 },
-        { id: 'cat-004', name: 'News', slug: 'news', count: 15 },
-        { id: 'cat-005', name: 'Case Study', slug: 'case-study', count: 12 }
-      ];
+  // Render pagination buttons
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
 
-      setTimeout(() => {
-        setFeaturedArticles(mockFeatured);
-        setArticles(mockArticles);
-        setCategories(mockCategories);
-        setLoading(false);
-      }, 500);
-    };
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
 
-    fetchData();
-  }, []);
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
 
-  // Filter articles by category and search
-  const filteredArticles = articles.filter(article => {
-    const matchesCategory = activeCategory === 'all' || article.category === activeCategory;
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+    return (
+      <div className="flex items-center justify-center gap-2 mt-12">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
+        >
+          Previous
+        </Button>
+        
+        {startPage > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(1)}
+              className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
+            >
+              1
+            </Button>
+            {startPage > 2 && <span className="px-2 text-gray-400">...</span>}
+          </>
+        )}
+        
+        {pages.map((page) => (
+          <Button
+            key={page}
+            variant={currentPage === page ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handlePageChange(page)}
+            className={cn(
+              'rounded-lg min-w-[40px]',
+              currentPage === page 
+                ? 'bg-[#0066FF] hover:bg-[#0052CC] text-white border-[#0066FF]' 
+                : 'border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]'
+            )}
+          >
+            {page}
+          </Button>
+        ))}
+        
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="px-2 text-gray-400">...</span>}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(totalPages)}
+              className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
+            >
+              {totalPages}
+            </Button>
+          </>
+        )}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
+        >
+          Next
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -485,30 +384,17 @@ export default function ArticlesPage() {
               <div className="text-center max-w-4xl mx-auto">
                 <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-6 shadow-lg">
                   <BookOpen className="w-4 h-4 inline-block mr-2" />
-                  {content.hero.badge}
+                  Wawasan & Berita
                 </div>
                 
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                  {content.hero.title}
+                  Artikel & Berita Terkini
                 </h1>
                 
                 <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed">
-                  {content.hero.subtitle}
+                  Temukan wawasan terbaru, tren industri, dan berita teknologi yang membantu 
+                  bisnis Anda berkembang di era digital
                 </p>
-
-                {/* Search Bar */}
-                <div className="max-w-2xl mx-auto">
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder={content.hero.searchPlaceholder}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-4 py-6 text-lg border-2 border-gray-200 focus:border-[#0066FF] rounded-2xl shadow-lg"
-                    />
-                  </div>
-                </div>
               </div>
             </FadeInSection>
           </div>
@@ -520,23 +406,65 @@ export default function ArticlesPage() {
           </div>
         </section>
 
-        {/* Featured Articles */}
+        {/* Search & Filter Section */}
+        <section className="py-8 border-b border-gray-200 bg-white shadow-sm">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              {/* Search Input */}
+              <div className="flex-1 w-full md:max-w-md relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Cari artikel..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="pl-10 rounded-lg border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]"
+                />
+              </div>
+              
+              {/* Category Filter */}
+              <div className="w-full md:w-64">
+                <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+                  <SelectTrigger className="rounded-lg border-gray-300">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <TrendingUp className="w-4 h-4 text-[#0066FF]" />
+                <span className="font-semibold">
+                  {loading ? '...' : articles.length} Artikel
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Articles Section */}
         {featuredArticles.length > 0 && (
           <section className="py-16 lg:py-20">
             <div className="container mx-auto max-w-7xl px-6 lg:px-8">
               <FadeInSection>
-                <div className="flex items-center gap-3 mb-8">
-                  <TrendingUp className="w-6 h-6 text-[#0066FF]" />
-                  <h2 className="text-3xl font-bold text-gray-900">
-                    {content.featured.title}
-                  </h2>
+                <div className="mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Artikel Unggulan</h2>
+                  <p className="text-gray-600">Artikel pilihan yang wajib Anda baca</p>
                 </div>
               </FadeInSection>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {featuredArticles.map((article, index) => (
                   <FadeInSection key={article.id} delay={index * 0.1}>
-                    <FeaturedArticleCard article={article} />
+                    <ArticleCard article={article} featured={true} />
                   </FadeInSection>
                 ))}
               </div>
@@ -544,84 +472,66 @@ export default function ArticlesPage() {
           </section>
         )}
 
-        {/* Category Filter */}
-        <section className="py-12 bg-gray-50">
+        {/* All Articles Section */}
+        <section className="py-16 lg:py-20 bg-gray-50">
           <div className="container mx-auto max-w-7xl px-6 lg:px-8">
             <FadeInSection>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Filter className="w-5 h-5 text-gray-600" />
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {content.filter.title}
-                  </h3>
-                </div>
-                
-                <button
-                  onClick={() => setLanguage(language === 'id' ? 'en' : 'id')}
-                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  {language === 'id' ? 'EN' : 'ID'}
-                </button>
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  {selectedCategory !== 'all' 
+                    ? `Artikel ${categories.find(c => c.value === selectedCategory)?.label}` 
+                    : 'Semua Artikel'}
+                </h2>
+                <p className="text-gray-600">
+                  {searchQuery 
+                    ? `Hasil pencarian untuk "${searchQuery}"` 
+                    : 'Jelajahi artikel terbaru kami'}
+                </p>
               </div>
-
-              <CategoryFilter
-                categories={categories}
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-              />
-            </FadeInSection>
-          </div>
-        </section>
-
-        {/* Articles Grid */}
-        <section className="py-16 lg:py-20">
-          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
-            <FadeInSection>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                {content.articles.title}
-              </h2>
             </FadeInSection>
 
             {loading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-gray-200 h-48 rounded-t-lg" />
-                    <div className="p-5 space-y-3">
-                      <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2" />
-                      <div className="h-20 bg-gray-200 rounded" />
-                    </div>
-                  </div>
+                  <ArticleSkeleton key={i} />
                 ))}
               </div>
-            ) : filteredArticles.length === 0 ? (
+            ) : articles.length === 0 ? (
               <div className="text-center py-20">
-                <BookOpen className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-xl text-gray-500">{content.articles.noResults}</p>
+                <Search className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Artikel Tidak Ditemukan
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {searchQuery || selectedCategory !== 'all'
+                    ? 'Coba ubah kata kunci atau filter pencarian Anda'
+                    : 'Belum ada artikel yang dipublikasikan'}
+                </p>
+                {(searchQuery || selectedCategory !== 'all') && (
+                  <Button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('all');
+                      setCurrentPage(1);
+                    }}
+                    className="bg-[#0066FF] hover:bg-[#0052CC] rounded-lg shadow-lg"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
               </div>
             ) : (
               <>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredArticles.map((article, index) => (
-                    <FadeInSection key={article.id} delay={index * 0.05}>
+                  {articles.map((article, index) => (
+                    <FadeInSection key={article.id} delay={index * 0.1}>
                       <ArticleCard article={article} />
                     </FadeInSection>
                   ))}
                 </div>
 
-                {/* Load More Button */}
-                <FadeInSection delay={0.2}>
-                  <div className="text-center mt-12">
-                    <Button
-                      size="lg"
-                      className="bg-[#0066FF] hover:bg-[#0052CC] text-white px-8"
-                    >
-                      {content.articles.loadMore}
-                      <ChevronRight className="ml-2 w-5 h-5" />
-                    </Button>
-                  </div>
-                </FadeInSection>
+                {/* Pagination */}
+                {renderPagination()}
               </>
             )}
           </div>
@@ -640,17 +550,18 @@ export default function ArticlesPage() {
               <div className="text-center max-w-3xl mx-auto">
                 <BookOpen className="w-16 h-16 mx-auto mb-6 text-white" />
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-                  {content.cta.title}
+                  Ingin Berkontribusi?
                 </h2>
                 <p className="text-lg sm:text-xl text-blue-100 mb-8 leading-relaxed">
-                  {content.cta.subtitle}
+                  Bagikan wawasan dan pengalaman Anda dengan komunitas kami. 
+                  Hubungi kami untuk menjadi kontributor artikel.
                 </p>
                 <Link href="/contact">
                   <Button 
                     size="lg"
                     className="bg-white text-[#0066FF] hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
                   >
-                    {content.cta.button}
+                    Hubungi Kami
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
