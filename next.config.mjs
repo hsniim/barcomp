@@ -1,10 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {
-    resolveAlias: {
-      '@/*': './src/*',                  
-    },
-  },
   images: {
     remotePatterns: [
       {
@@ -21,7 +16,7 @@ const nextConfig = {
   },
   reactCompiler: true,
   experimental: {
-    turbopack: false,
+    turbopack: false
   }
 };
 
