@@ -3,124 +3,282 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+
+const CATEGORIES = [
+  { value: 'teknologi', label: 'Teknologi' },
+  { value: 'kesehatan', label: 'Kesehatan' },
+  { value: 'finansial', label: 'Finansial' },
+  { value: 'bisnis', label: 'Bisnis' },
+  { value: 'inovasi', label: 'Inovasi' },
+  { value: 'karir', label: 'Karir' },
+  { value: 'keberlanjutan', label: 'Keberlanjutan' },
+  { value: 'lainnya', label: 'Lainnya' },
+  { value: 'kantor', label: 'Kantor' },
+  { value: 'acara', label: 'Acara' },
+];
 
 export default function EditGalleryPage() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    imageUrl: '',
-    thumbnailUrl: '',
+    image_url: '',
+    thumbnail_url: '',
     category: '',
-    tags: [],
-    eventId: ''
+    tags: '',
+    featured: false,
+    display_order: 0,
+    captured_at: '',
   });
+
+  const [imagePreview, setImagePreview] = useState('');
+  const [thumbnailPreview, setThumbnailPreview] = useState('');
 
   useEffect(() => {
     fetchGallery();
-    fetchEvents();
-  }, []);
+  }, [params.id]);
 
+  // Fetch gallery data
   const fetchGallery = async () => {
     try {
-      const response = await fetch(`/api/gallery/${params.id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      setLoading(true);
+      const res = await fetch(`/api/gallery/${params.id}`);
+      const data = await res.json();
 
-      const data = await response.json();
-      if (data.success && data.gallery) {
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal memuat data galeri');
+      }
+
+      if (data.gallery) {
         const gallery = data.gallery;
+        
+        // Parse tags from JSON array to comma-separated string
+        const tagsString = Array.isArray(gallery.tags) 
+          ? gallery.tags.join(', ') 
+          : '';
+
+        // Format captured_at for datetime-local input
+        let capturedAtFormatted = '';
+        if (gallery.captured_at) {
+          const date = new Date(gallery.captured_at);
+          // Format: YYYY-MM-DDTHH:mm
+          capturedAtFormatted = date.toISOString().slice(0, 16);
+        }
+
         setFormData({
           title: gallery.title || '',
           description: gallery.description || '',
-          imageUrl: gallery.imageUrl || '',
-          thumbnailUrl: gallery.thumbnailUrl || '',
+          image_url: gallery.image_url || '',
+          thumbnail_url: gallery.thumbnail_url || '',
           category: gallery.category || '',
-          tags: gallery.tags || [],
-          eventId: gallery.eventId || ''
+          tags: tagsString,
+          featured: gallery.featured || false,
+          display_order: gallery.display_order || 0,
+          captured_at: capturedAtFormatted,
         });
-      } else {
-        alert('Photo not found');
-        router.push('/admin/gallery');
+
+        setImagePreview(gallery.image_url || '');
+        setThumbnailPreview(gallery.thumbnail_url || '');
       }
     } catch (error) {
-      console.error('Failed to fetch gallery:', error);
-      alert('Failed to load photo');
+      console.error('Fetch error:', error);
+      toast.error(error.message || 'Gagal memuat data galeri');
+      router.push('/admin/gallery');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchEvents = async () => {
-    try {
-      const response = await fetch('/api/events?status=published&limit=100', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setEvents(data.events);
-      }
-    } catch (error) {
-      console.error('Failed to fetch events:', error);
-    }
+  // Handle input change
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // Handle select change
+  const handleSelectChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleTagsChange = (e) => {
-    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(Boolean);
-    setFormData(prev => ({ ...prev, tags }));
-  };
+  // Handle image upload (main image)
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('File harus berupa gambar');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran gambar maksimal 5MB');
+      return;
+    }
 
     try {
-      const submitData = {
-        ...formData,
-        eventId: formData.eventId || null
+      setUploading(true);
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('type', 'gallery');
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Upload gagal');
+      }
+
+      setFormData(prev => ({ ...prev, image_url: data.url }));
+      setImagePreview(data.url);
+      toast.success('Gambar berhasil diupload');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error.message || 'Gagal upload gambar');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Handle thumbnail upload
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('File harus berupa gambar');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran gambar maksimal 5MB');
+      return;
+    }
+
+    try {
+      setUploadingThumbnail(true);
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('type', 'gallery');
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Upload gagal');
+      }
+
+      setFormData(prev => ({ ...prev, thumbnail_url: data.url }));
+      setThumbnailPreview(data.url);
+      toast.success('Thumbnail berhasil diupload');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error.message || 'Gagal upload thumbnail');
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
+
+  // Remove image
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, image_url: '' }));
+    setImagePreview('');
+  };
+
+  // Remove thumbnail
+  const removeThumbnail = () => {
+    setFormData(prev => ({ ...prev, thumbnail_url: '' }));
+    setThumbnailPreview('');
+  };
+
+  // Handle submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.title.trim()) {
+      toast.error('Judul harus diisi');
+      return;
+    }
+
+    if (!formData.image_url) {
+      toast.error('Gambar utama harus diupload');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      // Prepare tags as array
+      const tagsArray = formData.tags
+        ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        : [];
+
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim() || null,
+        image_url: formData.image_url,
+        thumbnail_url: formData.thumbnail_url || null,
+        category: formData.category || null,
+        tags: tagsArray.length > 0 ? tagsArray : null,
+        featured: formData.featured,
+        display_order: parseInt(formData.display_order) || 0,
+        captured_at: formData.captured_at || null,
       };
 
-      const response = await fetch(`/api/gallery/${params.id}`, {
+      const res = await fetch(`/api/gallery/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(submitData)
+        body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (data.success) {
-        alert('Photo updated successfully!');
-        router.push('/admin/gallery');
-      } else {
-        alert(data.error || 'Failed to update photo');
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal mengupdate galeri');
       }
+
+      toast.success('Galeri berhasil diupdate');
+      router.push('/admin/gallery');
+      router.refresh();
     } catch (error) {
-      console.error('Failed to update photo:', error);
-      alert('Failed to update photo');
+      console.error('Submit error:', error);
+      toast.error(error.message || 'Gagal mengupdate galeri');
     } finally {
       setSubmitting(false);
     }
@@ -128,181 +286,328 @@ export default function EditGalleryPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
+          <p className="mt-4 text-sm text-gray-600">Memuat data galeri...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/admin/gallery">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Photo</h1>
-          <p className="mt-2 text-gray-600">Update photo information</p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="mx-auto max-w-4xl">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <Link
+              href="/admin/gallery"
+              className="mb-2 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Kembali ke Galeri
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Galeri</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              Update informasi galeri Barcomp
+            </p>
+          </div>
         </div>
-      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Main Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Photo Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter photo title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Short description (optional)"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image URL *
-              </label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/photo.jpg"
-              />
-              <p className="mt-1 text-sm text-gray-500">Full size image URL</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thumbnail URL
-              </label>
-              <input
-                type="url"
-                name="thumbnailUrl"
-                value={formData.thumbnailUrl}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/thumbnail.jpg (optional)"
-              />
-              <p className="mt-1 text-sm text-gray-500">Leave empty to use image URL</p>
-            </div>
-
-            {/* Image Preview */}
-            {formData.imageUrl && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Preview
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <img
-                    src={formData.imageUrl}
-                    alt="Preview"
-                    className="w-full max-w-md mx-auto rounded-lg"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div className="hidden flex-col items-center justify-center py-8 text-gray-400">
-                    <ImageIcon className="w-16 h-16 mb-2" />
-                    <p className="text-sm">Failed to load image</p>
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6">
+            {/* Main Image Upload */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Gambar Utama</CardTitle>
+                <CardDescription>
+                  Upload gambar utama untuk galeri (maksimal 5MB)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {imagePreview ? (
+                  <div className="relative">
+                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border-2 border-gray-200">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={removeImage}
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Hapus Gambar
+                      </Button>
+                      <Label
+                        htmlFor="image-upload-replace"
+                        className="inline-flex cursor-pointer items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploading ? 'Mengupload...' : 'Ganti Gambar'}
+                      </Label>
+                      <Input
+                        id="image-upload-replace"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </div>
                   </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 transition-colors hover:border-gray-400">
+                    <ImageIcon className="mb-4 h-12 w-12 text-gray-400" />
+                    <Label
+                      htmlFor="image-upload"
+                      className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      {uploading ? 'Mengupload...' : 'Pilih Gambar'}
+                    </Label>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                    <p className="mt-2 text-xs text-gray-500">
+                      PNG, JPG, WebP atau GIF (max. 5MB)
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Thumbnail Upload (Optional) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Thumbnail (Opsional)</CardTitle>
+                <CardDescription>
+                  Upload thumbnail terpisah atau biarkan kosong untuk menggunakan gambar utama
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {thumbnailPreview ? (
+                  <div className="relative">
+                    <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-lg border-2 border-gray-200">
+                      <Image
+                        src={thumbnailPreview}
+                        alt="Thumbnail Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={removeThumbnail}
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Hapus Thumbnail
+                      </Button>
+                      <Label
+                        htmlFor="thumbnail-upload-replace"
+                        className="inline-flex cursor-pointer items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploadingThumbnail ? 'Mengupload...' : 'Ganti Thumbnail'}
+                      </Label>
+                      <Input
+                        id="thumbnail-upload-replace"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleThumbnailUpload}
+                        disabled={uploadingThumbnail}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:border-gray-400">
+                    <ImageIcon className="mb-3 h-10 w-10 text-gray-400" />
+                    <Label
+                      htmlFor="thumbnail-upload"
+                      className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      {uploadingThumbnail ? 'Mengupload...' : 'Pilih Thumbnail'}
+                    </Label>
+                    <Input
+                      id="thumbnail-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleThumbnailUpload}
+                      disabled={uploadingThumbnail}
+                      className="hidden"
+                    />
+                    <p className="mt-2 text-xs text-gray-500">
+                      PNG, JPG, WebP atau GIF (max. 5MB)
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Informasi Galeri</CardTitle>
+                <CardDescription>
+                  Update detail informasi galeri
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="title">
+                    Judul <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="Masukkan judul galeri"
+                    required
+                  />
                 </div>
-              </div>
-            )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Events, Team, Office, etc."
-                />
-              </div>
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Deskripsi</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Masukkan deskripsi galeri (opsional)"
+                    rows={4}
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Related Event
-                </label>
-                <select
-                  name="eventId"
-                  value={formData.eventId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">No event</option>
-                  {events.map((event) => (
-                    <option key={event.id} value={event.id}>
-                      {event.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* Category */}
+                <div className="space-y-2">
+                  <Label htmlFor="category">Kategori</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => handleSelectChange('category', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((cat) => (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Tags */}
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags</Label>
+                  <Input
+                    id="tags"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleChange}
+                    placeholder="Pisahkan dengan koma (contoh: outdoor, team, meeting)"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Pisahkan setiap tag dengan koma
+                  </p>
+                </div>
+
+                {/* Captured At */}
+                <div className="space-y-2">
+                  <Label htmlFor="captured_at">Tanggal Pengambilan</Label>
+                  <Input
+                    id="captured_at"
+                    name="captured_at"
+                    type="datetime-local"
+                    value={formData.captured_at}
+                    onChange={handleChange}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Kosongkan untuk menggunakan waktu upload
+                  </p>
+                </div>
+
+                {/* Display Order */}
+                <div className="space-y-2">
+                  <Label htmlFor="display_order">Urutan Tampilan</Label>
+                  <Input
+                    id="display_order"
+                    name="display_order"
+                    type="number"
+                    value={formData.display_order}
+                    onChange={handleChange}
+                    placeholder="0"
+                    min="0"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Angka lebih kecil akan ditampilkan lebih dulu
+                  </p>
+                </div>
+
+                {/* Featured */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="featured"
+                    name="featured"
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={handleChange}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <Label htmlFor="featured" className="cursor-pointer font-normal">
+                    Tampilkan sebagai galeri unggulan
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push('/admin/gallery')}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button type="submit" disabled={submitting || uploading || uploadingThumbnail}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Update Galeri
+                  </>
+                )}
+              </Button>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                value={formData.tags.join(', ')}
-                onChange={handleTagsChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="conference, team, 2026"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-4">
-          <Link href="/admin/gallery">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Updating...' : 'Update Photo'}
-          </Button>
-        </div>
-      </form>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ import {
   Plus,
   ArrowUpRight,
   MessageSquare,
-  UserCheck
+  Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -42,11 +42,10 @@ const itemVariants = {
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState({
-    articles: { total: 0, published: 0, draft: 0 },
-    events: { total: 0, upcoming: 0, ongoing: 0 },
+    articles: { total: 0, published: 0, draft: 0, featured: 0 },
+    events: { total: 0, upcoming: 0, ongoing: 0, completed: 0, featured: 0 },
     gallery: { total: 0, featured: 0 },
-    comments: { total: 0, pending: 0 },
-    registrations: { total: 0 }
+    comments: { total: 0, pending: 0, approved: 0, spam: 0 }
   });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,12 +110,15 @@ export default function AdminDashboard() {
         articles: {
           total: articles.length,
           published: articles.filter(a => a.status === 'published').length,
-          draft: articles.filter(a => a.status === 'draft').length
+          draft: articles.filter(a => a.status === 'draft').length,
+          featured: articles.filter(a => a.featured).length
         },
         events: {
           total: events.length,
           upcoming: events.filter(e => e.status === 'upcoming').length,
-          ongoing: events.filter(e => e.status === 'ongoing').length
+          ongoing: events.filter(e => e.status === 'ongoing').length,
+          completed: events.filter(e => e.status === 'completed').length,
+          featured: events.filter(e => e.featured).length
         },
         gallery: {
           total: gallery.filter(g => !g.deleted_at).length,
@@ -124,10 +126,9 @@ export default function AdminDashboard() {
         },
         comments: {
           total: comments.length,
-          pending: comments.filter(c => c.status === 'pending').length
-        },
-        registrations: {
-          total: 0 // Will be calculated if we have registrations endpoint
+          pending: comments.filter(c => c.status === 'pending').length,
+          approved: comments.filter(c => c.status === 'approved').length,
+          spam: comments.filter(c => c.status === 'spam').length
         }
       });
     } catch (error) {
@@ -147,7 +148,7 @@ export default function AdminDashboard() {
       color: 'text-[#0066FF]',
       bgColor: 'bg-blue-50',
       borderColor: 'border-gray-200',
-      trend: '+12%',
+      trend: `${stats.articles.featured} featured`,
       trendUp: true,
       href: '/admin/articles'
     },
@@ -159,7 +160,7 @@ export default function AdminDashboard() {
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
       borderColor: 'border-gray-200',
-      trend: '+8%',
+      trend: `${stats.events.featured} featured`,
       trendUp: true,
       href: '/admin/events'
     },
@@ -171,20 +172,20 @@ export default function AdminDashboard() {
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       borderColor: 'border-gray-200',
-      trend: '+24%',
+      trend: 'Active items',
       trendUp: true,
       href: '/admin/gallery'
     },
     {
       title: 'Comments',
       value: stats.comments.total,
-      subtitle: `${stats.comments.pending} pending approval`,
+      subtitle: `${stats.comments.pending} pending, ${stats.comments.approved} approved`,
       icon: MessageSquare,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       borderColor: 'border-gray-200',
-      trend: '+15%',
-      trendUp: true,
+      trend: `${stats.comments.spam} spam`,
+      trendUp: false,
       href: '/admin/articles'
     }
   ];
@@ -211,8 +212,8 @@ export default function AdminDashboard() {
       href: '/admin/events/create'
     },
     {
-      title: 'Upload Foto',
-      description: 'Tambah ke galeri',
+      title: 'Upload Gallery',
+      description: 'Tambah foto baru',
       icon: Image,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
@@ -221,20 +222,20 @@ export default function AdminDashboard() {
       href: '/admin/gallery/create'
     },
     {
-      title: 'Kelola Profil',
-      description: 'Edit profil admin',
-      icon: UserCheck,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      hoverBg: 'hover:bg-green-100',
+      title: 'Lihat Komentar',
+      description: 'Kelola komentar',
+      icon: MessageSquare,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      hoverBg: 'hover:bg-orange-100',
       borderColor: 'border-gray-200',
-      href: '/admin/profile'
+      href: '/admin/articles'
     }
   ];
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="relative w-16 h-16 mx-auto">
             <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
@@ -297,11 +298,14 @@ export default function AdminDashboard() {
                         {stat.subtitle}
                       </p>
                       <div className="flex items-center gap-1 mt-3">
-                        <TrendingUp className="w-4 h-4 text-green-600" />
-                        <span className="text-sm font-semibold text-green-600">
+                        {stat.trendUp ? (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <MessageSquare className="w-4 h-4 text-gray-600" />
+                        )}
+                        <span className={`text-sm font-semibold ${stat.trendUp ? 'text-green-600' : 'text-gray-600'}`}>
                           {stat.trend}
                         </span>
-                        <span className="text-xs text-gray-500">vs last month</span>
                       </div>
                     </div>
                     <div className="w-14 h-14 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">

@@ -68,24 +68,29 @@ export default function ArticlesPage() {
     setLoading(true);
     try {
       const response = await fetch('/api/articles', {
-        credentials: 'include'
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store'
       });
 
       if (!response.ok) {
         if (response.status === 401) {
+          toast.error('Sesi telah berakhir. Silakan login kembali.');
           router.push('/admin/login');
           return;
         }
-        throw new Error('Failed to fetch articles');
+        throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
       if (data.data) {
         setArticles(data.data);
+      } else {
+        setArticles([]);
       }
     } catch (error) {
       console.error('Failed to fetch articles:', error);
-      toast.error('Gagal memuat artikel');
+      toast.error('Gagal memuat artikel. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -103,7 +108,13 @@ export default function ArticlesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete article');
+        let errData;
+        try {
+          errData = await response.json();
+        } catch {
+          errData = { error: `HTTP ${response.status}` };
+        }
+        throw new Error(errData.error || 'Gagal menghapus artikel');
       }
 
       const data = await response.json();
@@ -111,7 +122,7 @@ export default function ArticlesPage() {
       fetchArticles();
     } catch (error) {
       console.error('Failed to delete article:', error);
-      toast.error('Gagal menghapus artikel');
+      toast.error(error.message || 'Gagal menghapus artikel. Silakan coba lagi.');
     }
   };
 
@@ -190,13 +201,13 @@ export default function ArticlesPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Articles</h1>
-          <p className="mt-1 text-base text-gray-600">Manage and organize your blog articles</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Artikel</h1>
+          <p className="mt-1 text-base text-gray-600">Kelola dan atur artikel blog Anda</p>
         </div>
         <Link href="/admin/articles/create">
           <Button className="flex items-center gap-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white transition-all duration-300">
             <Plus className="w-4 h-4" />
-            New Article
+            Artikel Baru
           </Button>
         </Link>
       </motion.div>
@@ -209,10 +220,10 @@ export default function ArticlesPage() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         {[
-          { label: 'Total Articles', value: stats.total, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-          { label: 'Published', value: stats.published, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Total Artikel', value: stats.total, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
+          { label: 'Dipublikasikan', value: stats.published, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
           { label: 'Draft', value: stats.draft, icon: Edit, color: 'text-gray-600', bg: 'bg-gray-50' },
-          { label: 'Featured', value: stats.featured, icon: Star, color: 'text-orange-600', bg: 'bg-orange-50' }
+          { label: 'Unggulan', value: stats.featured, icon: Star, color: 'text-orange-600', bg: 'bg-orange-50' }
         ].map((stat, index) => (
           <motion.div key={index} variants={itemVariants}>
             <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
@@ -247,7 +258,7 @@ export default function ArticlesPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     type="text"
-                    placeholder="Search articles by title or content..."
+                    placeholder="Cari artikel berdasarkan judul atau slug..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10 border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]"
@@ -260,11 +271,11 @@ export default function ArticlesPage() {
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]">
                     <Filter className="w-4 h-4 mr-2 text-gray-400" />
-                    <SelectValue placeholder="All Status" />
+                    <SelectValue placeholder="Semua Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="published">Dipublikasikan</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
                   </SelectContent>
                 </Select>
@@ -275,10 +286,10 @@ export default function ArticlesPage() {
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]">
                     <Filter className="w-4 h-4 mr-2 text-gray-400" />
-                    <SelectValue placeholder="All Categories" />
+                    <SelectValue placeholder="Semua Kategori" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">Semua Kategori</SelectItem>
                     {CATEGORIES.map(cat => (
                       <SelectItem key={cat} value={cat}>
                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -307,7 +318,7 @@ export default function ArticlesPage() {
                     <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
                     <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
                   </div>
-                  <p className="text-sm font-semibold text-gray-600">Loading articles...</p>
+                  <p className="text-sm font-semibold text-gray-600">Memuat artikel...</p>
                 </div>
               </div>
             ) : paginatedArticles.length === 0 ? (
@@ -315,17 +326,17 @@ export default function ArticlesPage() {
                 <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
                   <FileText className="w-10 h-10 text-[#0066FF]" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No articles found</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Tidak ada artikel ditemukan</h3>
                 <p className="text-gray-600 mb-6">
                   {search || statusFilter !== 'all' || categoryFilter !== 'all' 
-                    ? 'Try adjusting your filters' 
-                    : 'Get started by creating your first article'}
+                    ? 'Coba sesuaikan filter pencarian Anda' 
+                    : 'Mulai dengan membuat artikel pertama Anda'}
                 </p>
                 {!search && statusFilter === 'all' && categoryFilter === 'all' && (
                   <Link href="/admin/articles/create">
                     <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white">
                       <Plus className="w-4 h-4 mr-2" />
-                      Create Your First Article
+                      Buat Artikel Pertama
                     </Button>
                   </Link>
                 )}
@@ -336,22 +347,22 @@ export default function ArticlesPage() {
                   <thead className="bg-gradient-to-r from-gray-50 to-white border-b-2 border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Article
+                        Artikel
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Category
+                        Kategori
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Featured
+                        Unggulan
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Published
+                        Dipublikasi
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Actions
+                        Aksi
                       </th>
                     </tr>
                   </thead>
@@ -408,10 +419,10 @@ export default function ArticlesPage() {
                           {article.featured ? (
                             <div className="flex items-center gap-2">
                               <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-                              <span className="text-xs font-semibold text-orange-600">Yes</span>
+                              <span className="text-xs font-semibold text-orange-600">Ya</span>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">No</span>
+                            <span className="text-xs text-gray-400">Tidak</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -439,7 +450,7 @@ export default function ArticlesPage() {
                                   target="_blank"
                                 >
                                   <Eye className="w-4 h-4" />
-                                  <span>View Article</span>
+                                  <span>Lihat Artikel</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
@@ -448,7 +459,7 @@ export default function ArticlesPage() {
                                   className="flex items-center gap-2 cursor-pointer"
                                 >
                                   <Edit className="w-4 h-4" />
-                                  <span>Edit Article</span>
+                                  <span>Edit Artikel</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
@@ -457,7 +468,7 @@ export default function ArticlesPage() {
                                   className="flex items-center gap-2 cursor-pointer"
                                 >
                                   <MessageSquare className="w-4 h-4" />
-                                  <span>Manage Comments</span>
+                                  <span>Kelola Komentar</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -466,7 +477,7 @@ export default function ArticlesPage() {
                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                <span>Delete Article</span>
+                                <span>Hapus Artikel</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -487,12 +498,12 @@ export default function ArticlesPage() {
           variants={itemVariants}
           initial="hidden"
           animate="visible"
-          className="flex items-center justify-between"
+          className="flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <div className="text-sm text-gray-700 font-medium">
-            Showing <span className="font-bold text-gray-900">{startIndex + 1}</span> to{' '}
-            <span className="font-bold text-gray-900">{Math.min(endIndex, filteredArticles.length)}</span> of{' '}
-            <span className="font-bold text-gray-900">{filteredArticles.length}</span> results
+            Menampilkan <span className="font-bold text-gray-900">{startIndex + 1}</span> sampai{' '}
+            <span className="font-bold text-gray-900">{Math.min(endIndex, filteredArticles.length)}</span> dari{' '}
+            <span className="font-bold text-gray-900">{filteredArticles.length}</span> hasil
           </div>
           <div className="flex gap-2">
             <Button
@@ -502,15 +513,18 @@ export default function ArticlesPage() {
               className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
-              Previous
+              Sebelumnya
             </Button>
+            <div className="hidden sm:flex items-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-semibold text-gray-700">
+              Halaman {currentPage} dari {totalPages}
+            </div>
             <Button
               variant="outline"
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              Next
+              Selanjutnya
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>

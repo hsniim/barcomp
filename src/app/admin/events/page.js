@@ -28,10 +28,12 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
-  TrendingUp
+  TrendingUp,
+  Loader2,
+  Star,
+  StarOff
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
@@ -39,33 +41,29 @@ export default function EventsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchEvents();
-  }, [pagination.page, statusFilter, typeFilter]);
+  }, []);
 
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: '10',
-        ...(statusFilter && { status: statusFilter }),
-        ...(typeFilter && { event_type: typeFilter }),
-        ...(search && { search }),
+      const response = await fetch('/api/events', {
+        credentials: 'include'
       });
 
-      const response = await fetch(`/api/events?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
 
       const data = await response.json();
       if (data.success) {
-        setEvents(data.events);
-        setPagination(data.pagination);
+        setEvents(data.data || []);
+      } else {
+        toast.error(data.error || 'Failed to load events');
       }
     } catch (error) {
       console.error('Failed to fetch events:', error);
@@ -83,9 +81,7 @@ export default function EventsPage() {
     try {
       const response = await fetch(`/api/events/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -101,20 +97,55 @@ export default function EventsPage() {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPagination({ ...pagination, page: 1 });
-    fetchEvents();
+  const toggleFeatured = async (id, currentFeatured) => {
+    try {
+      const response = await fetch(`/api/events/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ featured: !currentFeatured })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Event ${!currentFeatured ? 'featured' : 'unfeatured'}`);
+        fetchEvents();
+      } else {
+        toast.error(data.error || 'Failed to update event');
+      }
+    } catch (error) {
+      console.error('Failed to toggle featured:', error);
+      toast.error('Failed to update event');
+    }
   };
 
   const getStatusBadge = (status) => {
     const styles = {
       upcoming: 'bg-blue-100 text-blue-700 border-blue-200',
       ongoing: 'bg-green-100 text-green-700 border-green-200',
-      completed: 'bg-gray-100 text-gray-700 border-gray-200',
-      cancelled: 'bg-red-100 text-red-700 border-red-200'
+      completed: 'bg-gray-100 text-gray-700 border-gray-200'
     };
     return styles[status] || styles.upcoming;
+  };
+
+  const getTypeBadge = (type) => {
+    const styles = {
+      workshop: 'bg-purple-100 text-purple-700 border-purple-200',
+      seminar: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      webinar: 'bg-cyan-100 text-cyan-700 border-cyan-200'
+    };
+    return styles[type] || styles.workshop;
+  };
+
+  const getLocationTypeBadge = (locationType) => {
+    const styles = {
+      online: 'bg-green-100 text-green-700 border-green-200',
+      onsite: 'bg-orange-100 text-orange-700 border-orange-200',
+      hybrid: 'bg-blue-100 text-blue-700 border-blue-200'
+    };
+    return styles[locationType] || styles.online;
   };
 
   const formatDate = (dateString) => {
@@ -134,6 +165,33 @@ export default function EventsPage() {
       hour: '2-digit', 
       minute: '2-digit' 
     });
+  };
+
+  // Filter events based on search and filters
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = search === '' || 
+      event.title.toLowerCase().includes(search.toLowerCase()) ||
+      event.slug.toLowerCase().includes(search.toLowerCase()) ||
+      (event.description && event.description.toLowerCase().includes(search.toLowerCase()));
+    
+    const matchesStatus = statusFilter === '' || event.status === statusFilter;
+    const matchesType = typeFilter === '' || event.event_type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEvents = filteredEvents.slice(startIndex, startIndex + itemsPerPage);
+
+  // Stats
+  const stats = {
+    total: events.length,
+    upcoming: events.filter(e => e.status === 'upcoming').length,
+    ongoing: events.filter(e => e.status === 'ongoing').length,
+    completed: events.filter(e => e.status === 'completed').length,
+    featured: events.filter(e => e.featured).length
   };
 
   const containerVariants = {
@@ -167,7 +225,7 @@ export default function EventsPage() {
           <p className="mt-1 text-base text-gray-600">Manage and organize your events</p>
         </div>
         <Link href="/admin/events/create">
-          <Button className="flex items-center gap-2 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-lg transition-all duration-300">
+          <Button className="flex items-center gap-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white transition-all duration-300">
             <Plus className="w-4 h-4" />
             New Event
           </Button>
@@ -179,24 +237,29 @@ export default function EventsPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
       >
         {[
-          { label: 'Total Events', value: pagination.total || 0, icon: CalendarDays, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-          { label: 'Upcoming', value: events.filter(e => e.status === 'upcoming').length, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Ongoing', value: events.filter(e => e.status === 'ongoing').length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Total Registrations', value: events.reduce((sum, e) => sum + (e.registered_count || 0), 0), icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' }
+          { label: 'Total Events', value: stats.total, icon: CalendarDays, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
+          { label: 'Upcoming', value: stats.upcoming, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Ongoing', value: stats.ongoing, icon: Clock, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Completed', value: stats.completed, icon: Calendar, color: 'text-gray-600', bg: 'bg-gray-50' },
+          { label: 'Featured', value: stats.featured, icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' }
         ].map((stat, index) => (
           <motion.div key={index} variants={itemVariants}>
             <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{stat.label}</p>
-                    <p className="mt-2 text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      {stat.label}
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">
+                      {stat.value}
+                    </p>
                   </div>
-                  <div className={`w-11 h-11 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                  <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
                   </div>
                 </div>
               </CardContent>
@@ -205,95 +268,50 @@ export default function EventsPage() {
         ))}
       </motion.div>
 
-      {/* Search & Filter Bar */}
+      {/* Search & Filters */}
       <motion.div
         variants={itemVariants}
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 shadow-md">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
+        <Card className="border-gray-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
               {/* Search */}
-              <form onSubmit={handleSearch} className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search events..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-              </form>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search events..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200"
+                />
+              </div>
 
-              {/* Filter by Status */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 transition-all duration-200"
-                  >
-                    <Filter className="w-4 h-4 mr-2" />
-                    {statusFilter ? statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) : 'All Status'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-40">
-                  <DropdownMenuItem onClick={() => setStatusFilter('')}>
-                    All Status
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setStatusFilter('upcoming')}>
-                    Upcoming
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('ongoing')}>
-                    Ongoing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('completed')}>
-                    Completed
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('cancelled')}>
-                    Cancelled
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200"
+              >
+                <option value="">All Status</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+              </select>
 
-              {/* Filter by Type */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 transition-all duration-200"
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {typeFilter ? typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) : 'All Types'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-40">
-                  <DropdownMenuItem onClick={() => setTypeFilter('')}>
-                    All Types
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setTypeFilter('workshop')}>
-                    Workshop
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTypeFilter('seminar')}>
-                    Seminar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTypeFilter('webinar')}>
-                    Webinar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTypeFilter('conference')}>
-                    Conference
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTypeFilter('training')}>
-                    Training
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Type Filter */}
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200"
+              >
+                <option value="">All Types</option>
+                <option value="workshop">Workshop</option>
+                <option value="seminar">Seminar</option>
+                <option value="webinar">Webinar</option>
+              </select>
             </div>
           </CardContent>
         </Card>
@@ -305,33 +323,27 @@ export default function EventsPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 shadow-md overflow-hidden">
+        <Card className="border-gray-200 shadow-sm">
           <CardContent className="p-0">
             {loading ? (
-              <div className="p-12 text-center">
-                <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-[#0066FF]"></div>
-                <p className="mt-4 text-sm text-gray-600 font-medium">Loading events...</p>
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#0066FF] mx-auto" />
+                  <p className="text-sm text-gray-600 font-medium">Loading events...</p>
+                </div>
               </div>
-            ) : events.length === 0 ? (
-              <div className="p-12 text-center">
-                <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No Events Found</h3>
-                <p className="text-gray-600 mb-6">
-                  {search || statusFilter || typeFilter
-                    ? "Try adjusting your search or filter criteria" 
-                    : "Get started by creating your first event"}
+            ) : filteredEvents.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-900">No events found</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {search || statusFilter || typeFilter ? 'Try adjusting your filters' : 'Create your first event to get started'}
                 </p>
-                <Link href="/admin/events/create">
-                  <Button className="bg-[#0066FF] hover:bg-[#0052CC]">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Event
-                  </Button>
-                </Link>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-gray-50 to-white border-b-2 border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gradient-to-r from-gray-50 to-white">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Event
@@ -349,7 +361,7 @@ export default function EventsPage() {
                         Status
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Registrations
+                        Featured
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Actions
@@ -357,7 +369,7 @@ export default function EventsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {events.map((event, index) => (
+                    {paginatedEvents.map((event, index) => (
                       <motion.tr 
                         key={event.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -367,9 +379,9 @@ export default function EventsPage() {
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            {event.cover_image ? (
+                            {event.cover_image_url ? (
                               <img
-                                src={event.cover_image}
+                                src={event.cover_image_url}
                                 alt={event.title}
                                 className="w-16 h-16 rounded-xl object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200"
                               />
@@ -389,9 +401,11 @@ export default function EventsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 capitalize">
-                            {event.event_type || 'N/A'}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getTypeBadge(event.event_type)} capitalize`}>
+                              {event.event_type || 'N/A'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-sm text-gray-900">
@@ -405,38 +419,39 @@ export default function EventsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-900">
-                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex items-start gap-2 text-sm">
+                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                             <div className="min-w-0">
-                              <div className="font-medium truncate">
-                                {event.location_type === 'online' 
-                                  ? 'Online Event' 
-                                  : event.location_venue || 'TBA'}
-                              </div>
-                              {event.location_city && event.location_type !== 'online' && (
-                                <div className="text-xs text-gray-500 truncate">{event.location_city}</div>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${getLocationTypeBadge(event.location_type)} capitalize mb-1`}>
+                                {event.location_type || 'N/A'}
+                              </span>
+                              {event.location_type !== 'online' && event.location_venue && (
+                                <div className="text-xs text-gray-600 truncate">{event.location_venue}</div>
                               )}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={cn(
-                            "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border",
-                            getStatusBadge(event.status)
-                          )}>
-                            {event.status?.charAt(0).toUpperCase() + event.status?.slice(1)}
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(event.status)} capitalize`}>
+                            {event.status || 'N/A'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                            <Users className="w-4 h-4 text-gray-400" />
-                            <span>
-                              {event.registered_count || 0}
-                              {event.capacity && (
-                                <span className="text-gray-500 font-normal"> / {event.capacity}</span>
-                              )}
-                            </span>
-                          </div>
+                          <button
+                            onClick={() => toggleFeatured(event.id, event.featured)}
+                            className={`p-2 rounded-lg transition-all duration-200 ${
+                              event.featured
+                                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                            }`}
+                            title={event.featured ? 'Unfeatured' : 'Set as featured'}
+                          >
+                            {event.featured ? (
+                              <Star className="w-5 h-5 fill-current" />
+                            ) : (
+                              <StarOff className="w-5 h-5" />
+                            )}
+                          </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <DropdownMenu>
@@ -450,15 +465,6 @@ export default function EventsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem asChild>
-                                <Link 
-                                  href={`/events/${event.slug || event.id}`}
-                                  className="flex items-center gap-2 cursor-pointer"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  <span>View Event</span>
-                                </Link>
-                              </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/edit/${event.id}`}
@@ -499,7 +505,7 @@ export default function EventsPage() {
       </motion.div>
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
+      {totalPages > 1 && (
         <motion.div
           variants={itemVariants}
           initial="hidden"
@@ -507,24 +513,27 @@ export default function EventsPage() {
           className="flex items-center justify-between"
         >
           <div className="text-sm text-gray-700 font-medium">
-            Showing page <span className="font-bold text-gray-900">{pagination.page}</span> of{' '}
-            <span className="font-bold text-gray-900">{pagination.totalPages}</span>
+            Showing <span className="font-bold text-gray-900">{startIndex + 1}</span> to{' '}
+            <span className="font-bold text-gray-900">
+              {Math.min(startIndex + itemsPerPage, filteredEvents.length)}
+            </span>{' '}
+            of <span className="font-bold text-gray-900">{filteredEvents.length}</span> events
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-              disabled={pagination.page === 1}
-              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
             </Button>
             <Button
               variant="outline"
-              onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-              disabled={pagination.page === pagination.totalPages}
-              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Next
               <ChevronRight className="w-4 h-4" />
