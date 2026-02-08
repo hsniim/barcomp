@@ -4,23 +4,41 @@ import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
-    // Public: tampilkan upcoming & ongoing saja, atau semua tergantung kebutuhan
     const [rows] = await pool.query(
       `SELECT * FROM events 
        WHERE status IN ('upcoming', 'ongoing') 
        ORDER BY start_date ASC`
     );
-    return Response.json(rows);
+    
+    console.log(`[GET /api/events] Found ${rows.length} events`);
+    
+    // ✅ FIX: Return with success wrapper untuk konsistensi dengan frontend
+    return Response.json({
+      success: true,
+      data: rows,
+      total: rows.length
+    });
+    
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: 'Gagal mengambil data events' }, { status: 500 });
+    console.error('[GET /api/events] Error:', error);
+    return Response.json({ 
+      success: false,
+      error: 'Gagal mengambil data events' 
+    }, { status: 500 });
   }
 }
 
 export async function POST(request) {
-  const auth = verifyToken();
+  const auth = await verifyToken();
+  
+  console.log('[POST /api/events] Auth result:', auth ? `User: ${auth.email}, Role: ${auth.role}` : 'No auth');
+  
   if (!auth || auth.role !== 'super_admin') {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    console.warn('[POST /api/events] Unauthorized attempt:', { auth });
+    return Response.json({ 
+      success: false,
+      error: 'Unauthorized' 
+    }, { status: 401 });
   }
 
   try {
@@ -30,20 +48,71 @@ export async function POST(request) {
       tags, featured, status
     } = await request.json();
 
+    // Validasi input dasar
+    if (!title || !slug || !description || !cover_image || !event_type || !location_type || !start_date || !end_date) {
+      return Response.json({ 
+        success: false,
+        error: 'Field required tidak lengkap' 
+      }, { status: 400 });
+    }
+
+    console.log('[POST /api/events] Creating event:', { title, slug, event_type });
+
+    // Generate UUID
+    const { v4: uuidv4 } = await import('uuid');
+    const eventId = uuidv4();
+
+    console.log('[POST /api/events] Generated UUID:', eventId);
+
     const [result] = await pool.query(
       `INSERT INTO events (
-        title, slug, description, cover_image, event_type, location_type,
+        id, title, slug, description, cover_image, event_type, location_type,
         location_venue, start_date, end_date, tags, featured, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        title, slug, description, cover_image, event_type, location_type,
-        location_venue, start_date, end_date, JSON.stringify(tags || []), featured, status || 'upcoming'
+        eventId,
+        title, 
+        slug, 
+        description, 
+        cover_image, 
+        event_type, 
+        location_type,
+        location_venue || null, 
+        start_date, 
+        end_date, 
+        JSON.stringify(tags || []), 
+        featured || false, 
+        status || 'upcoming'
       ]
     );
 
-    return Response.json({ success: true, id: result.insertId });
+    console.log('[POST /api/events] ✅ Event created successfully');
+    console.log('[POST /api/events] - UUID:', eventId);
+    console.log('[POST /api/events] - Affected rows:', result.affectedRows);
+
+    if (result.affectedRows === 0) {
+      throw new Error('Insert failed - no rows affected');
+    }
+
+    return Response.json({ 
+      success: true, 
+      id: eventId,
+      message: 'Event berhasil dibuat'
+    }, { status: 201 });
+
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: error.message || 'Gagal membuat event' }, { status: 500 });
+    console.error('[POST /api/events] Error:', error);
+    
+    if (error.code === 'ER_DUP_ENTRY') {
+      return Response.json({ 
+        success: false,
+        error: 'Slug sudah digunakan, silakan gunakan slug lain' 
+      }, { status: 409 });
+    }
+    
+    return Response.json({ 
+      success: false,
+      error: error.message || 'Gagal membuat event' 
+    }, { status: 500 });
   }
-} 
+}
