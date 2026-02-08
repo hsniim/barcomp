@@ -1,29 +1,33 @@
+// app/api/comments/route.js
 import pool from '@/lib/db';
-
-export async function POST(request) {
-  try {
-    const { article_id, name, email, content } = await request.json();
-
-    await pool.query(
-      'INSERT INTO comments (article_id, name, email, content) VALUES (?, ?, ?, ?)',
-      [article_id, name, email, content]
-    );
-
-    return Response.json({ success: true });
-  } catch (error) {
-    return Response.json({ error: 'Gagal kirim komentar' }, { status: 500 });
-  }
-}
+import { verifyToken } from '@/lib/auth';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const article_id = searchParams.get('article_id');
+  try {
+    const auth = await verifyToken();  // Async, tanpa parameter – benar dari auth.js
+    if (!auth || auth.role !== 'super_admin') {
+      console.log('[GET /api/comments] Unauthorized access attempt');
+      return Response.json({ error: 'Unauthorized - Hanya super admin yang diizinkan' }, { status: 401 });
+    }
 
-  if (!article_id) return Response.json({ error: 'article_id required' }, { status: 400 });
+    const searchParams = request.nextUrl.searchParams;
+    const article_id = searchParams.get('article_id');
 
-  const [rows] = await pool.query(
-    'SELECT * FROM comments WHERE article_id = ? AND status = "approved" ORDER BY created_at DESC',
-    [article_id]
-  );
-  return Response.json(rows);
+    if (!article_id) {
+      console.log('[GET /api/comments] Missing article_id');
+      return Response.json({ error: 'Missing article_id parameter' }, { status: 400 });
+    }
+
+    // Query comments berdasarkan article_id, urut descending created_at
+    const [rows] = await pool.query(
+      'SELECT * FROM comments WHERE article_id = ? ORDER BY created_at DESC',
+      [article_id]
+    );
+
+    console.log(`[GET /api/comments] Fetched ${rows.length} comments for article_id: ${article_id}`);
+    return Response.json({ success: true, data: rows });
+  } catch (error) {
+    console.error('[GET /api/comments] Error:', error.message);
+    return Response.json({ error: 'Gagal memuat komentar' }, { status: 500 });
+  }
 }

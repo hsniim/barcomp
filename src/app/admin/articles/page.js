@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,18 +23,17 @@ import {
   Trash2, 
   Eye, 
   MoreHorizontal,
-  Filter,
   FileText,
   Calendar,
-  User,
   TrendingUp,
   ChevronLeft,
   ChevronRight,
   MessageSquare,
-  Star
+  Star,
+  StarOff,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 const CATEGORIES = [
   'teknologi',
@@ -55,8 +53,8 @@ export default function ArticlesPage() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -83,14 +81,25 @@ export default function ArticlesPage() {
       }
 
       const data = await response.json();
-      if (data.data) {
+      
+      // Handle both response formats (array langsung atau object dengan data property)
+      if (Array.isArray(data)) {
+        console.log('✅ Fetched articles (array format):', data.length);
+        setArticles(data);
+      } else if (data.success && data.data && Array.isArray(data.data)) {
+        console.log('✅ Fetched articles (object format):', data.data.length);
+        setArticles(data.data);
+      } else if (data.data && Array.isArray(data.data)) {
+        console.log('✅ Fetched articles (object format without success flag):', data.data.length);
         setArticles(data.data);
       } else {
+        console.warn('⚠️ Unexpected response format:', data);
         setArticles([]);
       }
     } catch (error) {
-      console.error('Failed to fetch articles:', error);
+      console.error('❌ Failed to fetch articles:', error);
       toast.error('Gagal memuat artikel. Silakan coba lagi.');
+      setArticles([]);
     } finally {
       setLoading(false);
     }
@@ -126,12 +135,50 @@ export default function ArticlesPage() {
     }
   };
 
+  const toggleFeatured = async (id, currentFeatured) => {
+    try {
+      const response = await fetch(`/api/articles/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ featured: !currentFeatured })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Artikel ${!currentFeatured ? 'ditandai unggulan' : 'dihapus dari unggulan'}`);
+        fetchArticles();
+      } else {
+        toast.error(data.error || 'Gagal mengubah status unggulan');
+      }
+    } catch (error) {
+      console.error('Failed to toggle featured:', error);
+      toast.error('Gagal mengubah status unggulan');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const styles = {
       published: 'bg-green-100 text-green-700 border-green-200',
       draft: 'bg-gray-100 text-gray-700 border-gray-200'
     };
     return styles[status] || styles.draft;
+  };
+
+  const getCategoryBadge = (category) => {
+    const styles = {
+      teknologi: 'bg-blue-100 text-blue-700 border-blue-200',
+      kesehatan: 'bg-green-100 text-green-700 border-green-200',
+      finansial: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      bisnis: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      inovasi: 'bg-purple-100 text-purple-700 border-purple-200',
+      karir: 'bg-orange-100 text-orange-700 border-orange-200',
+      keberlanjutan: 'bg-teal-100 text-teal-700 border-teal-200',
+      lainnya: 'bg-gray-100 text-gray-700 border-gray-200'
+    };
+    return styles[category] || styles.lainnya;
   };
 
   const formatDate = (dateString) => {
@@ -148,10 +195,11 @@ export default function ArticlesPage() {
   const filteredArticles = articles.filter(article => {
     const matchSearch = search === '' || 
       article.title.toLowerCase().includes(search.toLowerCase()) ||
-      article.slug.toLowerCase().includes(search.toLowerCase());
+      article.slug.toLowerCase().includes(search.toLowerCase()) ||
+      (article.excerpt && article.excerpt.toLowerCase().includes(search.toLowerCase()));
     
-    const matchStatus = statusFilter === 'all' || article.status === statusFilter;
-    const matchCategory = categoryFilter === 'all' || article.category === categoryFilter;
+    const matchStatus = statusFilter === '' || article.status === statusFilter;
+    const matchCategory = categoryFilter === '' || article.category === categoryFilter;
 
     return matchSearch && matchStatus && matchCategory;
   });
@@ -159,13 +207,7 @@ export default function ArticlesPage() {
   // Pagination
   const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedArticles = filteredArticles.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter, categoryFilter]);
+  const paginatedArticles = filteredArticles.slice(startIndex, startIndex + itemsPerPage);
 
   const stats = {
     total: articles.length,
@@ -197,17 +239,21 @@ export default function ArticlesPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex items-center justify-between"
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Artikel</h1>
-          <p className="mt-1 text-base text-gray-600">Kelola dan atur artikel blog Anda</p>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+            Articles
+          </h1>
+          <p className="text-gray-600 mt-2 text-base">
+            Create, manage, and publish your articles
+          </p>
         </div>
         <Link href="/admin/articles/create">
-          <Button className="flex items-center gap-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white transition-all duration-300">
-            <Plus className="w-4 h-4" />
-            Artikel Baru
+          <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 px-6 py-5 text-base font-bold">
+            <Plus className="w-5 h-5 mr-2" />
+            Create New Article
           </Button>
         </Link>
       </motion.div>
@@ -217,30 +263,71 @@ export default function ArticlesPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
-        {[
-          { label: 'Total Artikel', value: stats.total, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-          { label: 'Dipublikasikan', value: stats.published, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Draft', value: stats.draft, icon: Edit, color: 'text-gray-600', bg: 'bg-gray-50' },
-          { label: 'Unggulan', value: stats.featured, icon: Star, color: 'text-orange-600', bg: 'bg-orange-50' }
-        ].map((stat, index) => (
-          <motion.div key={index} variants={itemVariants}>
-            <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{stat.label}</p>
-                    <p className="mt-2 text-2xl font-bold text-gray-900">{stat.value}</p>
-                  </div>
-                  <div className={`w-11 h-11 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                  </div>
+        <motion.div variants={itemVariants}>
+          <Card className="border-2 border-gray-200 hover:border-[#0066FF] transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Articles</p>
+                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.total}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-2xl">
+                  <FileText className="w-8 h-8 text-[#0066FF]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="border-2 border-gray-200 hover:border-green-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Published</p>
+                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.published}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-2xl">
+                  <TrendingUp className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="border-2 border-gray-200 hover:border-gray-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Draft</p>
+                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.draft}</p>
+                </div>
+                <div className="bg-gradient-to-br from-gray-100 to-slate-100 p-4 rounded-2xl">
+                  <Edit className="w-8 h-8 text-gray-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="border-2 border-gray-200 hover:border-orange-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Featured</p>
+                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.featured}</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-100 to-amber-100 p-4 rounded-2xl">
+                  <Star className="w-8 h-8 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </motion.div>
 
       {/* Filters */}
@@ -249,54 +336,47 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200">
+        <Card className="border-2 border-gray-200 shadow-sm">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
                     type="text"
-                    placeholder="Cari artikel berdasarkan judul atau slug..."
+                    placeholder="Search articles by title, slug, or excerpt..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]"
+                    className="pl-12 h-12 border-2 border-gray-200 focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-base"
                   />
                 </div>
               </div>
+              <div className="flex gap-4">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-12 px-4 border-2 border-gray-200 rounded-lg focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-700 font-medium cursor-pointer"
+                >
+                  <option value="">All Status</option>
+                  {STATUSES.map(status => (
+                    <option key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
+                  ))}
+                </select>
 
-              {/* Status Filter */}
-              <div className="w-full lg:w-48">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]">
-                    <Filter className="w-4 h-4 mr-2 text-gray-400" />
-                    <SelectValue placeholder="Semua Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="published">Dipublikasikan</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Category Filter */}
-              <div className="w-full lg:w-48">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]">
-                    <Filter className="w-4 h-4 mr-2 text-gray-400" />
-                    <SelectValue placeholder="Semua Kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Kategori</SelectItem>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="h-12 px-4 border-2 border-gray-200 rounded-lg focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-700 font-medium cursor-pointer"
+                >
+                  <option value="">All Categories</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </CardContent>
@@ -309,34 +389,33 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 overflow-hidden">
+        <Card className="border-2 border-gray-200 shadow-lg">
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="text-center space-y-4">
-                  <div className="relative w-16 h-16 mx-auto">
-                    <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-                    <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-600">Memuat artikel...</p>
-                </div>
+              <div className="flex flex-col items-center justify-center py-24 px-4">
+                <Loader2 className="w-12 h-12 text-[#0066FF] animate-spin" />
+                <p className="text-gray-600 mt-6 text-lg font-semibold">Loading articles...</p>
               </div>
-            ) : paginatedArticles.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                  <FileText className="w-10 h-10 text-[#0066FF]" />
+            ) : filteredArticles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 px-4">
+                <div className="bg-gradient-to-br from-gray-100 to-slate-100 p-8 rounded-3xl mb-6">
+                  <FileText className="w-20 h-20 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Tidak ada artikel ditemukan</h3>
-                <p className="text-gray-600 mb-6">
-                  {search || statusFilter !== 'all' || categoryFilter !== 'all' 
-                    ? 'Coba sesuaikan filter pencarian Anda' 
-                    : 'Mulai dengan membuat artikel pertama Anda'}
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  {search || statusFilter || categoryFilter
+                    ? 'No Articles Found' 
+                    : 'No Articles Yet'}
+                </h3>
+                <p className="text-gray-600 text-center mb-8 max-w-md">
+                  {search || statusFilter || categoryFilter
+                    ? 'Try adjusting your search filters or create a new article.'
+                    : 'Get started by creating your first article. Click the "Create New Article" button above.'}
                 </p>
-                {!search && statusFilter === 'all' && categoryFilter === 'all' && (
+                {articles.length === 0 && (
                   <Link href="/admin/articles/create">
-                    <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white">
+                    <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 px-6 py-3 text-base font-bold">
                       <Plus className="w-4 h-4 mr-2" />
-                      Buat Artikel Pertama
+                      Create First Article
                     </Button>
                   </Link>
                 )}
@@ -347,22 +426,22 @@ export default function ArticlesPage() {
                   <thead className="bg-gradient-to-r from-gray-50 to-white border-b-2 border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Artikel
+                        Article
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Kategori
+                        Category
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Unggulan
+                        Published
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Dipublikasi
+                        Featured
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Aksi
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -400,36 +479,40 @@ export default function ArticlesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {article.category ? (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                              {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getCategoryBadge(article.category)} capitalize`}>
+                              {article.category}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-400">-</span>
+                            <span className="text-xs text-gray-400">N/A</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={cn(
-                            "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border",
-                            getStatusBadge(article.status)
-                          )}>
-                            {article.status?.charAt(0).toUpperCase() + article.status?.slice(1)}
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(article.status)} capitalize`}>
+                            {article.status || 'N/A'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {article.featured ? (
-                            <div className="flex items-center gap-2">
-                              <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-                              <span className="text-xs font-semibold text-orange-600">Ya</span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">Tidak</span>
-                          )}
+                          <div className="flex items-center gap-2 text-sm text-gray-900">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium">{formatDate(article.published_at)}</span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>{formatDate(article.published_at)}</span>
-                          </div>
+                          <button
+                            onClick={() => toggleFeatured(article.id, article.featured)}
+                            className={`p-2 rounded-lg transition-all duration-200 ${
+                              article.featured
+                                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                            }`}
+                            title={article.featured ? 'Unfeatured' : 'Set as featured'}
+                          >
+                            {article.featured ? (
+                              <Star className="w-5 h-5 fill-current" />
+                            ) : (
+                              <StarOff className="w-5 h-5" />
+                            )}
+                          </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <DropdownMenu>
@@ -445,21 +528,21 @@ export default function ArticlesPage() {
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem asChild>
                                 <Link 
+                                  href={`/admin/articles/edit/${article.id}`}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                  <span>Edit Article</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link 
                                   href={`/resources/articles/${article.slug}`}
                                   className="flex items-center gap-2 cursor-pointer"
                                   target="_blank"
                                 >
                                   <Eye className="w-4 h-4" />
-                                  <span>Lihat Artikel</span>
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link 
-                                  href={`/admin/articles/edit/${article.id}`}
-                                  className="flex items-center gap-2 cursor-pointer"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                  <span>Edit Artikel</span>
+                                  <span>View Article</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
@@ -468,7 +551,7 @@ export default function ArticlesPage() {
                                   className="flex items-center gap-2 cursor-pointer"
                                 >
                                   <MessageSquare className="w-4 h-4" />
-                                  <span>Kelola Komentar</span>
+                                  <span>Manage Comments</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -477,7 +560,7 @@ export default function ArticlesPage() {
                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                <span>Hapus Artikel</span>
+                                <span>Delete Article</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -498,33 +581,32 @@ export default function ArticlesPage() {
           variants={itemVariants}
           initial="hidden"
           animate="visible"
-          className="flex flex-col sm:flex-row items-center justify-between gap-4"
+          className="flex items-center justify-between"
         >
           <div className="text-sm text-gray-700 font-medium">
-            Menampilkan <span className="font-bold text-gray-900">{startIndex + 1}</span> sampai{' '}
-            <span className="font-bold text-gray-900">{Math.min(endIndex, filteredArticles.length)}</span> dari{' '}
-            <span className="font-bold text-gray-900">{filteredArticles.length}</span> hasil
+            Showing <span className="font-bold text-gray-900">{startIndex + 1}</span> to{' '}
+            <span className="font-bold text-gray-900">
+              {Math.min(startIndex + itemsPerPage, filteredArticles.length)}
+            </span>{' '}
+            of <span className="font-bold text-gray-900">{filteredArticles.length}</span> articles
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
-              Sebelumnya
+              Previous
             </Button>
-            <div className="hidden sm:flex items-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-semibold text-gray-700">
-              Halaman {currentPage} dari {totalPages}
-            </div>
             <Button
               variant="outline"
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="flex items-center gap-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 hover:text-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              Selanjutnya
+              Next
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
