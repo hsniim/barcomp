@@ -1,4 +1,6 @@
 // app/api/upload-image/route.js
+// ✅ Updated: Support upload untuk type 'event'
+
 import { NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import path from 'path';
@@ -30,13 +32,22 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ukuran maksimal 5MB' }, { status: 400 });
     }
 
+    // ✅ UPDATED: Tambahkan 'event' ke validasi type
     let uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    let subfolder = ''; // untuk tracking subfolder di relativePath
+    
     if (type === 'article') {
       uploadDir = path.join(uploadDir, 'articles');
+      subfolder = 'articles';
     } else if (type === 'gallery') {
       uploadDir = path.join(uploadDir, 'gallery');
+      subfolder = 'gallery';
+    } else if (type === 'event') {
+      // ✅ ADDED: Support untuk event uploads
+      uploadDir = path.join(uploadDir, 'events');
+      subfolder = 'events';
     } else {
-      return NextResponse.json({ error: 'Type tidak valid' }, { status: 400 });
+      return NextResponse.json({ error: 'Type tidak valid (harus: article, gallery, atau event)' }, { status: 400 });
     }
 
     await fs.mkdir(uploadDir, { recursive: true });
@@ -48,12 +59,15 @@ export async function POST(request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, buffer);
 
-    const relativePath = `/uploads/${type === 'article' ? 'articles' : 'gallery'}/${fileName}`;
+    // ✅ UPDATED: Gunakan subfolder yang sudah di-track
+    const relativePath = `/uploads/${subfolder}/${fileName}`;
 
-    // Return format yang cocok dengan client (pakai 'path' bukan hanya 'url')
+    console.log(`[UPLOAD SUCCESS] Type: ${type}, Path: ${relativePath}`);
+
+    // Return format yang cocok dengan client
     return NextResponse.json({
       success: true,
-      path: relativePath,          // ← ini yang diharapkan client
+      path: relativePath,          // yang diharapkan client
       url: relativePath,
       fullUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${relativePath}`,
     });
