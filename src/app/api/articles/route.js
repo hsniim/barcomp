@@ -1,13 +1,19 @@
 // app/api/articles/route.js
+// FIXED: Show ALL articles (draft + published) for admin dashboard
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
+    // FIXED: Remove status filter for admin - show ALL articles
+    // Admin needs to see both draft and published articles
     const [rows] = await pool.query(
-      'SELECT * FROM articles WHERE status = "published" ORDER BY published_at DESC'
+      'SELECT * FROM articles ORDER BY created_at DESC'
     );
+    
+    console.log(`[GET /api/articles] Fetched ${rows.length} articles (all statuses)`);
+    
     return NextResponse.json(rows);
   } catch (error) {
     console.error('[GET /api/articles] Database error:', error);

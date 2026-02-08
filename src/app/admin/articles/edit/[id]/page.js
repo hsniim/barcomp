@@ -1,322 +1,33 @@
-// app/admin/articles/edit/[id]/page.js
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+// app/admin/articles/edit/[id]/page.js
+// FIXED: Added credentials, proper error handling, retry logic, field mapping
+
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { 
-  ArrowLeft, Save, Eye, Loader2, AlertCircle, Upload, 
-  X, Image as ImageIcon, Check, ChevronDown 
-} from 'lucide-react';
-import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Loader2, Upload, ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-function generateSlug(title) {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-// ============================================================================
-// VALIDATION
-// ============================================================================
-
-function validateArticle(data) {
-  const errors = {};
-
-  if (!data.title || data.title.trim().length === 0) {
-    errors.title = 'Title is required';
-  } else if (data.title.length > 255) {
-    errors.title = 'Title must be less than 255 characters';
-  }
-
-  if (!data.excerpt || data.excerpt.trim().length === 0) {
-    errors.excerpt = 'Excerpt is required';
-  }
-
-  if (!data.content || data.content.trim().length === 0) {
-    errors.content = 'Content is required';
-  } else if (data.content.length < 50) {
-    errors.content = 'Content must be at least 50 characters';
-  }
-
-  if (!data.category || data.category === '') {
-    errors.category = 'Category is required';
-  }
-
-  if (!data.cover_image_url || data.cover_image_url.trim().length === 0) {
-    errors.cover_image_url = 'Cover image is required';
-  }
-
-  if (data.slug && !/^[a-z0-9-]+$/.test(data.slug)) {
-    errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
-  }
-
-  return errors;
-}
-
-// ============================================================================
-// IMAGE UPLOAD COMPONENT (Local Upload)
-// ============================================================================
-
-function ImageUpload({ value, onChange }) {
-  const [preview, setPreview] = useState(value || '');
-  const [uploading, setUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
-
-  useEffect(() => {
-    if (value) setPreview(value);
-  }, [value]);
-
-  const uploadToLocal = async (file) => {
-    setUploading(true);
-    setUploadError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'article');
-
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        let errData;
-        try {
-          errData = await response.json();
-        } catch {
-          errData = { error: `HTTP ${response.status}` };
-        }
-        throw new Error(errData.error || 'Upload gagal');
-      }
-
-      const data = await response.json();
-      if (!data.success || !data.path) {
-        throw new Error('Server tidak mengembalikan path gambar');
-      }
-
-      setPreview(data.path);
-      onChange(data.path);
-      toast.success('Image uploaded successfully');
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadError(error.message || 'Gagal mengupload gambar. Pastikan Anda sudah login sebagai super_admin.');
-      toast.error(error.message || 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setUploadError('Pilih file gambar saja');
-        toast.error('Pilih file gambar saja');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadError('Ukuran maksimal 5MB');
-        toast.error('Ukuran maksimal 5MB');
-        return;
-      }
-      uploadToLocal(file);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
-      uploadToLocal(file);
-    } else if (file) {
-      setUploadError('File tidak valid atau terlalu besar');
-      toast.error('File tidak valid atau terlalu besar');
-    }
-  };
-
-  const handleClear = () => {
-    setPreview('');
-    onChange('');
-  };
-
-  return (
-    <div className="space-y-3">
-      {preview ? (
-        <div className="relative group rounded-xl overflow-hidden border-2 border-gray-200 hover:border-[#0066FF] transition-all duration-300">
-          <img src={preview} alt="Preview" className="w-full h-48 object-cover" onError={() => setPreview('')} />
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-            isDragging
-              ? 'border-[#0066FF] bg-blue-50'
-              : uploading
-              ? 'border-gray-300 bg-gray-50'
-              : 'border-gray-300 hover:border-[#0066FF] hover:bg-gray-50'
-          }`}
-        >
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            disabled={uploading}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-          />
-          <div className="flex flex-col items-center gap-2">
-            {uploading ? (
-              <>
-                <Loader2 className="w-10 h-10 text-[#0066FF] animate-spin" />
-                <p className="text-sm font-semibold text-gray-700">Uploading...</p>
-              </>
-            ) : (
-              <>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-full flex items-center justify-center">
-                  <Upload className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">
-                    Drop image here or <span className="text-[#0066FF]">browse</span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-      {uploadError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            {uploadError}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// SIMPLE SELECT COMPONENT
-// ============================================================================
-
-function SimpleSelect({ value, onChange, options, placeholder = 'Select...' }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const selectRef = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (selectRef.current && !selectRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const selectedOption = options.find(opt => opt.value === value);
-
-  return (
-    <div ref={selectRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-[#0066FF] focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] outline-none transition-all duration-200"
-      >
-        <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
-        >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-              className={`w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors duration-150 ${
-                value === option.value ? 'bg-blue-50 text-[#0066FF] font-semibold' : 'text-gray-700'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </motion.div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
 
 export default function EditArticle() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const [slugAvailable, setSlugAvailable] = useState(null);
-  const [tagInput, setTagInput] = useState('');
-  const [originalSlug, setOriginalSlug] = useState('');
+  const id = params?.id;
 
-  const categories = [
-    { value: 'teknologi', label: 'Teknologi' },
-    { value: 'kesehatan', label: 'Kesehatan' },
-    { value: 'finansial', label: 'Finansial' },
-    { value: 'bisnis', label: 'Bisnis' },
-    { value: 'inovasi', label: 'Inovasi' },
-    { value: 'karir', label: 'Karir' },
-    { value: 'keberlanjutan', label: 'Keberlanjutan' },
-    { value: 'lainnya', label: 'Lainnya' }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -327,495 +38,502 @@ export default function EditArticle() {
     category: '',
     tags: [],
     featured: false,
-    status: 'draft'
+    status: 'published', // FIXED: Preserve status
   });
 
-  useEffect(() => {
-    fetchArticle();
-  }, [params.id]);
+  const [tagInput, setTagInput] = useState('');
 
-  const fetchArticle = async () => {
-    setLoading(true);
+  // ============================================================================
+  // FIXED: Fetch article with proper auth, error handling, retry
+  // ============================================================================
+  const fetchArticle = async (retryCount = 0) => {
     try {
-      const response = await fetch(`/api/articles/${params.id}`, {
-        credentials: 'include'
-      });
+      console.log(`[EditArticle] Fetching article ID: ${id} (attempt ${retryCount + 1})`);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch article');
-      }
-
-      const data = await response.json();
-      if (data.success && data.data) {
-        const article = data.data;
-        
-        // Parse tags if it's a JSON string
-        let parsedTags = [];
-        if (article.tags) {
-          try {
-            parsedTags = typeof article.tags === 'string' 
-              ? JSON.parse(article.tags) 
-              : article.tags;
-          } catch (e) {
-            parsedTags = [];
-          }
-        }
-
-        setFormData({
-          title: article.title || '',
-          slug: article.slug || '',
-          excerpt: article.excerpt || '',
-          content: article.content || '',
-          cover_image_url: article.cover_image_url || article.cover_image || '',
-          category: article.category || '',
-          tags: parsedTags,
-          featured: article.featured || false,
-          status: article.status || 'draft'
-        });
-        setOriginalSlug(article.slug || '');
-        toast.success('Article loaded successfully');
-      } else {
-        toast.error('Article not found');
-        router.push('/admin/articles');
-      }
-    } catch (error) {
-      console.error('Failed to fetch article:', error);
-      toast.error('Failed to load article');
-      router.push('/admin/articles');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Auto-generate slug from title (only if creating new slug or user hasn't manually edited)
-  useEffect(() => {
-    if (!slugManuallyEdited && formData.title) {
-      const newSlug = generateSlug(formData.title);
-      setFormData(prev => ({ ...prev, slug: newSlug }));
-    }
-  }, [formData.title, slugManuallyEdited]);
-
-  // Check slug availability (skip if it's the original slug)
-  useEffect(() => {
-    const checkSlug = async () => {
-      if (!formData.slug || formData.slug === originalSlug) {
-        setSlugAvailable(null);
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/articles?slug=${formData.slug}`, {
-          credentials: 'include'
-        });
-        const data = await response.json();
-        setSlugAvailable(!data.data || data.data.length === 0);
-      } catch (error) {
-        console.error('Error checking slug:', error);
-      }
-    };
-
-    const timeoutId = setTimeout(checkSlug, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.slug, originalSlug]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
-    if (name === 'slug') {
-      setSlugManuallyEdited(true);
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleAddTag = (e) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      if (formData.tags.length >= 10) {
-        toast.error('Maximum 10 tags allowed');
-        return;
-      }
-      if (formData.tags.includes(tagInput.trim())) {
-        toast.error('Tag already exists');
-        return;
-      }
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()]
-      }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleSubmit = async (status) => {
-    const dataToValidate = { ...formData, status };
-    const validationErrors = validateArticle(dataToValidate);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      toast.error('Please fix validation errors');
-      return;
-    }
-
-    if (slugAvailable === false) {
-      toast.error('Slug already exists, please choose a different one');
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const payload = {
-        ...formData,
-        status,
-        tags: JSON.stringify(formData.tags)
-      };
-
-      const response = await fetch(`/api/articles/${params.id}`, {
-        method: 'PUT',
+      // FIXED: Added credentials for auth
+      const res = await fetch(`/api/articles/${id}`, {
+        method: 'GET',
+        credentials: 'include', // CRITICAL: Include auth cookies
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      console.log(`[EditArticle] Fetch response status: ${res.status}`);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update article');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error(`[EditArticle] Fetch failed:`, errorData);
+
+        // IMPROVED: Don't immediately redirect on first failure
+        if (res.status === 404 && retryCount < 2) {
+          console.log(`[EditArticle] 404 received, retrying in 1s...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return fetchArticle(retryCount + 1);
+        }
+
+        throw new Error(errorData.error || `HTTP ${res.status}`);
       }
 
-      toast.success(status === 'published' ? 'Article updated and published!' : 'Article updated as draft!');
-      router.push('/admin/articles');
+      const data = await res.json();
+      console.log(`[EditArticle] Article fetched successfully:`, data.title);
+
+      // FIXED: Handle both field name formats
+      setFormData({
+        title: data.title || '',
+        slug: data.slug || '',
+        excerpt: data.excerpt || '',
+        content: data.content || '',
+        cover_image_url: data.cover_image_url || data.cover_image || '', // FIXED: Accept both
+        category: data.category || '',
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        featured: Boolean(data.featured),
+        status: data.status || 'published', // FIXED: Preserve original status
+      });
+
+      setTagInput(
+        Array.isArray(data.tags) ? data.tags.join(', ') : ''
+      );
+
+      setLoading(false);
+
     } catch (error) {
-      console.error('Submit error:', error);
-      toast.error(error.message || 'Failed to update article');
-    } finally {
-      setSubmitting(false);
+      console.error('Failed to fetch article:', error);
+      
+      // IMPROVED: Show error toast instead of silent redirect
+      toast.error('Gagal memuat artikel: ' + error.message, {
+        description: 'Coba refresh halaman atau kembali ke daftar artikel',
+        action: {
+          label: 'Kembali',
+          onClick: () => router.push('/admin/articles'),
+        },
+        duration: 5000,
+      });
+
+      setLoading(false);
+      // REMOVED: Auto redirect - let user decide
+      // setTimeout(() => router.push('/admin/articles'), 2000);
     }
   };
 
-  const getCharCount = (text) => text?.length || 0;
-  const getWordCount = (text) => text?.trim().split(/\s+/).filter(Boolean).length || 0;
+  // ============================================================================
+  // Load article on mount
+  // ============================================================================
+  useEffect(() => {
+    if (id) {
+      fetchArticle();
+    } else {
+      console.error('[EditArticle] No ID provided');
+      toast.error('ID artikel tidak ditemukan');
+      router.push('/admin/articles');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // ============================================================================
+  // Handle form changes
+  // ============================================================================
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    // Auto-generate slug from title
+    if (field === 'title') {
+      const slug = value
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .trim();
+      setFormData((prev) => ({ ...prev, slug }));
+    }
+  };
+
+  const handleTagsChange = (value) => {
+    setTagInput(value);
+    const tagsArray = value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+    setFormData((prev) => ({ ...prev, tags: tagsArray }));
+  };
+
+  // ============================================================================
+  // IMPROVED: Upload cover image with better error handling
+  // ============================================================================
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('File harus berupa gambar');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 5MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      console.log('[EditArticle] Uploading file:', file.name, file.size, 'bytes');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include', // FIXED: Include auth
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      console.log('[EditArticle] Upload success:', data.url);
+
+      setFormData((prev) => ({ ...prev, cover_image_url: data.url }));
+      toast.success('Cover image berhasil diupload');
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Gagal upload gambar: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ============================================================================
+  // FIXED: Update article with proper validation and field mapping
+  // ============================================================================
+  const handleUpdate = async () => {
+    // Validation
+    if (!formData.title?.trim()) {
+      toast.error('Judul artikel wajib diisi');
+      return;
+    }
+
+    if (!formData.slug?.trim()) {
+      toast.error('Slug artikel wajib diisi');
+      return;
+    }
+
+    if (!formData.content?.trim()) {
+      toast.error('Konten artikel wajib diisi');
+      return;
+    }
+
+    if (!formData.cover_image_url?.trim()) {
+      toast.error('Cover image wajib diupload');
+      return;
+    }
+
+    if (!formData.category?.trim()) {
+      toast.error('Kategori wajib dipilih');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      console.log('[EditArticle] Updating article ID:', id);
+      console.log('[EditArticle] Form data:', {
+        ...formData,
+        content: '(hidden)',
+      });
+
+      // FIXED: Send with credentials
+      const res = await fetch(`/api/articles/${id}`, {
+        method: 'PUT',
+        credentials: 'include', // FIXED: Include auth
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      console.log('[EditArticle] Update response status:', res.status);
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('[EditArticle] Update failed:', errorData);
+        throw new Error(errorData.error || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log('[EditArticle] Update success:', data);
+
+      toast.success('Artikel berhasil diupdate!', {
+        description: 'Redirecting ke daftar artikel...',
+      });
+
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push('/admin/articles');
+      }, 1000);
+
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('Gagal update artikel: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ============================================================================
+  // Render
+  // ============================================================================
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
-          </div>
-          <p className="text-sm font-semibold text-gray-600">Loading article...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Memuat data artikel...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex items-center justify-between"
-      >
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/admin/articles"
-            className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 transition-all duration-300 group"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-[#0066FF]" />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Edit Article</h1>
-            <p className="text-sm text-gray-600 mt-1">Update article information</p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push('/admin/articles')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Artikel</h1>
           </div>
+          <p className="text-muted-foreground">
+            Update informasi artikel yang sudah dipublikasikan
+          </p>
         </div>
-      </motion.div>
 
-      {/* Form Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Content */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="lg:col-span-2"
+        <Button
+          onClick={handleUpdate}
+          disabled={saving || uploading}
+          size="lg"
         >
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-            <div className="space-y-6">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Enter article title..."
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 ${
-                    errors.title ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.title ? (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.title}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs text-gray-500 font-medium">{getCharCount(formData.title)}/255 characters</p>
-                )}
-              </div>
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Menyimpan...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Update Artikel
+            </>
+          )}
+        </Button>
+      </div>
 
-              {/* Slug */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
-                  Slug <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                  placeholder="article-url-slug"
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 ${
-                    errors.slug ? 'border-red-500' : 
-                    slugAvailable === false ? 'border-red-500' :
-                    slugAvailable === true ? 'border-green-500' :
-                    'border-gray-300'
-                  }`}
-                />
-                {errors.slug ? (
-                  <p className="mt-1 text-sm text-red-600 font-medium">✗ {errors.slug}</p>
-                ) : slugAvailable === true ? (
-                  <p className="mt-1 text-sm text-green-600 font-medium">✓ Slug available</p>
-                ) : slugAvailable === false ? (
-                  <p className="mt-1 text-sm text-red-600 font-medium">✗ Slug already exists</p>
-                ) : formData.slug === originalSlug ? (
-                  <p className="mt-1 text-sm text-blue-600 font-medium">Current slug (unchanged)</p>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-500">
-                    {slugManuallyEdited ? 'Manually edited' : 'Auto-generated from title'}
-                  </p>
-                )}
-              </div>
-
-              {/* Excerpt */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
-                  Excerpt <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="excerpt"
-                  value={formData.excerpt}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder="Brief summary for list view and SEO..."
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 ${
-                    errors.excerpt ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.excerpt ? (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.excerpt}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs text-gray-500 font-medium">{getCharCount(formData.excerpt)} characters</p>
-                )}
-              </div>
-
-              {/* Content */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Content <span className="text-red-500">*</span>
-                  </label>
-                  <div className="text-xs font-semibold text-gray-600">
-                    {getCharCount(formData.content)} chars • {getWordCount(formData.content)} words
-                  </div>
-                </div>
-                <textarea
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  rows={20}
-                  placeholder="Write your article content here..."
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 ${
-                    errors.content ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.content && (
-                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.content}
-                  </p>
-                )}
-              </div>
-            </div>
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Artikel</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title">Judul Artikel *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="Masukkan judul artikel..."
+              required
+            />
           </div>
-        </motion.div>
 
-        {/* Right Column - Metadata */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="space-y-6"
-        >
-          {/* Publish Actions */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Update</h2>
-            <div className="space-y-3">
-              <button
-                onClick={() => handleSubmit('published')}
-                disabled={submitting}
-                className="w-full px-4 py-2 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all duration-300"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Update & Publish
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => handleSubmit('draft')}
-                disabled={submitting}
-                className="w-full px-4 py-2 border-2 border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 text-gray-900 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save as Draft
-                  </>
-                )}
-              </button>
-            </div>
+          {/* Slug */}
+          <div className="space-y-2">
+            <Label htmlFor="slug">Slug URL *</Label>
+            <Input
+              id="slug"
+              value={formData.slug}
+              onChange={(e) => handleChange('slug', e.target.value)}
+              placeholder="url-friendly-slug"
+              required
+            />
+            <p className="text-sm text-muted-foreground">
+              Auto-generated dari judul, bisa diedit manual
+            </p>
+          </div>
+
+          {/* Excerpt */}
+          <div className="space-y-2">
+            <Label htmlFor="excerpt">Ringkasan</Label>
+            <Textarea
+              id="excerpt"
+              value={formData.excerpt}
+              onChange={(e) => handleChange('excerpt', e.target.value)}
+              placeholder="Ringkasan singkat artikel (opsional)..."
+              rows={3}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="space-y-2">
+            <Label htmlFor="content">Konten Artikel *</Label>
+            <Textarea
+              id="content"
+              value={formData.content}
+              onChange={(e) => handleChange('content', e.target.value)}
+              placeholder="Tulis konten artikel di sini..."
+              rows={12}
+              required
+            />
           </div>
 
           {/* Cover Image */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Cover Image <span className="text-red-500">*</span>
-            </h2>
-            <ImageUpload
-              value={formData.cover_image_url}
-              onChange={(url) => setFormData(prev => ({ ...prev, cover_image_url: url }))}
-            />
-            {errors.cover_image_url && (
-              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
-                {errors.cover_image_url}
-              </p>
-            )}
-          </div>
-
-          {/* Settings */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Settings</h2>
-            
-            {/* Category */}
-            <div className="mb-4">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <SimpleSelect
-                value={formData.category}
-                onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                options={categories}
-                placeholder="Select a category"
-              />
-              {errors.category && (
-                <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+          <div className="space-y-2">
+            <Label>Cover Image *</Label>
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Upload gambar cover artikel (max 5MB)
+                </p>
+              </div>
+              {uploading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading...
+                </div>
               )}
             </div>
 
-            {/* Featured Toggle */}
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200">
-              <div>
-                <label className="text-sm font-semibold text-gray-700">Featured Article</label>
-                <p className="text-xs text-gray-500">Show on homepage</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="featured"
-                  checked={formData.featured}
-                  onChange={handleChange}
-                  className="sr-only peer"
+            {/* Preview */}
+            {formData.cover_image_url && (
+              <div className="mt-3">
+                <img
+                  src={formData.cover_image_url}
+                  alt="Cover preview"
+                  className="w-full max-w-md h-48 object-cover rounded-lg border"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0066FF]"></div>
-              </label>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Tags</h2>
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              placeholder="Type and press Enter..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200"
-            />
-            <p className="mt-1 text-xs text-gray-500 font-medium">{formData.tags.length}/10 tags</p>
-            
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {formData.tags.map((tag, index) => (
-                  <motion.span
-                    key={index}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full border border-blue-200"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="hover:text-blue-900 transition-colors duration-150"
-                    >
-                      ×
-                    </button>
-                  </motion.span>
-                ))}
               </div>
             )}
           </div>
-        </motion.div>
+
+          {/* Category */}
+          <div className="space-y-2">
+            <Label htmlFor="category">Kategori *</Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => handleChange('category', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih kategori..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="teknologi">Teknologi</SelectItem>
+                <SelectItem value="kesehatan">Kesehatan</SelectItem>
+                <SelectItem value="finansial">Finansial</SelectItem>
+                <SelectItem value="bisnis">Bisnis</SelectItem>
+                <SelectItem value="inovasi">Inovasi</SelectItem>
+                <SelectItem value="karir">Karir</SelectItem>
+                <SelectItem value="keberlanjutan">Keberlanjutan</SelectItem>
+                <SelectItem value="lainnya">Lainnya</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status - ADDED */}
+          <div className="space-y-2">
+            <Label htmlFor="status">Status Publikasi *</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleChange('status', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih status..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft (Tersimpan, belum tayang)</SelectItem>
+                <SelectItem value="published">Published (Tayang di website)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {formData.status === 'published' 
+                ? '✅ Artikel ini akan tampil di website publik' 
+                : '📝 Artikel ini hanya tersimpan sebagai draft'}
+            </p>
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <Input
+              id="tags"
+              value={tagInput}
+              onChange={(e) => handleTagsChange(e.target.value)}
+              placeholder="teknologi, AI, inovasi (pisahkan dengan koma)"
+            />
+            <p className="text-sm text-muted-foreground">
+              Pisahkan dengan koma. Contoh: teknologi, AI, inovasi
+            </p>
+          </div>
+
+          {/* Featured */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="featured"
+              checked={formData.featured}
+              onChange={(e) => handleChange('featured', e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="featured" className="cursor-pointer">
+              Jadikan artikel unggulan
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Actions (mobile) */}
+      <div className="flex gap-3 sm:hidden">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => router.push('/admin/articles')}
+        >
+          Batal
+        </Button>
+        <Button
+          className="flex-1"
+          onClick={handleUpdate}
+          disabled={saving || uploading}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Menyimpan...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Update
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
