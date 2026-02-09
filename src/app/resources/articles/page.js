@@ -1,29 +1,26 @@
 'use client';
 
 import { useState, useEffect, useRef, memo } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
-  Search, 
-  Calendar, 
-  ArrowRight, 
+  BookOpen,
+  Search,
   Filter,
+  Calendar,
+  ChevronRight,
+  FileText,
   Sparkles,
   Tag,
   Clock,
-  BookOpen,
-  TrendingUp,
-  ChevronRight
+  AlertCircle
 } from 'lucide-react';
-import { toast } from 'sonner';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { cn } from '@/lib/utils';
 
 // Fade-in Animation Component
 const FadeInSection = memo(({ children, delay = 0 }) => {
@@ -60,25 +57,12 @@ const FadeInSection = memo(({ children, delay = 0 }) => {
 
 FadeInSection.displayName = 'FadeInSection';
 
-// Kategori sesuai ENUM di database
-const categories = [
-  { value: 'all', label: 'Semua Kategori' },
-  { value: 'teknologi', label: 'Teknologi' },
-  { value: 'kesehatan', label: 'Kesehatan' },
-  { value: 'finansial', label: 'Finansial' },
-  { value: 'bisnis', label: 'Bisnis' },
-  { value: 'inovasi', label: 'Inovasi' },
-  { value: 'karir', label: 'Karir' },
-  { value: 'keberlanjutan', label: 'Keberlanjutan' },
-  { value: 'lainnya', label: 'Lainnya' },
-];
-
-// Warna badge kategori
+// Category Badge Colors
 const categoryColors = {
   teknologi: 'bg-blue-100 text-blue-700 border-blue-200',
   kesehatan: 'bg-green-100 text-green-700 border-green-200',
-  finansial: 'bg-purple-100 text-purple-700 border-purple-200',
-  bisnis: 'bg-orange-100 text-orange-700 border-orange-200',
+  finansial: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  bisnis: 'bg-purple-100 text-purple-700 border-purple-200',
   inovasi: 'bg-pink-100 text-pink-700 border-pink-200',
   karir: 'bg-indigo-100 text-indigo-700 border-indigo-200',
   keberlanjutan: 'bg-teal-100 text-teal-700 border-teal-200',
@@ -93,31 +77,24 @@ const formatDate = (dateString) => {
     return new Intl.DateTimeFormat('id-ID', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric',
+      year: 'numeric'
     }).format(date);
   } catch (error) {
     return '';
   }
 };
 
-// Get badge class untuk kategori
-const getCategoryBadgeClass = (category) => {
-  return categoryColors[category] || categoryColors.lainnya;
-};
-
 // Article Card Component
-const ArticleCard = memo(({ article, featured = false }) => {
+const ArticleCard = memo(({ article }) => {
   return (
     <Card className={cn(
       "overflow-hidden border-2 transition-all duration-300 group h-full p-0",
-      featured 
-        ? "border-[#0066FF] hover:shadow-2xl" 
-        : "border-gray-200 hover:border-[#0066FF] hover:shadow-xl"
+      "border-gray-200 hover:border-[#0066FF] hover:shadow-xl"
     )}>
       <Link href={`/resources/articles/${article.slug}`}>
         <div className="relative h-56 overflow-hidden">
           <Image
-            src={article.cover_image || '/images/placeholder-article.jpg'}
+            src={article.cover_image || '/images/default-article.jpg'}
             alt={article.title}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -125,23 +102,15 @@ const ArticleCard = memo(({ article, featured = false }) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           
-          <div className="absolute top-4 left-4 flex gap-2">
-            {article.featured && (
-              <Badge className="bg-[#0066FF] text-white border-0 flex items-center gap-1 shadow-lg">
-                <Sparkles className="w-3 h-3" />
-                Featured
-              </Badge>
-            )}
-          </div>
-
           {article.category && (
-            <div className="absolute bottom-4 left-4">
-              <span className={cn(
-                "inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize border",
-                getCategoryBadgeClass(article.category)
+            <div className="absolute top-4 left-4">
+              <Badge className={cn(
+                "border",
+                categoryColors[article.category] || categoryColors.lainnya
               )}>
-                {categories.find(c => c.value === article.category)?.label || article.category}
-              </span>
+                <Tag className="w-3 h-3 mr-1" />
+                {article.category}
+              </Badge>
             </div>
           )}
         </div>
@@ -154,25 +123,22 @@ const ArticleCard = memo(({ article, featured = false }) => {
           </h3>
         </Link>
 
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
           {article.excerpt}
         </p>
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Calendar className="w-4 h-4 text-[#0066FF]" />
-            <span>{formatDate(article.published_at)}</span>
+            <span>{formatDate(article.published_at || article.created_at)}</span>
           </div>
           
-          <Link href={`/resources/articles/${article.slug}`}>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-[#0066FF] hover:text-[#0052CC] hover:bg-blue-50 group/btn p-0"
-            >
-              Baca
-              <ArrowRight className="ml-1 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-            </Button>
+          <Link 
+            href={`/resources/articles/${article.slug}`}
+            className="text-[#0066FF] hover:text-[#0052CC] font-semibold text-sm flex items-center gap-1 transition-colors"
+          >
+            Baca
+            <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
       </CardContent>
@@ -182,189 +148,117 @@ const ArticleCard = memo(({ article, featured = false }) => {
 
 ArticleCard.displayName = 'ArticleCard';
 
-// Skeleton Loading Component
+// Article Skeleton
 const ArticleSkeleton = () => (
-  <div className="animate-pulse">
-    <div className="bg-gray-200 h-56 rounded-t-lg" />
-    <div className="p-6 space-y-4">
-      <div className="h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-4 bg-gray-200 rounded w-1/2" />
-      <div className="h-20 bg-gray-200 rounded" />
+  <Card className="overflow-hidden h-full p-0">
+    <div className="animate-pulse">
+      <div className="bg-gray-200 h-56 w-full" />
+      <div className="p-6 space-y-4">
+        <div className="h-4 bg-gray-200 rounded w-1/4" />
+        <div className="h-6 bg-gray-200 rounded w-3/4" />
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded" />
+          <div className="h-4 bg-gray-200 rounded w-5/6" />
+        </div>
+        <div className="flex justify-between items-center pt-4">
+          <div className="h-4 bg-gray-200 rounded w-1/3" />
+          <div className="h-4 bg-gray-200 rounded w-1/4" />
+        </div>
+      </div>
     </div>
-  </div>
+  </Card>
 );
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState([]);
-  const [featuredArticles, setFeaturedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const articlesPerPage = 9;
+  const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    search: '',
+    page: 1,
+    limit: 9
+  });
+  const [totalArticles, setTotalArticles] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  // Fetch articles dari API
+  const categories = [
+    { value: 'all', label: 'Semua Kategori' },
+    { value: 'teknologi', label: 'Teknologi' },
+    { value: 'kesehatan', label: 'Kesehatan' },
+    { value: 'finansial', label: 'Finansial' },
+    { value: 'bisnis', label: 'Bisnis' },
+    { value: 'inovasi', label: 'Inovasi' },
+    { value: 'karir', label: 'Karir' },
+    { value: 'keberlanjutan', label: 'Keberlanjutan' },
+    { value: 'lainnya', label: 'Lainnya' },
+  ];
+
   useEffect(() => {
     fetchArticles();
-  }, [currentPage, selectedCategory, searchQuery]);
+  }, [filters]);
 
   const fetchArticles = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      
-      // Build query params
-      const params = new URLSearchParams();
-      params.append('status', 'published');
-      params.append('page', currentPage.toString());
-      params.append('limit', articlesPerPage.toString());
-      
-      if (selectedCategory && selectedCategory !== 'all') {
-        params.append('category', selectedCategory);
-      }
-      
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
+      const params = new URLSearchParams({
+        status: 'published',
+        page: filters.page.toString(),
+        limit: filters.limit.toString(),
+      });
+
+      if (filters.category && filters.category !== 'all') {
+        params.append('category', filters.category);
       }
 
-      const response = await fetch(`/api/articles?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error('Gagal mengambil data artikel');
+      if (filters.search.trim()) {
+        params.append('search', filters.search.trim());
       }
 
-      const data = await response.json();
+      const url = `/api/articles?${params.toString()}`;
+      const res = await fetch(url);
       
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
       if (data.success) {
         setArticles(data.data || []);
-        setTotalPages(data.pagination?.totalPages || 1);
-        
-        // Fetch featured articles (hanya di page 1 dan tanpa filter)
-        if (currentPage === 1 && selectedCategory === 'all' && !searchQuery) {
-          const featured = (data.data || []).filter(article => article.featured).slice(0, 3);
-          setFeaturedArticles(featured);
-        } else {
-          setFeaturedArticles([]);
-        }
+        setTotalArticles(data.total || 0);
+        setTotalPages(data.totalPages || 0);
       } else {
-        throw new Error(data.message || 'Gagal mengambil data artikel');
+        throw new Error(data.error || 'Gagal memuat artikel');
       }
-    } catch (error) {
-      console.error('Error fetching articles:', error);
-      toast.error(error.message || 'Terjadi kesalahan saat mengambil data artikel');
+
+    } catch (err) {
+      console.error('[ArticlesPage] Fetch error:', err);
+      setError(err.message);
       setArticles([]);
-      setFeaturedArticles([]);
+      setTotalArticles(0);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle search
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1);
+  const handleCategoryChange = (category) => {
+    setFilters(prev => ({ ...prev, category, page: 1 }));
   };
 
-  // Handle category filter
-  const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
-    setCurrentPage(1);
+  const handleSearchChange = (e) => {
+    setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }));
   };
 
-  // Handle pagination
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  const handlePageChange = (newPage) => {
+    setFilters(prev => ({ ...prev, page: newPage }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Render pagination buttons
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage < maxVisiblePages - 1) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return (
-      <div className="flex items-center justify-center gap-2 mt-12">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
-        >
-          Previous
-        </Button>
-        
-        {startPage > 1 && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(1)}
-              className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
-            >
-              1
-            </Button>
-            {startPage > 2 && <span className="px-2 text-gray-400">...</span>}
-          </>
-        )}
-        
-        {pages.map((page) => (
-          <Button
-            key={page}
-            variant={currentPage === page ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => handlePageChange(page)}
-            className={cn(
-              'rounded-lg min-w-[40px]',
-              currentPage === page 
-                ? 'bg-[#0066FF] hover:bg-[#0052CC] text-white border-[#0066FF]' 
-                : 'border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]'
-            )}
-          >
-            {page}
-          </Button>
-        ))}
-        
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && <span className="px-2 text-gray-400">...</span>}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(totalPages)}
-              className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
-            >
-              {totalPages}
-            </Button>
-          </>
-        )}
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="rounded-lg border-gray-300 hover:border-[#0066FF] hover:text-[#0066FF]"
-        >
-          Next
-        </Button>
-      </div>
-    );
+  const handleResetFilters = () => {
+    setFilters({ category: 'all', search: '', page: 1, limit: 9 });
   };
 
   return (
@@ -384,16 +278,16 @@ export default function ArticlesPage() {
               <div className="text-center max-w-4xl mx-auto">
                 <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-6 shadow-lg">
                   <BookOpen className="w-4 h-4 inline-block mr-2" />
-                  Wawasan & Berita
+                  Resources & Artikel
                 </div>
                 
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                  Artikel & Berita Terkini
+                  Artikel & Insights
                 </h1>
                 
                 <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed">
-                  Temukan wawasan terbaru, tren industri, dan berita teknologi yang membantu 
-                  bisnis Anda berkembang di era digital
+                  Temukan {totalArticles} artikel terbaru seputar teknologi, bisnis, dan inovasi 
+                  untuk meningkatkan pengetahuan Anda
                 </p>
               </div>
             </FadeInSection>
@@ -406,115 +300,91 @@ export default function ArticlesPage() {
           </div>
         </section>
 
-        {/* Search & Filter Section */}
+        {/* Filters Section */}
         <section className="py-8 border-b border-gray-200 bg-white shadow-sm">
           <div className="container mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              {/* Search Input */}
-              <div className="flex-1 w-full md:max-w-md relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Cari artikel..."
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  className="pl-10 rounded-lg border-gray-300 focus:border-[#0066FF] focus:ring-[#0066FF]"
-                />
-              </div>
-              
-              {/* Category Filter */}
-              <div className="w-full md:w-64">
-                <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="rounded-lg border-gray-300">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
+            <FadeInSection>
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Category Filter */}
+                <div className="relative flex-shrink-0">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={filters.category}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent bg-white font-medium text-gray-700 min-w-[200px] appearance-none cursor-pointer transition-all hover:border-[#0066FF]"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat.value} value={cat.value}>
                         {cat.label}
-                      </SelectItem>
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </select>
+                </div>
 
-              {/* Stats */}
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <TrendingUp className="w-4 h-4 text-[#0066FF]" />
-                <span className="font-semibold">
-                  {loading ? '...' : articles.length} Artikel
-                </span>
+                {/* Search */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Cari artikel..."
+                    value={filters.search}
+                    onChange={handleSearchChange}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all hover:border-[#0066FF]"
+                  />
+                </div>
+
+                {/* Reset Button - Only show if filters are active */}
+                {(filters.category !== 'all' || filters.search) && (
+                  <Button
+                    onClick={handleResetFilters}
+                    variant="outline"
+                    className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-[#0066FF] hover:text-white transition-all"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
               </div>
-            </div>
+            </FadeInSection>
           </div>
         </section>
 
-        {/* Featured Articles Section */}
-        {featuredArticles.length > 0 && (
-          <section className="py-16 lg:py-20">
-            <div className="container mx-auto max-w-7xl px-6 lg:px-8">
-              <FadeInSection>
-                <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Artikel Unggulan</h2>
-                  <p className="text-gray-600">Artikel pilihan yang wajib Anda baca</p>
-                </div>
-              </FadeInSection>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {featuredArticles.map((article, index) => (
-                  <FadeInSection key={article.id} delay={index * 0.1}>
-                    <ArticleCard article={article} featured={true} />
-                  </FadeInSection>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* All Articles Section */}
-        <section className="py-16 lg:py-20 bg-gray-50">
+        {/* Articles Content */}
+        <section className="py-16 lg:py-20">
           <div className="container mx-auto max-w-7xl px-6 lg:px-8">
-            <FadeInSection>
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  {selectedCategory !== 'all' 
-                    ? `Artikel ${categories.find(c => c.value === selectedCategory)?.label}` 
-                    : 'Semua Artikel'}
-                </h2>
-                <p className="text-gray-600">
-                  {searchQuery 
-                    ? `Hasil pencarian untuk "${searchQuery}"` 
-                    : 'Jelajahi artikel terbaru kami'}
-                </p>
-              </div>
-            </FadeInSection>
-
             {loading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <ArticleSkeleton key={i} />
                 ))}
               </div>
+            ) : error ? (
+              <div className="text-center py-20">
+                <AlertCircle className="w-16 h-16 mx-auto text-red-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Terjadi Kesalahan
+                </h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <Button 
+                  onClick={fetchArticles}
+                  className="bg-[#0066FF] hover:bg-[#0052CC] text-white"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
             ) : articles.length === 0 ? (
               <div className="text-center py-20">
-                <Search className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Artikel Tidak Ditemukan
+                  Tidak Ada Artikel Ditemukan
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {searchQuery || selectedCategory !== 'all'
-                    ? 'Coba ubah kata kunci atau filter pencarian Anda'
-                    : 'Belum ada artikel yang dipublikasikan'}
+                  Coba ubah filter atau kata kunci pencarian Anda
                 </p>
-                {(searchQuery || selectedCategory !== 'all') && (
+                {(filters.category !== 'all' || filters.search) && (
                   <Button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('all');
-                      setCurrentPage(1);
-                    }}
-                    className="bg-[#0066FF] hover:bg-[#0052CC] rounded-lg shadow-lg"
+                    onClick={handleResetFilters}
+                    variant="outline"
+                    className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-[#0066FF] hover:text-white"
                   >
                     Reset Filter
                   </Button>
@@ -531,7 +401,61 @@ export default function ArticlesPage() {
                 </div>
 
                 {/* Pagination */}
-                {renderPagination()}
+                {totalPages > 1 && (
+                  <FadeInSection delay={0.2}>
+                    <div className="mt-12 flex justify-center items-center gap-2">
+                      <Button
+                        onClick={() => handlePageChange(filters.page - 1)}
+                        disabled={filters.page === 1}
+                        variant="outline"
+                        className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-[#0066FF] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-900 disabled:hover:border-gray-200"
+                      >
+                        <ChevronRight className="w-4 h-4 rotate-180 mr-1" />
+                        Prev
+                      </Button>
+
+                      <div className="flex gap-2">
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                          let page;
+                          if (totalPages <= 5) {
+                            page = i + 1;
+                          } else if (filters.page <= 3) {
+                            page = i + 1;
+                          } else if (filters.page >= totalPages - 2) {
+                            page = totalPages - 4 + i;
+                          } else {
+                            page = filters.page - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={cn(
+                                "min-w-[40px]",
+                                page === filters.page
+                                  ? "bg-[#0066FF] text-white hover:bg-[#0052CC]"
+                                  : "bg-white text-gray-700 border-2 border-gray-200 hover:border-[#0066FF] hover:bg-gray-50"
+                              )}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        onClick={() => handlePageChange(filters.page + 1)}
+                        disabled={filters.page === totalPages}
+                        variant="outline"
+                        className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-[#0066FF] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-900 disabled:hover:border-gray-200"
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </FadeInSection>
+                )}
               </>
             )}
           </div>
@@ -548,13 +472,13 @@ export default function ArticlesPage() {
           <div className="container mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
             <FadeInSection>
               <div className="text-center max-w-3xl mx-auto">
-                <BookOpen className="w-16 h-16 mx-auto mb-6 text-white" />
+                <Sparkles className="w-16 h-16 mx-auto mb-6 text-white" />
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
                   Ingin Berkontribusi?
                 </h2>
                 <p className="text-lg sm:text-xl text-blue-100 mb-8 leading-relaxed">
-                  Bagikan wawasan dan pengalaman Anda dengan komunitas kami. 
-                  Hubungi kami untuk menjadi kontributor artikel.
+                  Bagikan pengetahuan dan pengalaman Anda dengan menulis artikel 
+                  untuk komunitas kami
                 </p>
                 <Link href="/contact">
                   <Button 
