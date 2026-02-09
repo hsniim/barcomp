@@ -1,39 +1,23 @@
 // app/admin/gallery/edit/[id]/page.js
+// FIXED: Same improvements as create page
+// FIXED: Handle existing thumbnail properly
+// FIXED: Better upload error handling
+// FIXED: Category can be set to null (empty)
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-
-const CATEGORIES = [
-  { value: 'teknologi', label: 'Teknologi' },
-  { value: 'kesehatan', label: 'Kesehatan' },
-  { value: 'finansial', label: 'Finansial' },
-  { value: 'bisnis', label: 'Bisnis' },
-  { value: 'inovasi', label: 'Inovasi' },
-  { value: 'karir', label: 'Karir' },
-  { value: 'keberlanjutan', label: 'Keberlanjutan' },
-  { value: 'lainnya', label: 'Lainnya' },
-  { value: 'kantor', label: 'Kantor' },
-  { value: 'acara', label: 'Acara' },
-];
 
 export default function EditGalleryPage() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const id = params?.id;
+
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -41,573 +25,382 @@ export default function EditGalleryPage() {
     image_url: '',
     thumbnail_url: '',
     category: '',
-    tags: '',
+    tags: [],
+    event_id: '',
+    captured_at: '',
     featured: false,
     display_order: 0,
-    captured_at: '',
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState('');
 
+  const categories = [
+    { value: '', label: '-- Pilih Kategori (Opsional) --' },
+    { value: 'teknologi', label: 'Teknologi' },
+    { value: 'kesehatan', label: 'Kesehatan' },
+    { value: 'finansial', label: 'Finansial' },
+    { value: 'bisnis', label: 'Bisnis' },
+    { value: 'inovasi', label: 'Inovasi' },
+    { value: 'karir', label: 'Karir' },
+    { value: 'keberlanjutan', label: 'Keberlanjutan' },
+    { value: 'kantor', label: 'Kantor' },
+    { value: 'acara', label: 'Acara' },
+    { value: 'lainnya', label: 'Lainnya' },
+  ];
+
   useEffect(() => {
-    fetchGallery();
-  }, [params.id]);
+    if (id) {
+      fetchGalleryItem();
+    }
+  }, [id]);
 
-  // Fetch gallery data
-  const fetchGallery = async () => {
+  const fetchGalleryItem = async () => {
+    console.log('[EditGallery] Fetching gallery item:', id);
     try {
-      setLoading(true);
-      const res = await fetch(`/api/gallery/${params.id}`);
-      const data = await res.json();
-
+      setFetching(true);
+      const res = await fetch(`/api/gallery/${id}`);
+      
       if (!res.ok) {
-        throw new Error(data.error || 'Gagal memuat data galeri');
+        throw new Error('Gallery item tidak ditemukan');
       }
 
-      if (data.gallery) {
-        const gallery = data.gallery;
-        
-        // Parse tags from JSON array to comma-separated string
-        const tagsString = Array.isArray(gallery.tags) 
-          ? gallery.tags.join(', ') 
-          : '';
+      const data = await res.json();
+      console.log('[EditGallery] Fetched data:', data);
 
-        // Format captured_at for datetime-local input
-        let capturedAtFormatted = '';
-        if (gallery.captured_at) {
-          const date = new Date(gallery.captured_at);
-          // Format: YYYY-MM-DDTHH:mm
-          capturedAtFormatted = date.toISOString().slice(0, 16);
-        }
+      // Format captured_at for datetime-local input
+      let capturedAt = '';
+      if (data.captured_at) {
+        const date = new Date(data.captured_at);
+        capturedAt = date.toISOString().slice(0, 16);
+      }
 
-        setFormData({
-          title: gallery.title || '',
-          description: gallery.description || '',
-          image_url: gallery.image_url || '',
-          thumbnail_url: gallery.thumbnail_url || '',
-          category: gallery.category || '',
-          tags: tagsString,
-          featured: gallery.featured || false,
-          display_order: gallery.display_order || 0,
-          captured_at: capturedAtFormatted,
-        });
+      setFormData({
+        title: data.title || '',
+        description: data.description || '',
+        image_url: data.image_url || '',
+        thumbnail_url: data.thumbnail_url || '',
+        category: data.category || '',
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        event_id: data.event_id || '',
+        captured_at: capturedAt,
+        featured: !!data.featured,
+        display_order: data.display_order || 0,
+      });
 
-        setImagePreview(gallery.image_url || '');
-        setThumbnailPreview(gallery.thumbnail_url || '');
+      // Set existing image previews
+      if (data.image_url) {
+        setImagePreview(data.image_url);
+      }
+      if (data.thumbnail_url) {
+        setThumbnailPreview(data.thumbnail_url);
       }
     } catch (error) {
-      console.error('Fetch error:', error);
-      toast.error(error.message || 'Gagal memuat data galeri');
+      console.error('[EditGallery] Fetch error:', error);
+      toast.error('Gagal memuat data gallery');
       router.push('/admin/gallery');
     } finally {
-      setLoading(false);
+      setFetching(false);
     }
   };
 
-  // Handle input change
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // Handle select change
-  const handleSelectChange = (name, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle image upload (main image)
-  const handleImageUpload = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    console.log('[EditGallery] New image selected:', file?.name);
+    
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Tipe file tidak didukung: ${file.type}`);
+        return;
+      }
+      
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`Ukuran file terlalu besar: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        return;
+      }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('File harus berupa gambar');
-      return;
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
+  };
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran gambar maksimal 5MB');
-      return;
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files?.[0];
+    console.log('[EditGallery] New thumbnail selected:', file?.name);
+    
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Tipe file tidak didukung: ${file.type}`);
+        return;
+      }
+      
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`Ukuran file terlalu besar: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        return;
+      }
+
+      setThumbnailFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const uploadImage = async (file, type = 'gallery') => {
+    console.log('[EditGallery] Uploading:', file.name);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
 
     try {
       setUploading(true);
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      formDataUpload.append('type', 'gallery');
-
       const res = await fetch('/api/upload-image', {
         method: 'POST',
-        body: formDataUpload,
+        body: formData,
       });
 
       const data = await res.json();
+      console.log('[EditGallery] Upload response:', data);
 
       if (!res.ok) {
         throw new Error(data.error || 'Upload gagal');
       }
 
-      setFormData(prev => ({ ...prev, image_url: data.url }));
-      setImagePreview(data.url);
-      toast.success('Gambar berhasil diupload');
+      return data.path;
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Gagal upload gambar');
+      console.error('[EditGallery] Upload error:', error);
+      throw error;
     } finally {
       setUploading(false);
     }
   };
 
-  // Handle thumbnail upload
-  const handleThumbnailUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('File harus berupa gambar');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran gambar maksimal 5MB');
-      return;
-    }
-
-    try {
-      setUploadingThumbnail(true);
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      formDataUpload.append('type', 'gallery');
-
-      const res = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formDataUpload,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Upload gagal');
-      }
-
-      setFormData(prev => ({ ...prev, thumbnail_url: data.url }));
-      setThumbnailPreview(data.url);
-      toast.success('Thumbnail berhasil diupload');
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Gagal upload thumbnail');
-    } finally {
-      setUploadingThumbnail(false);
-    }
-  };
-
-  // Remove image
-  const removeImage = () => {
-    setFormData(prev => ({ ...prev, image_url: '' }));
-    setImagePreview('');
-  };
-
-  // Remove thumbnail
-  const removeThumbnail = () => {
-    setFormData(prev => ({ ...prev, thumbnail_url: '' }));
-    setThumbnailPreview('');
-  };
-
-  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[EditGallery] Submit started');
 
-    // Validation
     if (!formData.title.trim()) {
-      toast.error('Judul harus diisi');
+      toast.error('Judul wajib diisi');
       return;
     }
 
-    if (!formData.image_url) {
-      toast.error('Gambar utama harus diupload');
-      return;
-    }
+    setLoading(true);
 
     try {
-      setSubmitting(true);
+      let imageUrl = formData.image_url;
+      let thumbnailUrl = formData.thumbnail_url;
 
-      // Prepare tags as array
-      const tagsArray = formData.tags
-        ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
-        : [];
+      // Upload new main image if changed
+      if (imageFile) {
+        console.log('[EditGallery] Uploading new main image...');
+        toast.info('Mengupload gambar baru...');
+        imageUrl = await uploadImage(imageFile, 'gallery');
+        console.log('[EditGallery] New image uploaded:', imageUrl);
+      }
+
+      // Upload new thumbnail if changed
+      if (thumbnailFile) {
+        console.log('[EditGallery] Uploading new thumbnail...');
+        toast.info('Mengupload thumbnail baru...');
+        thumbnailUrl = await uploadImage(thumbnailFile, 'gallery');
+        console.log('[EditGallery] New thumbnail uploaded:', thumbnailUrl);
+      }
 
       const payload = {
-        title: formData.title.trim(),
-        description: formData.description.trim() || null,
-        image_url: formData.image_url,
-        thumbnail_url: formData.thumbnail_url || null,
+        ...formData,
+        image_url: imageUrl,
+        thumbnail_url: thumbnailUrl || null,
         category: formData.category || null,
-        tags: tagsArray.length > 0 ? tagsArray : null,
-        featured: formData.featured,
-        display_order: parseInt(formData.display_order) || 0,
+        tags: formData.tags.length > 0 ? formData.tags : [],
+        event_id: formData.event_id || null,
         captured_at: formData.captured_at || null,
       };
 
-      const res = await fetch(`/api/gallery/${params.id}`, {
+      console.log('[EditGallery] Updating with payload:', payload);
+
+      const res = await fetch(`/api/gallery/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
+      console.log('[EditGallery] Update response:', data);
 
       if (!res.ok) {
-        throw new Error(data.error || 'Gagal mengupdate galeri');
+        throw new Error(data.error || 'Gagal update gallery');
       }
 
-      toast.success('Galeri berhasil diupdate');
+      toast.success('Gallery berhasil diupdate');
       router.push('/admin/gallery');
       router.refresh();
     } catch (error) {
-      console.error('Submit error:', error);
-      toast.error(error.message || 'Gagal mengupdate galeri');
+      console.error('[EditGallery] Submit error:', error);
+      toast.error(error.message || 'Gagal menyimpan perubahan');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  if (fetching) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
-          <p className="mt-4 text-sm text-gray-600">Memuat data galeri...</p>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <p>Memuat data...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <Link
-              href="/admin/gallery"
-              className="mb-2 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Kembali ke Galeri
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Galeri</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Update informasi galeri Barcomp
-            </p>
-          </div>
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <h1 className="text-3xl font-bold mb-6">Edit Gallery Item</h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Title */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Judul <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+            required
+          />
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            {/* Main Image Upload */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Gambar Utama</CardTitle>
-                <CardDescription>
-                  Upload gambar utama untuk galeri (maksimal 5MB)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {imagePreview ? (
-                  <div className="relative">
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border-2 border-gray-200">
-                      <Image
-                        src={imagePreview}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={removeImage}
-                      >
-                        <X className="mr-2 h-4 w-4" />
-                        Hapus Gambar
-                      </Button>
-                      <Label
-                        htmlFor="image-upload-replace"
-                        className="inline-flex cursor-pointer items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        {uploading ? 'Mengupload...' : 'Ganti Gambar'}
-                      </Label>
-                      <Input
-                        id="image-upload-replace"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={uploading}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 transition-colors hover:border-gray-400">
-                    <ImageIcon className="mb-4 h-12 w-12 text-gray-400" />
-                    <Label
-                      htmlFor="image-upload"
-                      className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700"
-                    >
-                      {uploading ? 'Mengupload...' : 'Pilih Gambar'}
-                    </Label>
-                    <Input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={uploading}
-                      className="hidden"
-                    />
-                    <p className="mt-2 text-xs text-gray-500">
-                      PNG, JPG, WebP atau GIF (max. 5MB)
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Deskripsi</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+            rows={4}
+          />
+        </div>
 
-            {/* Thumbnail Upload (Optional) */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thumbnail (Opsional)</CardTitle>
-                <CardDescription>
-                  Upload thumbnail terpisah atau biarkan kosong untuk menggunakan gambar utama
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {thumbnailPreview ? (
-                  <div className="relative">
-                    <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-lg border-2 border-gray-200">
-                      <Image
-                        src={thumbnailPreview}
-                        alt="Thumbnail Preview"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={removeThumbnail}
-                      >
-                        <X className="mr-2 h-4 w-4" />
-                        Hapus Thumbnail
-                      </Button>
-                      <Label
-                        htmlFor="thumbnail-upload-replace"
-                        className="inline-flex cursor-pointer items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        {uploadingThumbnail ? 'Mengupload...' : 'Ganti Thumbnail'}
-                      </Label>
-                      <Input
-                        id="thumbnail-upload-replace"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleThumbnailUpload}
-                        disabled={uploadingThumbnail}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:border-gray-400">
-                    <ImageIcon className="mb-3 h-10 w-10 text-gray-400" />
-                    <Label
-                      htmlFor="thumbnail-upload"
-                      className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700"
-                    >
-                      {uploadingThumbnail ? 'Mengupload...' : 'Pilih Thumbnail'}
-                    </Label>
-                    <Input
-                      id="thumbnail-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleThumbnailUpload}
-                      disabled={uploadingThumbnail}
-                      className="hidden"
-                    />
-                    <p className="mt-2 text-xs text-gray-500">
-                      PNG, JPG, WebP atau GIF (max. 5MB)
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Informasi Galeri</CardTitle>
-                <CardDescription>
-                  Update detail informasi galeri
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Title */}
-                <div className="space-y-2">
-                  <Label htmlFor="title">
-                    Judul <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    placeholder="Masukkan judul galeri"
-                    required
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Deskripsi</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Masukkan deskripsi galeri (opsional)"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Category */}
-                <div className="space-y-2">
-                  <Label htmlFor="category">Kategori</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => handleSelectChange('category', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    placeholder="Pisahkan dengan koma (contoh: outdoor, team, meeting)"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Pisahkan setiap tag dengan koma
-                  </p>
-                </div>
-
-                {/* Captured At */}
-                <div className="space-y-2">
-                  <Label htmlFor="captured_at">Tanggal Pengambilan</Label>
-                  <Input
-                    id="captured_at"
-                    name="captured_at"
-                    type="datetime-local"
-                    value={formData.captured_at}
-                    onChange={handleChange}
-                  />
-                  <p className="text-xs text-gray-500">
-                    Kosongkan untuk menggunakan waktu upload
-                  </p>
-                </div>
-
-                {/* Display Order */}
-                <div className="space-y-2">
-                  <Label htmlFor="display_order">Urutan Tampilan</Label>
-                  <Input
-                    id="display_order"
-                    name="display_order"
-                    type="number"
-                    value={formData.display_order}
-                    onChange={handleChange}
-                    placeholder="0"
-                    min="0"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Angka lebih kecil akan ditampilkan lebih dulu
-                  </p>
-                </div>
-
-                {/* Featured */}
-                <div className="flex items-center space-x-2">
-                  <input
-                    id="featured"
-                    name="featured"
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={handleChange}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <Label htmlFor="featured" className="cursor-pointer font-normal">
-                    Tampilkan sebagai galeri unggulan
-                  </Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/admin/gallery')}
-                disabled={submitting}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={submitting || uploading || uploadingThumbnail}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Update Galeri
-                  </>
-                )}
-              </Button>
+        {/* Main Image */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Gambar Utama</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+          {imagePreview && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-2">
+                {imageFile ? 'Preview baru:' : 'Gambar saat ini:'}
+              </p>
+              <img src={imagePreview} alt="Preview" className="max-h-64 rounded" />
             </div>
-          </div>
-        </form>
-      </div>
+          )}
+        </div>
+
+        {/* Thumbnail */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Thumbnail <span className="text-gray-400 text-xs">(opsional)</span>
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+          {thumbnailPreview && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-2">
+                {thumbnailFile ? 'Preview baru:' : 'Thumbnail saat ini:'}
+              </p>
+              <img src={thumbnailPreview} alt="Thumbnail" className="max-h-32 rounded" />
+            </div>
+          )}
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Kategori</label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+          >
+            {categories.map((cat) => (
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Captured Date */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Tanggal Foto</label>
+          <input
+            type="datetime-local"
+            value={formData.captured_at}
+            onChange={(e) => setFormData({ ...formData, captured_at: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Featured */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            checked={formData.featured}
+            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+            className="mr-2"
+          />
+          <label className="text-sm font-medium">Featured</label>
+        </div>
+
+        {/* Display Order */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Urutan Tampil</label>
+          <input
+            type="number"
+            value={formData.display_order}
+            onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Submit */}
+        <div className="flex gap-4">
+          <button
+            type="submit"
+            disabled={loading || uploading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Menyimpan...' : uploading ? 'Mengupload...' : 'Update'}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            disabled={loading || uploading}
+            className="px-6 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+          >
+            Batal
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
