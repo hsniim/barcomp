@@ -1,7 +1,11 @@
 'use client';
 
 // app/admin/articles/edit/[id]/page.js
-// FIXED: Added credentials, proper error handling, retry logic, field mapping
+// FIXED: Corrected upload endpoint from /api/upload to /api/upload-image
+// FIXED: Added type parameter for upload routing
+// FIXED: Added comprehensive logging for debugging
+// FIXED: Proper error handling and image preview
+// FIXED: Added credentials for all API calls
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -38,7 +42,7 @@ export default function EditArticle() {
     category: '',
     tags: [],
     featured: false,
-    status: 'published', // FIXED: Preserve status
+    status: 'published',
   });
 
   const [tagInput, setTagInput] = useState('');
@@ -77,6 +81,7 @@ export default function EditArticle() {
 
       const data = await res.json();
       console.log(`[EditArticle] Article fetched successfully:`, data.title);
+      console.log(`[EditArticle] Cover image from DB:`, data.cover_image_url || data.cover_image);
 
       // FIXED: Handle both field name formats
       setFormData({
@@ -98,7 +103,7 @@ export default function EditArticle() {
       setLoading(false);
 
     } catch (error) {
-      console.error('Failed to fetch article:', error);
+      console.error('[EditArticle] Failed to fetch article:', error);
       
       // IMPROVED: Show error toast instead of silent redirect
       toast.error('Gagal memuat artikel: ' + error.message, {
@@ -111,8 +116,6 @@ export default function EditArticle() {
       });
 
       setLoading(false);
-      // REMOVED: Auto redirect - let user decide
-      // setTimeout(() => router.push('/admin/articles'), 2000);
     }
   };
 
@@ -134,6 +137,7 @@ export default function EditArticle() {
   // Handle form changes
   // ============================================================================
   const handleChange = (field, value) => {
+    console.log(`[EditArticle] Field changed: ${field} =`, value);
     setFormData((prev) => ({ ...prev, [field]: value }));
     
     // Auto-generate slug from title
@@ -144,6 +148,7 @@ export default function EditArticle() {
         .replace(/\s+/g, '-')
         .replace(/--+/g, '-')
         .trim();
+      console.log(`[EditArticle] Auto-generated slug: ${slug}`);
       setFormData((prev) => ({ ...prev, slug }));
     }
   };
@@ -154,58 +159,92 @@ export default function EditArticle() {
       .split(',')
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0);
+    console.log(`[EditArticle] Tags updated:`, tagsArray);
     setFormData((prev) => ({ ...prev, tags: tagsArray }));
   };
 
   // ============================================================================
-  // IMPROVED: Upload cover image with better error handling
+  // FIXED: Upload cover image with CORRECT endpoint and type parameter
   // ============================================================================
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('[EditArticle] No file selected');
+      return;
+    }
+
+    console.log('[EditArticle] File selected:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      sizeInMB: (file.size / 1024 / 1024).toFixed(2) + 'MB'
+    });
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      console.error('[EditArticle] Invalid file type:', file.type);
       toast.error('File harus berupa gambar');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.error('[EditArticle] File too large:', file.size);
       toast.error('Ukuran file maksimal 5MB');
       return;
     }
 
     setUploading(true);
+    console.log('[EditArticle] Starting upload process...');
 
     try {
-      console.log('[EditArticle] Uploading file:', file.name, file.size, 'bytes');
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('type', 'article'); // FIXED: Added type parameter
 
-      const formData = new FormData();
-      formData.append('file', file);
+      console.log('[EditArticle] FormData prepared, sending to /api/upload-image...');
 
-      const res = await fetch('/api/upload', {
+      // FIXED: Corrected endpoint from /api/upload to /api/upload-image
+      const res = await fetch('/api/upload-image', {
         method: 'POST',
         credentials: 'include', // FIXED: Include auth
-        body: formData,
+        body: uploadFormData,
+        // IMPORTANT: Do NOT set Content-Type header - let browser set it with boundary
       });
+
+      console.log('[EditArticle] Upload response status:', res.status);
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Upload failed');
+        console.error('[EditArticle] Upload failed:', errorData);
+        throw new Error(errorData.error || `Upload failed with status ${res.status}`);
       }
 
       const data = await res.json();
-      console.log('[EditArticle] Upload success:', data.url);
+      console.log('[EditArticle] Upload success response:', data);
 
-      setFormData((prev) => ({ ...prev, cover_image_url: data.url }));
-      toast.success('Cover image berhasil diupload');
+      // FIXED: Use the correct field from response (path or url)
+      const imageUrl = data.path || data.url;
+      console.log('[EditArticle] Setting cover_image_url to:', imageUrl);
+
+      setFormData((prev) => ({ 
+        ...prev, 
+        cover_image_url: imageUrl 
+      }));
+
+      toast.success('Cover image berhasil diupload', {
+        description: `File: ${data.fileName || file.name}`
+      });
+
+      console.log('[EditArticle] Upload complete, formData updated');
 
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('[EditArticle] Upload error:', error);
+      console.error('[EditArticle] Error stack:', error.stack);
       toast.error('Gagal upload gambar: ' + error.message);
     } finally {
       setUploading(false);
+      console.log('[EditArticle] Upload process finished');
     }
   };
 
@@ -213,6 +252,8 @@ export default function EditArticle() {
   // FIXED: Update article with proper validation and field mapping
   // ============================================================================
   const handleUpdate = async () => {
+    console.log('[EditArticle] Starting validation...');
+
     // Validation
     if (!formData.title?.trim()) {
       toast.error('Judul artikel wajib diisi');
@@ -239,23 +280,41 @@ export default function EditArticle() {
       return;
     }
 
+    console.log('[EditArticle] Validation passed, preparing update...');
     setSaving(true);
 
     try {
       console.log('[EditArticle] Updating article ID:', id);
       console.log('[EditArticle] Form data:', {
         ...formData,
+        content: `(${formData.content.length} chars)`,
+      });
+
+      // FIXED: Send with correct field mapping
+      const updatePayload = {
+        title: formData.title.trim(),
+        slug: formData.slug.trim(),
+        excerpt: formData.excerpt.trim(),
+        content: formData.content.trim(),
+        cover_image_url: formData.cover_image_url.trim(), // FIXED: Use cover_image_url
+        category: formData.category.trim(),
+        tags: formData.tags,
+        featured: formData.featured,
+        status: formData.status, // FIXED: Preserve status
+      };
+
+      console.log('[EditArticle] Sending PUT request with payload:', {
+        ...updatePayload,
         content: '(hidden)',
       });
 
-      // FIXED: Send with credentials
       const res = await fetch(`/api/articles/${id}`, {
         method: 'PUT',
         credentials: 'include', // FIXED: Include auth
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updatePayload),
       });
 
       console.log('[EditArticle] Update response status:', res.status);
@@ -263,33 +322,35 @@ export default function EditArticle() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         console.error('[EditArticle] Update failed:', errorData);
-        throw new Error(errorData.error || `HTTP ${res.status}`);
+        throw new Error(errorData.error || `Update failed with status ${res.status}`);
       }
 
       const data = await res.json();
       console.log('[EditArticle] Update success:', data);
 
       toast.success('Artikel berhasil diupdate!', {
-        description: 'Redirecting ke daftar artikel...',
+        description: 'Perubahan telah disimpan',
       });
 
       // Redirect after short delay
       setTimeout(() => {
+        console.log('[EditArticle] Redirecting to articles list...');
         router.push('/admin/articles');
       }, 1000);
 
     } catch (error) {
-      console.error('Update error:', error);
-      toast.error('Gagal update artikel: ' + error.message);
+      console.error('[EditArticle] Update error:', error);
+      console.error('[EditArticle] Error stack:', error.stack);
+      toast.error('Gagal mengupdate artikel: ' + error.message);
     } finally {
       setSaving(false);
+      console.log('[EditArticle] Update process finished');
     }
   };
 
   // ============================================================================
-  // Render
+  // LOADING STATE
   // ============================================================================
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -301,6 +362,9 @@ export default function EditArticle() {
     );
   }
 
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -421,13 +485,23 @@ export default function EditArticle() {
               )}
             </div>
 
-            {/* Preview */}
+            {/* FIXED: Preview image - only shows if cover_image_url exists */}
             {formData.cover_image_url && (
               <div className="mt-3">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Current image: {formData.cover_image_url}
+                </p>
                 <img
                   src={formData.cover_image_url}
                   alt="Cover preview"
                   className="w-full max-w-md h-48 object-cover rounded-lg border"
+                  onError={(e) => {
+                    console.error('[EditArticle] Image failed to load:', formData.cover_image_url);
+                    e.target.style.display = 'none';
+                  }}
+                  onLoad={() => {
+                    console.log('[EditArticle] Image loaded successfully:', formData.cover_image_url);
+                  }}
                 />
               </div>
             )}
@@ -456,7 +530,7 @@ export default function EditArticle() {
             </Select>
           </div>
 
-          {/* Status - ADDED */}
+          {/* Status */}
           <div className="space-y-2">
             <Label htmlFor="status">Status Publikasi *</Label>
             <Select
