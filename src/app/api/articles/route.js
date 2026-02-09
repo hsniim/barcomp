@@ -15,6 +15,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     
     // Extract query params
+    const slug = searchParams.get('slug'); // untuk single article by slug
     const status = searchParams.get('status'); // 'published', 'draft', atau null (all)
     const category = searchParams.get('category'); // 'teknologi', 'kesehatan', dll
     const search = searchParams.get('search'); // keyword search
@@ -23,12 +24,18 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit') || '9', 10);
     
     console.log('[GET /api/articles] Query params:', {
-      status, category, search, featured, page, limit
+      slug, status, category, search, featured, page, limit
     });
 
     // Build WHERE clause dengan parameterized queries (prevent SQL injection)
     const conditions = [];
     const params = [];
+
+    // Filter by slug (untuk detail page)
+    if (slug) {
+      conditions.push('slug = ?');
+      params.push(slug);
+    }
 
     // Filter by status (untuk public pages: published only)
     if (status) {
