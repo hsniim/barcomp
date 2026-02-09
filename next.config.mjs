@@ -15,9 +15,5 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   reactCompiler: true,
-  experimental: {
-    turbopack: false
-  }
 };
-
 export default nextConfig;

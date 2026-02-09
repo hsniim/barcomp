@@ -4,7 +4,6 @@ import { cookies } from 'next/headers';
 
 const SECRET = process.env.JWT_SECRET || 'super-secret-key-ganti-di-env';
 
-// Durasi default dan remember me (dalam detik)
 const DEFAULT_EXPIRY_SECONDS = 24 * 60 * 60;          // 24 jam
 const REMEMBER_ME_EXPIRY_SECONDS = 30 * 24 * 60 * 60; // 30 hari
 
@@ -21,47 +20,40 @@ export function signToken(user, rememberMe = false) {
   });
 }
 
-// Versi untuk route handlers (menerima request)
-export function verifyToken(request) {
+// Versi utama & direkomendasikan (untuk route handlers & server components)
+// Tidak perlu parameter request lagi
+export async function verifyToken() {
   try {
-    // Ambil token dari cookie via request.headers
-    const cookieHeader = request.headers.get('cookie');
-    if (!cookieHeader) return null;
-
-    const tokenMatch = cookieHeader.match(/auth_token=([^;]*)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
-
-    if (!token) return null;
-
-    return jwt.verify(token, SECRET);
-  } catch (err) {
-    console.error('Token verification failed in route handler:', err.message);
-    return null;
-  }
-}
-
-// Versi lama (untuk server components / pages yang pakai cookies())
-export async function verifyTokenFromCookies() {
-  try {
-    const cookieStore = await cookies();
+    const cookieStore = await cookies();           // ← wajib await di Next.js 15+
     const token = cookieStore.get('auth_token')?.value;
 
-    if (!token) return null;
+    if (!token) {
+      console.log('[verifyToken] Token tidak ditemukan di cookies');
+      return null;
+    }
 
-    return jwt.verify(token, SECRET);
+    console.log('[verifyToken] Token ditemukan, verifying...');
+    const decoded = jwt.verify(token, SECRET);
+
+    if (!decoded?.role) {
+      console.warn('[verifyToken] Token valid tapi role tidak ditemukan');
+    }
+
+    console.log('[verifyToken] Token valid untuk:', decoded.email || decoded.id);
+    return decoded;
   } catch (err) {
-    console.error('Token verification failed (cookies):', err.message);
+    console.error('[verifyToken] Token verification failed:', err.name, err.message);  // Log error spesifik (e.g., TokenExpiredError)
     return null;
   }
 }
 
-// Untuk middleware atau tempat lain yang sync
+// Versi untuk middleware atau manual token passing (sync)
 export function verifyTokenSync(token) {
   if (!token) return null;
   try {
     return jwt.verify(token, SECRET);
   } catch (err) {
-    console.error('Token verification failed (sync):', err.message);
+    console.error('[verifyTokenSync] Token verification failed:', err.message);
     return null;
   }
 }
@@ -75,15 +67,15 @@ export async function setAuthCookie(token, rememberMe = false) {
 
     cookieStore.set('auth_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',  // false di dev untuk localhost
-      sameSite: 'lax',                                // 'lax' untuk mendukung redirect
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: maxAgeSeconds,
       path: '/',
     });
 
-    console.log(`Cookie auth_token diset dengan maxAge: ${maxAgeSeconds} detik`);
+    console.log(`[setAuthCookie] auth_token diset (maxAge: ${maxAgeSeconds}s)`);
   } catch (error) {
-    console.error('Error setting auth cookie:', error);
+    console.error('[setAuthCookie] Error:', error);
     throw error;
   }
 }
@@ -92,7 +84,8 @@ export async function clearAuthCookie() {
   try {
     const cookieStore = await cookies();
     cookieStore.delete('auth_token');
+    console.log('[clearAuthCookie] auth_token dihapus');
   } catch (error) {
-    console.error('Error clearing auth cookie:', error);
+    console.error('[clearAuthCookie] Error:', error);
   }
 }

@@ -1,306 +1,404 @@
 // app/admin/gallery/edit/[id]/page.js
+// FIXED: Same improvements as create page
+// FIXED: Handle existing thumbnail properly
+// FIXED: Better upload error handling
+// FIXED: Category can be set to null (empty)
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
-import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function EditGalleryPage() {
   const router = useRouter();
   const params = useParams();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [events, setEvents] = useState([]);
+  const id = params?.id;
+
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    imageUrl: '',
-    thumbnailUrl: '',
+    image_url: '',
+    thumbnail_url: '',
     category: '',
     tags: [],
-    eventId: ''
+    event_id: '',
+    captured_at: '',
+    featured: false,
+    display_order: 0,
   });
 
-  useEffect(() => {
-    fetchGallery();
-    fetchEvents();
-  }, []);
+  const [imageFile, setImageFile] = useState(null);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [thumbnailPreview, setThumbnailPreview] = useState('');
 
-  const fetchGallery = async () => {
+  const categories = [
+    { value: '', label: '-- Pilih Kategori (Opsional) --' },
+    { value: 'teknologi', label: 'Teknologi' },
+    { value: 'kesehatan', label: 'Kesehatan' },
+    { value: 'finansial', label: 'Finansial' },
+    { value: 'bisnis', label: 'Bisnis' },
+    { value: 'inovasi', label: 'Inovasi' },
+    { value: 'karir', label: 'Karir' },
+    { value: 'keberlanjutan', label: 'Keberlanjutan' },
+    { value: 'kantor', label: 'Kantor' },
+    { value: 'acara', label: 'Acara' },
+    { value: 'lainnya', label: 'Lainnya' },
+  ];
+
+  useEffect(() => {
+    if (id) {
+      fetchGalleryItem();
+    }
+  }, [id]);
+
+  const fetchGalleryItem = async () => {
+    console.log('[EditGallery] Fetching gallery item:', id);
     try {
-      const response = await fetch(`/api/gallery/${params.id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      setFetching(true);
+      const res = await fetch(`/api/gallery/${id}`);
+      
+      if (!res.ok) {
+        throw new Error('Gallery item tidak ditemukan');
+      }
+
+      const data = await res.json();
+      console.log('[EditGallery] Fetched data:', data);
+
+      // Format captured_at for datetime-local input
+      let capturedAt = '';
+      if (data.captured_at) {
+        const date = new Date(data.captured_at);
+        capturedAt = date.toISOString().slice(0, 16);
+      }
+
+      setFormData({
+        title: data.title || '',
+        description: data.description || '',
+        image_url: data.image_url || '',
+        thumbnail_url: data.thumbnail_url || '',
+        category: data.category || '',
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        event_id: data.event_id || '',
+        captured_at: capturedAt,
+        featured: !!data.featured,
+        display_order: data.display_order || 0,
       });
 
-      const data = await response.json();
-      if (data.success && data.gallery) {
-        const gallery = data.gallery;
-        setFormData({
-          title: gallery.title || '',
-          description: gallery.description || '',
-          imageUrl: gallery.imageUrl || '',
-          thumbnailUrl: gallery.thumbnailUrl || '',
-          category: gallery.category || '',
-          tags: gallery.tags || [],
-          eventId: gallery.eventId || ''
-        });
-      } else {
-        alert('Photo not found');
-        router.push('/admin/gallery');
+      // Set existing image previews
+      if (data.image_url) {
+        setImagePreview(data.image_url);
+      }
+      if (data.thumbnail_url) {
+        setThumbnailPreview(data.thumbnail_url);
       }
     } catch (error) {
-      console.error('Failed to fetch gallery:', error);
-      alert('Failed to load photo');
+      console.error('[EditGallery] Fetch error:', error);
+      toast.error('Gagal memuat data gallery');
+      router.push('/admin/gallery');
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    console.log('[EditGallery] New image selected:', file?.name);
+    
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Tipe file tidak didukung: ${file.type}`);
+        return;
+      }
+      
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`Ukuran file terlalu besar: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files?.[0];
+    console.log('[EditGallery] New thumbnail selected:', file?.name);
+    
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Tipe file tidak didukung: ${file.type}`);
+        return;
+      }
+      
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`Ukuran file terlalu besar: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        return;
+      }
+
+      setThumbnailFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file, type = 'gallery') => {
+    console.log('[EditGallery] Uploading:', file.name);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    try {
+      setUploading(true);
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      console.log('[EditGallery] Upload response:', data);
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Upload gagal');
+      }
+
+      return data.path;
+    } catch (error) {
+      console.error('[EditGallery] Upload error:', error);
+      throw error;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('[EditGallery] Submit started');
+
+    if (!formData.title.trim()) {
+      toast.error('Judul wajib diisi');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      let imageUrl = formData.image_url;
+      let thumbnailUrl = formData.thumbnail_url;
+
+      // Upload new main image if changed
+      if (imageFile) {
+        console.log('[EditGallery] Uploading new main image...');
+        toast.info('Mengupload gambar baru...');
+        imageUrl = await uploadImage(imageFile, 'gallery');
+        console.log('[EditGallery] New image uploaded:', imageUrl);
+      }
+
+      // Upload new thumbnail if changed
+      if (thumbnailFile) {
+        console.log('[EditGallery] Uploading new thumbnail...');
+        toast.info('Mengupload thumbnail baru...');
+        thumbnailUrl = await uploadImage(thumbnailFile, 'gallery');
+        console.log('[EditGallery] New thumbnail uploaded:', thumbnailUrl);
+      }
+
+      const payload = {
+        ...formData,
+        image_url: imageUrl,
+        thumbnail_url: thumbnailUrl || null,
+        category: formData.category || null,
+        tags: formData.tags.length > 0 ? formData.tags : [],
+        event_id: formData.event_id || null,
+        captured_at: formData.captured_at || null,
+      };
+
+      console.log('[EditGallery] Updating with payload:', payload);
+
+      const res = await fetch(`/api/gallery/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      console.log('[EditGallery] Update response:', data);
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal update gallery');
+      }
+
+      toast.success('Gallery berhasil diupdate');
+      router.push('/admin/gallery');
+      router.refresh();
+    } catch (error) {
+      console.error('[EditGallery] Submit error:', error);
+      toast.error(error.message || 'Gagal menyimpan perubahan');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchEvents = async () => {
-    try {
-      const response = await fetch('/api/events?status=published&limit=100', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setEvents(data.events);
-      }
-    } catch (error) {
-      console.error('Failed to fetch events:', error);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleTagsChange = (e) => {
-    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(Boolean);
-    setFormData(prev => ({ ...prev, tags }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    try {
-      const submitData = {
-        ...formData,
-        eventId: formData.eventId || null
-      };
-
-      const response = await fetch(`/api/gallery/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(submitData)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert('Photo updated successfully!');
-        router.push('/admin/gallery');
-      } else {
-        alert(data.error || 'Failed to update photo');
-      }
-    } catch (error) {
-      console.error('Failed to update photo:', error);
-      alert('Failed to update photo');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) {
+  if (fetching) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="container mx-auto px-4 py-8">
+        <p>Memuat data...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/admin/gallery">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Photo</h1>
-          <p className="mt-2 text-gray-600">Update photo information</p>
-        </div>
-      </div>
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <h1 className="text-3xl font-bold mb-6">Edit Gallery Item</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Main Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Photo Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter photo title"
-              />
+        {/* Title */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Judul <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Deskripsi</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+            rows={4}
+          />
+        </div>
+
+        {/* Main Image */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Gambar Utama</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+          {imagePreview && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-2">
+                {imageFile ? 'Preview baru:' : 'Gambar saat ini:'}
+              </p>
+              <img src={imagePreview} alt="Preview" className="max-h-64 rounded" />
             </div>
+          )}
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Short description (optional)"
-              />
+        {/* Thumbnail */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Thumbnail <span className="text-gray-400 text-xs">(opsional)</span>
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+          {thumbnailPreview && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-2">
+                {thumbnailFile ? 'Preview baru:' : 'Thumbnail saat ini:'}
+              </p>
+              <img src={thumbnailPreview} alt="Thumbnail" className="max-h-32 rounded" />
             </div>
+          )}
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image URL *
-              </label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/photo.jpg"
-              />
-              <p className="mt-1 text-sm text-gray-500">Full size image URL</p>
-            </div>
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Kategori</label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+          >
+            {categories.map((cat) => (
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thumbnail URL
-              </label>
-              <input
-                type="url"
-                name="thumbnailUrl"
-                value={formData.thumbnailUrl}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/thumbnail.jpg (optional)"
-              />
-              <p className="mt-1 text-sm text-gray-500">Leave empty to use image URL</p>
-            </div>
+        {/* Captured Date */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Tanggal Foto</label>
+          <input
+            type="datetime-local"
+            value={formData.captured_at}
+            onChange={(e) => setFormData({ ...formData, captured_at: e.target.value })}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
 
-            {/* Image Preview */}
-            {formData.imageUrl && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Preview
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <img
-                    src={formData.imageUrl}
-                    alt="Preview"
-                    className="w-full max-w-md mx-auto rounded-lg"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div className="hidden flex-col items-center justify-center py-8 text-gray-400">
-                    <ImageIcon className="w-16 h-16 mb-2" />
-                    <p className="text-sm">Failed to load image</p>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Featured */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            checked={formData.featured}
+            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+            className="mr-2"
+          />
+          <label className="text-sm font-medium">Featured</label>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Events, Team, Office, etc."
-                />
-              </div>
+        {/* Display Order */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Urutan Tampil</label>
+          <input
+            type="number"
+            value={formData.display_order}
+            onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Related Event
-                </label>
-                <select
-                  name="eventId"
-                  value={formData.eventId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">No event</option>
-                  {events.map((event) => (
-                    <option key={event.id} value={event.id}>
-                      {event.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                value={formData.tags.join(', ')}
-                onChange={handleTagsChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="conference, team, 2026"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-4">
-          <Link href="/admin/gallery">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Updating...' : 'Update Photo'}
-          </Button>
+        {/* Submit */}
+        <div className="flex gap-4">
+          <button
+            type="submit"
+            disabled={loading || uploading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Menyimpan...' : uploading ? 'Mengupload...' : 'Update'}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            disabled={loading || uploading}
+            className="px-6 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+          >
+            Batal
+          </button>
         </div>
       </form>
     </div>

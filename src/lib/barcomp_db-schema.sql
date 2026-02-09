@@ -24,7 +24,7 @@ CREATE TABLE articles (
     slug VARCHAR(255) UNIQUE NOT NULL,
     excerpt TEXT NOT NULL,
     content LONGTEXT NOT NULL,
-    cover_image TEXT NOT NULL,  -- untuk URL cloud panjang
+    cover_image TEXT NOT NULL,
     category ENUM('teknologi', 'kesehatan', 'finansial', 'bisnis', 'inovasi', 'karir', 'keberlanjutan', 'lainnya') NULL DEFAULT NULL,
     tags JSON,
     featured BOOLEAN DEFAULT FALSE,
@@ -90,7 +90,7 @@ CREATE TABLE gallery (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    image_url TEXT NOT NULL,      -- URL cloud
+    image_url TEXT NOT NULL,
     thumbnail_url TEXT,
     category ENUM('teknologi', 'kesehatan', 'finansial', 'bisnis', 'inovasi', 'karir', 'keberlanjutan', 'lainnya', 'kantor', 'acara') NULL DEFAULT NULL,
     tags JSON,

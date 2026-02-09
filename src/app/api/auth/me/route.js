@@ -1,11 +1,11 @@
 // app/api/auth/me/route.js
-import { verifyToken } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { verifyToken } from '@/lib/auth';
 
-export async function GET(request) {
+export async function GET() {
   try {
-    // Pass request ke verifyToken agar bisa membaca cookies dari header
-    const user = await verifyToken(request);
+    // Tidak perlu parameter request lagi
+    const user = await verifyToken();   // ← await karena async
 
     if (!user) {
       return NextResponse.json(
@@ -17,13 +17,11 @@ export async function GET(request) {
       );
     }
 
-    // Optional: tambahkan informasi minimal user yang aman untuk dikirim ke client
     const safeUser = {
       id: user.id,
       email: user.email,
       fullName: user.fullName || user.full_name,
       role: user.role,
-      // JANGAN kirim data sensitif seperti password hash dll
     };
 
     return NextResponse.json({

@@ -10,6 +10,7 @@ import {
   X, Image as ImageIcon, Check, ChevronDown 
 } from 'lucide-react';
 import React from 'react';
+import { toast } from 'sonner';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -57,6 +58,10 @@ function validateArticle(data) {
     errors.category = 'Category is required';
   }
 
+  if (!data.cover_image_url || data.cover_image_url.trim().length === 0) {
+    errors.cover_image_url = 'Cover image is required';
+  }
+
   if (data.slug && !/^[a-z0-9-]+$/.test(data.slug)) {
     errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
   }
@@ -65,42 +70,7 @@ function validateArticle(data) {
 }
 
 // ============================================================================
-// SIMPLE TOAST COMPONENT
-// ============================================================================
-
-function Toast({ message, type = 'success', onClose }) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
-  const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 100 }}
-      className={`fixed top-4 right-4 z-50 max-w-md px-4 py-3 border rounded-lg shadow-lg ${bgColor} ${textColor}`}
-    >
-      <div className="flex items-center gap-2">
-        {type === 'success' ? (
-          <Check className="w-5 h-5 text-green-600" />
-        ) : (
-          <AlertCircle className="w-5 h-5 text-red-600" />
-        )}
-        <span className="text-sm font-medium">{message}</span>
-        <button onClick={onClose} className="ml-auto">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-// ============================================================================
-// IMAGE UPLOAD COMPONENT (Vercel Blob)
+// IMAGE UPLOAD COMPONENT (Local Upload)
 // ============================================================================
 
 function ImageUpload({ value, onChange }) {
@@ -113,18 +83,19 @@ function ImageUpload({ value, onChange }) {
     if (value) setPreview(value);
   }, [value]);
 
-  const uploadToVercelBlob = async (file) => {
+  const uploadToLocal = async (file) => {
     setUploading(true);
     setUploadError(null);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('type', 'article'); // untuk disimpan di /public/uploads/articles
 
       const response = await fetch('/api/upload-image', {
         method: 'POST',
         body: formData,
-        credentials: 'include',           // ← wajib agar cookie dikirim
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -138,15 +109,18 @@ function ImageUpload({ value, onChange }) {
       }
 
       const data = await response.json();
-      if (!data.success || !data.url) {
-        throw new Error('Server tidak mengembalikan URL gambar');
+      if (!data.success || !data.path) {
+        throw new Error('Server tidak mengembalikan path gambar');
       }
 
-      setPreview(data.url);
-      onChange(data.url);
+      // data.path berisi "/uploads/articles/uuid-filename.jpg"
+      setPreview(data.path);
+      onChange(data.path);
+      toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Upload error:', error);
       setUploadError(error.message || 'Gagal mengupload gambar. Pastikan Anda sudah login sebagai super_admin.');
+      toast.error(error.message || 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -157,13 +131,15 @@ function ImageUpload({ value, onChange }) {
     if (file) {
       if (!file.type.startsWith('image/')) {
         setUploadError('Pilih file gambar saja');
+        toast.error('Pilih file gambar saja');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
         setUploadError('Ukuran maksimal 5MB');
+        toast.error('Ukuran maksimal 5MB');
         return;
       }
-      uploadToVercelBlob(file);
+      uploadToLocal(file);
     }
   };
 
@@ -182,9 +158,10 @@ function ImageUpload({ value, onChange }) {
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
-      uploadToVercelBlob(file);
+      uploadToLocal(file);
     } else if (file) {
       setUploadError('File tidak valid atau terlalu besar');
+      toast.error('File tidak valid atau terlalu besar');
     }
   };
 
@@ -204,7 +181,7 @@ function ImageUpload({ value, onChange }) {
               onClick={handleClear}
               className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -213,42 +190,49 @@ function ImageUpload({ value, onChange }) {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-            isDragging ? 'border-[#0066FF] bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+          className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+            isDragging
+              ? 'border-[#0066FF] bg-blue-50'
+              : uploading
+              ? 'border-gray-300 bg-gray-50'
+              : 'border-gray-300 hover:border-[#0066FF] hover:bg-gray-50'
           }`}
         >
-          <div className="flex flex-col items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl">
-              {uploading ? (
-                <Loader2 className="w-8 h-8 text-[#0066FF] animate-spin" />
-              ) : (
-                <ImageIcon className="w-8 h-8 text-[#0066FF]" />
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {uploading ? 'Mengupload...' : 'Drag & drop gambar di sini'}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">atau</p>
-            </div>
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                disabled={uploading}
-              />
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#0066FF] hover:bg-[#0052CC] text-white text-sm font-semibold rounded-lg transition-all duration-200 disabled:opacity-50">
-                <Upload className="w-4 h-4" />
-                {uploading ? 'Mengupload...' : 'Pilih File'}
-              </span>
-            </label>
-            <p className="text-xs text-gray-400 font-medium">PNG, JPG, WEBP, GIF • maks 5MB</p>
-            {uploadError && (
-              <p className="mt-3 text-sm text-red-600 font-medium">{uploadError}</p>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            disabled={uploading}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+          />
+          <div className="flex flex-col items-center gap-2">
+            {uploading ? (
+              <>
+                <Loader2 className="w-10 h-10 text-[#0066FF] animate-spin" />
+                <p className="text-sm font-semibold text-gray-700">Uploading...</p>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-full flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    Drop image here or <span className="text-[#0066FF]">browse</span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </>
             )}
           </div>
+        </div>
+      )}
+      {uploadError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            {uploadError}
+          </p>
         </div>
       )}
     </div>
@@ -261,59 +245,55 @@ function ImageUpload({ value, onChange }) {
 
 function SimpleSelect({ value, onChange, options, placeholder = 'Select...' }) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = React.useRef(null);
+  const selectRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    function handleClickOutside(event) {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
         setIsOpen(false);
       }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
     }
-  }, [isOpen]);
-
-  const handleSelect = (optionValue) => {
-    onChange(optionValue);
-    setIsOpen(false);
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div ref={selectRef} className="relative">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-left bg-white hover:border-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 flex items-center justify-between"
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-[#0066FF] focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] outline-none transition-all duration-200"
       >
         <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+        >
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
-              onClick={() => handleSelect(option.value)}
-              className={`w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors duration-150 ${
-                value === option.value ? 'bg-blue-50 text-[#0066FF] font-semibold' : 'text-gray-900'
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={`w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors duration-150 ${
+                value === option.value ? 'bg-blue-50 text-[#0066FF] font-semibold' : 'text-gray-700'
               }`}
             >
               {option.label}
             </button>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -323,64 +303,71 @@ function SimpleSelect({ value, onChange, options, placeholder = 'Select...' }) {
 // MAIN COMPONENT
 // ============================================================================
 
-export default function CreateArticlePage() {
+export default function CreateArticle() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [checkingSlug, setCheckingSlug] = useState(false);
-  const [slugAvailable, setSlugAvailable] = useState(null);
   const [errors, setErrors] = useState({});
-  const [toast, setToast] = useState(null);
-  const [tagInput, setTagInput] = useState('');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  
+  const [slugAvailable, setSlugAvailable] = useState(null);
+  const [tagInput, setTagInput] = useState('');
+
+  const categories = [
+    { value: 'teknologi', label: 'Teknologi' },
+    { value: 'kesehatan', label: 'Kesehatan' },
+    { value: 'finansial', label: 'Finansial' },
+    { value: 'bisnis', label: 'Bisnis' },
+    { value: 'inovasi', label: 'Inovasi' },
+    { value: 'karir', label: 'Karir' },
+    { value: 'keberlanjutan', label: 'Keberlanjutan' },
+    { value: 'lainnya', label: 'Lainnya' }
+  ];
+
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     excerpt: '',
     content: '',
-    cover_image: '', // Changed from cover_image_url to match schema column name
+    cover_image_url: '',
     category: '',
     tags: [],
     featured: false,
     status: 'draft'
   });
 
-  // Auto-generate slug from title (only if not manually edited)
+  // Auto-generate slug from title
   useEffect(() => {
-    if (formData.title && !slugManuallyEdited) {
-      const autoSlug = generateSlug(formData.title);
-      setFormData(prev => ({ ...prev, slug: autoSlug }));
+    if (!slugManuallyEdited && formData.title) {
+      const newSlug = generateSlug(formData.title);
+      setFormData(prev => ({ ...prev, slug: newSlug }));
     }
   }, [formData.title, slugManuallyEdited]);
 
   // Check slug availability
   useEffect(() => {
     const checkSlug = async () => {
-      if (!formData.slug || formData.slug.length === 0) {
+      if (!formData.slug) {
         setSlugAvailable(null);
         return;
       }
 
-      setCheckingSlug(true);
       try {
-        const response = await fetch(`/api/articles?slug=${formData.slug}`);
+        const response = await fetch(`/api/articles?slug=${formData.slug}`, {
+          credentials: 'include'
+        });
         const data = await response.json();
-        setSlugAvailable(!data.exists);
+        setSlugAvailable(!data.data || data.data.length === 0);
       } catch (error) {
         console.error('Error checking slug:', error);
-      } finally {
-        setCheckingSlug(false);
       }
     };
 
-    const timer = setTimeout(checkSlug, 500);
-    return () => clearTimeout(timer);
+    const timeoutId = setTimeout(checkSlug, 500);
+    return () => clearTimeout(timeoutId);
   }, [formData.slug]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
-    // Track if slug is manually edited
     if (name === 'slug') {
       setSlugManuallyEdited(true);
     }
@@ -389,24 +376,28 @@ export default function CreateArticlePage() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    // Clear error for this field
+
+    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleAddTag = (e) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
-      const newTag = tagInput.trim().toLowerCase();
-      
-      if (!formData.tags.includes(newTag) && formData.tags.length < 10) {
-        setFormData(prev => ({
-          ...prev,
-          tags: [...prev.tags, newTag]
-        }));
+      if (formData.tags.length >= 10) {
+        toast.error('Maximum 10 tags allowed');
+        return;
       }
+      if (formData.tags.includes(tagInput.trim())) {
+        toast.error('Tag already exists');
+        return;
+      }
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tagInput.trim()]
+      }));
       setTagInput('');
     }
   };
@@ -418,131 +409,89 @@ export default function CreateArticlePage() {
     }));
   };
 
-  const getCharCount = (text) => text.length;
-  const getWordCount = (text) => text.trim().split(/\s+/).filter(Boolean).length;
+  const handleSubmit = async (status) => {
+    const dataToValidate = { ...formData, status };
+    const validationErrors = validateArticle(dataToValidate);
 
-  const handleSubmit = async (publishStatus) => {
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error('Please fix validation errors');
+      return;
+    }
+
+    if (slugAvailable === false) {
+      toast.error('Slug already exists, please choose a different one');
+      return;
+    }
+
     setLoading(true);
-    setErrors({});
 
     try {
-      // Prepare data for submission
-      const submitData = {
+      const payload = {
         ...formData,
-        status: publishStatus,
-        published_at: publishStatus === 'published' ? new Date().toISOString() : null
+        status,
+        tags: JSON.stringify(formData.tags) // Convert array to JSON string
       };
 
-      // Auto-generate excerpt if empty
-      if (!submitData.excerpt && submitData.content) {
-        submitData.excerpt = generateExcerpt(submitData.content);
-      }
-
-      // Validate
-      const validationErrors = validateArticle(submitData);
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        setToast({ message: 'Please fix validation errors', type: 'error' });
-        setLoading(false);
-        return;
-      }
-
-      // Check slug availability
-      if (slugAvailable === false) {
-        setErrors({ slug: 'Slug already exists' });
-        setToast({ message: 'Slug already exists', type: 'error' });
-        setLoading(false);
-        return;
-      }
-
-      // Submit to API
       const response = await fetch('/api/articles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
       });
+
+      const data = await response.json();
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create article');
+        throw new Error(data.error || 'Failed to create article');
       }
 
-      const result = await response.json();
-      
-      setToast({ 
-        message: publishStatus === 'published' 
-          ? 'Article published successfully!' 
-          : 'Article saved as draft!',
-        type: 'success' 
-      });
-
-      // Redirect after short delay
-      setTimeout(() => {
-        router.push('/admin/articles');
-      }, 1500);
-
+      toast.success(status === 'published' ? 'Article published successfully!' : 'Article saved as draft!');
+      router.push('/admin/articles');
     } catch (error) {
       console.error('Submit error:', error);
-      setToast({ message: error.message || 'Failed to save article', type: 'error' });
+      toast.error(error.message || 'Failed to create article');
     } finally {
       setLoading(false);
     }
   };
 
-  // Categories from schema ENUM
-  const categories = [
-    { value: '', label: 'Select Category' },
-    { value: 'teknologi', label: 'Teknologi' },
-    { value: 'kesehatan', label: 'Kesehatan' },
-    { value: 'finansial', label: 'Finansial' },
-    { value: 'bisnis', label: 'Bisnis' },
-    { value: 'inovasi', label: 'Inovasi' },
-    { value: 'karir', label: 'Karir' },
-    { value: 'keberlanjutan', label: 'Keberlanjutan' },
-    { value: 'lainnya', label: 'Lainnya' }
-  ];
+  const getCharCount = (text) => text?.length || 0;
+  const getWordCount = (text) => text?.trim().split(/\s+/).filter(Boolean).length || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-6">
-      {/* Toast Notifications */}
-      {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
-        />
-      )}
-
+    <div className="space-y-6 pb-8">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto mb-6"
+        transition={{ duration: 0.5 }}
+        className="flex items-center justify-between"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/admin/articles"
-              className="p-2 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 shadow-sm transition-all duration-200"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Create New Article</h1>
-              <p className="text-sm text-gray-600 mt-1">Write and publish your article</p>
-            </div>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/admin/articles"
+            className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 transition-all duration-300 group"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-[#0066FF]" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create Article</h1>
+            <p className="text-sm text-gray-600 mt-1">Write and publish a new article</p>
           </div>
         </div>
       </motion.div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Form Grid */}
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="lg:col-span-2 space-y-6"
+          className="lg:col-span-2"
         >
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
             <div className="space-y-6">
@@ -561,51 +510,38 @@ export default function CreateArticlePage() {
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.title && (
+                {errors.title ? (
                   <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     {errors.title}
                   </p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-500 font-medium">{getCharCount(formData.title)}/255 characters</p>
                 )}
               </div>
 
               {/* Slug */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Slug
-                  </label>
-                  {slugManuallyEdited && (
-                    <button
-                      type="button"
-                      onClick={() => setSlugManuallyEdited(false)}
-                      className="text-xs text-[#0066FF] hover:text-[#0052CC] font-semibold transition-colors duration-200"
-                    >
-                      Reset to auto-generate
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleChange}
-                    placeholder="article-slug-here"
-                    className={`w-full px-4 py-2 border rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 ${
-                      errors.slug ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {checkingSlug && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                    </div>
-                  )}
-                </div>
+                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
+                  Slug <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="slug"
+                  value={formData.slug}
+                  onChange={handleChange}
+                  placeholder="article-url-slug"
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none transition-all duration-200 ${
+                    errors.slug ? 'border-red-500' : 
+                    slugAvailable === false ? 'border-red-500' :
+                    slugAvailable === true ? 'border-green-500' :
+                    'border-gray-300'
+                  }`}
+                />
                 {errors.slug ? (
-                  <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
+                  <p className="mt-1 text-sm text-red-600 font-medium">✗ {errors.slug}</p>
                 ) : slugAvailable === true ? (
-                  <p className="mt-1 text-sm text-green-600 font-medium">✓ Slug is available</p>
+                  <p className="mt-1 text-sm text-green-600 font-medium">✓ Slug available</p>
                 ) : slugAvailable === false ? (
                   <p className="mt-1 text-sm text-red-600 font-medium">✗ Slug already exists</p>
                 ) : (
@@ -721,13 +657,18 @@ export default function CreateArticlePage() {
 
           {/* Cover Image */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Cover Image</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              Cover Image <span className="text-red-500">*</span>
+            </h2>
             <ImageUpload
-              value={formData.cover_image}
-              onChange={(url) => setFormData(prev => ({ ...prev, cover_image: url }))}
+              value={formData.cover_image_url}
+              onChange={(url) => setFormData(prev => ({ ...prev, cover_image_url: url }))}
             />
-            {errors.cover_image && (
-              <p className="mt-2 text-sm text-red-600">{errors.cover_image}</p>
+            {errors.cover_image_url && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.cover_image_url}
+              </p>
             )}
           </div>
 
