@@ -1,29 +1,121 @@
 // app/api/articles/route.js
-// FIXED: Show ALL articles (draft + published) for admin dashboard
+// FIXED: Query params handling, pagination, proper response format for public pages
+// FIXED: Server-side filtering untuk status, category, search
+// FIXED: Return {success, data, total, page, limit} untuk client compatibility
+
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-export async function GET() {
+// ============================================================================
+// GET - List articles dengan filtering & pagination
+// ============================================================================
+export async function GET(request) {
   try {
-    // FIXED: Remove status filter for admin - show ALL articles
-    // Admin needs to see both draft and published articles
-    const [rows] = await pool.query(
-      'SELECT * FROM articles ORDER BY created_at DESC'
-    );
+    const { searchParams } = new URL(request.url);
     
-    console.log(`[GET /api/articles] Fetched ${rows.length} articles (all statuses)`);
+    // Extract query params
+    const slug = searchParams.get('slug'); // untuk single article by slug
+    const status = searchParams.get('status'); // 'published', 'draft', atau null (all)
+    const category = searchParams.get('category'); // 'teknologi', 'kesehatan', dll
+    const search = searchParams.get('search'); // keyword search
+    const featured = searchParams.get('featured'); // 'true' untuk featured only
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '9', 10);
     
-    return NextResponse.json(rows);
+    console.log('[GET /api/articles] Query params:', {
+      slug, status, category, search, featured, page, limit
+    });
+
+    // Build WHERE clause dengan parameterized queries (prevent SQL injection)
+    const conditions = [];
+    const params = [];
+
+    // Filter by slug (untuk detail page)
+    if (slug) {
+      conditions.push('slug = ?');
+      params.push(slug);
+    }
+
+    // Filter by status (untuk public pages: published only)
+    if (status) {
+      conditions.push('status = ?');
+      params.push(status);
+      
+      // CRITICAL: Hanya show published yang sudah lewat published_at
+      if (status === 'published') {
+        conditions.push('(published_at IS NULL OR published_at <= NOW())');
+      }
+    }
+
+    // Filter by category
+    if (category && category !== 'all') {
+      conditions.push('category = ?');
+      params.push(category);
+    }
+
+    // Search by title, excerpt, atau content
+    if (search && search.trim()) {
+      conditions.push('(title LIKE ? OR excerpt LIKE ? OR content LIKE ?)');
+      const searchPattern = `%${search.trim()}%`;
+      params.push(searchPattern, searchPattern, searchPattern);
+    }
+
+    // Filter featured
+    if (featured === 'true') {
+      conditions.push('featured = 1');
+    }
+
+    const whereClause = conditions.length > 0 
+      ? `WHERE ${conditions.join(' AND ')}` 
+      : '';
+
+    // Count total untuk pagination
+    const countQuery = `SELECT COUNT(*) as total FROM articles ${whereClause}`;
+    const [countResult] = await pool.query(countQuery, params);
+    const total = countResult[0]?.total || 0;
+
+    console.log(`[GET /api/articles] Total matching articles: ${total}`);
+
+    // Fetch articles dengan pagination
+    const offset = (page - 1) * limit;
+    const dataQuery = `
+      SELECT * FROM articles 
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    
+    const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
+
+    console.log(`[GET /api/articles] Returned ${rows.length} articles (page ${page})`);
+
+    // FIXED: Return format yang diexpect client
+    return NextResponse.json({
+      success: true,
+      data: rows,
+      total: total,
+      page: page,
+      limit: limit,
+      totalPages: Math.ceil(total / limit)
+    });
+
   } catch (error) {
-    console.error('[GET /api/articles] Database error:', error);
+    console.error('[GET /api/articles] Error:', error);
     return NextResponse.json(
-      { error: 'Gagal mengambil daftar artikel' },
+      { 
+        success: false,
+        error: 'Gagal mengambil daftar artikel',
+        details: error.message 
+      },
       { status: 500 }
     );
   }
 }
 
+// ============================================================================
+// POST - Create article (existing code - minimal changes)
+// ============================================================================
 export async function POST(request) {
   try {
     const user = await verifyToken();
@@ -38,7 +130,6 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // Log body untuk debug (hapus setelah fix)
     console.log('[POST /api/articles] Body diterima:', JSON.stringify(body, null, 2));
 
     const {
@@ -46,7 +137,7 @@ export async function POST(request) {
       slug,
       excerpt = '',
       content,
-      cover_image_url,       // ← nama field yang dikirim dari client setelah upload
+      cover_image_url,
       category,
       tags = [],
       featured = false,
@@ -73,12 +164,12 @@ export async function POST(request) {
       );
     }
 
-    // Pastikan category sesuai ENUM (opsional, tapi bagus untuk integritas)
+    // Validasi category sesuai ENUM
     const validCategories = [
       'teknologi', 'kesehatan', 'finansial', 'bisnis',
       'inovasi', 'karir', 'keberlanjutan', 'lainnya'
     ];
-    if (category && !validCategories.includes(category)) {
+    if (category && !validCategories.includes(category.toLowerCase())) {
       return NextResponse.json(
         { error: `Category tidak valid. Pilih salah satu: ${validCategories.join(', ')}` },
         { status: 400 }
@@ -95,8 +186,8 @@ export async function POST(request) {
         slug.trim(),
         excerpt.trim(),
         content.trim(),
-        cover_image_url.trim(),     // ← disimpan ke kolom cover_image
-        category.trim() || null,
+        cover_image_url.trim(),
+        category.trim().toLowerCase(), // FIXED: Ensure lowercase untuk ENUM
         JSON.stringify(tags),
         featured ? 1 : 0,
         user.id

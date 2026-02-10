@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useEffect, useRef, memo, useCallback } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { 
-  Camera,
+  Images,
   X,
   ChevronLeft,
   ChevronRight,
-  Download,
-  Share2,
-  Filter,
   Calendar,
   Tag,
-  ChevronRight as ChevronRightIcon
+  Sparkles,
+  AlertCircle,
+  ImageOff,
+  Filter
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Navbar from '@/components/Navbar';
@@ -57,20 +57,19 @@ const FadeInSection = memo(({ children, delay = 0 }) => {
 
 FadeInSection.displayName = 'FadeInSection';
 
-// Categories sesuai ENUM database
-const categories = [
-  { value: 'all', label: 'Semua Kategori' },
-  { value: 'teknologi', label: 'Teknologi' },
-  { value: 'kesehatan', label: 'Kesehatan' },
-  { value: 'finansial', label: 'Finansial' },
-  { value: 'bisnis', label: 'Bisnis' },
-  { value: 'inovasi', label: 'Inovasi' },
-  { value: 'karir', label: 'Karir' },
-  { value: 'keberlanjutan', label: 'Keberlanjutan' },
-  { value: 'kantor', label: 'Kantor' },
-  { value: 'acara', label: 'Acara' },
-  { value: 'lainnya', label: 'Lainnya' },
-];
+// Category Badge Colors
+const categoryColors = {
+  teknologi: 'bg-blue-100 text-blue-700 border-blue-200',
+  kesehatan: 'bg-green-100 text-green-700 border-green-200',
+  finansial: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  bisnis: 'bg-purple-100 text-purple-700 border-purple-200',
+  inovasi: 'bg-pink-100 text-pink-700 border-pink-200',
+  karir: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  keberlanjutan: 'bg-teal-100 text-teal-700 border-teal-200',
+  kantor: 'bg-orange-100 text-orange-700 border-orange-200',
+  acara: 'bg-rose-100 text-rose-700 border-rose-200',
+  lainnya: 'bg-gray-100 text-gray-700 border-gray-200',
+};
 
 // Format tanggal Indonesia
 const formatDate = (dateString) => {
@@ -78,234 +77,52 @@ const formatDate = (dateString) => {
   try {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('id-ID', {
-      year: 'numeric',
+      day: 'numeric',
       month: 'long',
-      day: 'numeric'
+      year: 'numeric'
     }).format(date);
   } catch (error) {
     return '';
   }
 };
 
-// Category Tabs Component
-const CategoryTabs = memo(({ activeCategory, onCategoryChange, categoryCounts }) => {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {categories.map((cat) => {
-        const count = categoryCounts[cat.value] || 0;
-        const isActive = activeCategory === cat.value;
-        
-        return (
-          <button
-            key={cat.value}
-            onClick={() => onCategoryChange(cat.value)}
-            className={cn(
-              "px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center gap-2",
-              isActive
-                ? "bg-[#0066FF] text-white shadow-lg"
-                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-            )}
-          >
-            {cat.label}
-            {cat.value === 'all' && count > 0 && (
-              <span className={cn(
-                "px-2 py-0.5 rounded-full text-xs",
-                isActive ? "bg-white/20" : "bg-gray-200"
-              )}>
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-});
-
-CategoryTabs.displayName = 'CategoryTabs';
-
-// Lightbox Component
-const Lightbox = memo(({ images, currentIndex, onClose, onNext, onPrev }) => {
-  const currentImage = images[currentIndex];
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev();
-      if (e.key === 'ArrowRight') onNext();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
-    };
-  }, [onClose, onNext, onPrev]);
-
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = currentImage.image_url;
-    link.download = `barcomp-${currentImage.id}.jpg`;
-    link.click();
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: currentImage.title,
-          text: currentImage.description || currentImage.title,
-          url: window.location.href
-        });
-      } catch (err) {
-        console.log('Share cancelled');
-      }
-    } else {
-      // Fallback: copy link to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link disalin ke clipboard');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
-      {/* Close Button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-        aria-label="Close"
-      >
-        <X className="w-6 h-6 text-white" />
-      </button>
-
-      {/* Navigation Buttons */}
-      {currentIndex > 0 && (
-        <button
-          onClick={onPrev}
-          className="absolute left-4 z-50 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-          aria-label="Previous"
-        >
-          <ChevronLeft className="w-8 h-8 text-white" />
-        </button>
-      )}
-
-      {currentIndex < images.length - 1 && (
-        <button
-          onClick={onNext}
-          className="absolute right-4 z-50 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-          aria-label="Next"
-        >
-          <ChevronRight className="w-8 h-8 text-white" />
-        </button>
-      )}
-
-      {/* Image */}
-      <div className="relative w-full h-full flex items-center justify-center p-4">
-        <div className="relative max-w-7xl max-h-full">
-          <Image
-            src={currentImage.image_url || currentImage.thumbnail_url}
-            alt={currentImage.title}
-            width={1200}
-            height={800}
-            className="object-contain max-h-[85vh] w-auto"
-            priority
-          />
-        </div>
-      </div>
-
-      {/* Image Info & Actions */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-        <div className="container mx-auto max-w-7xl">
-          <div className="flex items-end justify-between">
-            <div className="text-white flex-1">
-              <h3 className="text-xl font-bold mb-2">{currentImage.title}</h3>
-              {currentImage.description && (
-                <p className="text-sm text-gray-300 mb-3 line-clamp-2">
-                  {currentImage.description}
-                </p>
-              )}
-              <div className="flex items-center gap-4 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {formatDate(currentImage.captured_at)}
-                </span>
-                {currentImage.category && (
-                  <span className="px-2 py-1 bg-white/10 rounded-full capitalize">
-                    {categories.find(c => c.value === currentImage.category)?.label || currentImage.category}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-2 ml-4">
-              <button
-                onClick={handleShare}
-                className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                title="Share"
-              >
-                <Share2 className="w-5 h-5 text-white" />
-              </button>
-              <button
-                onClick={handleDownload}
-                className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                title="Download"
-              >
-                <Download className="w-5 h-5 text-white" />
-              </button>
-            </div>
-          </div>
-
-          {/* Image Counter */}
-          <div className="text-center mt-4">
-            <span className="text-sm text-gray-400">
-              {currentIndex + 1} / {images.length}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-Lightbox.displayName = 'Lightbox';
-
-// Gallery Item Component
-const GalleryItem = memo(({ image, onClick }) => {
+// Gallery Item Card Component
+const GalleryItemCard = memo(({ item, onOpen }) => {
   return (
     <Card 
-      className="group relative overflow-hidden cursor-pointer border-0 shadow-md hover:shadow-2xl transition-all duration-300 p-0"
-      onClick={onClick}
+      onClick={() => onOpen(item)}
+      className="overflow-hidden border-2 border-gray-200 hover:border-[#0066FF] transition-all duration-300 cursor-pointer group h-full p-0"
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-square overflow-hidden">
         <Image
-          src={image.thumbnail_url || image.image_url}
-          alt={image.title}
+          src={item.thumbnail_url || item.image_url}
+          alt={item.title}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           className="object-cover group-hover:scale-110 transition-transform duration-500"
-          loading="lazy"
+          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
         />
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">
-              {image.title}
-            </h3>
-            {image.category && (
-              <Badge className="bg-[#0066FF] text-white border-0 text-xs">
-                {categories.find(c => c.value === image.category)?.label || image.category}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-4">
+          <div className="text-white w-full">
+            <h3 className="font-bold mb-1 line-clamp-2">{item.title}</h3>
+            {item.category && (
+              <Badge className={cn(
+                "border text-xs",
+                categoryColors[item.category] || categoryColors.lainnya
+              )}>
+                <Tag className="w-3 h-3 mr-1" />
+                {item.category}
               </Badge>
             )}
           </div>
         </div>
 
         {/* Featured Badge */}
-        {image.featured && (
+        {item.featured && (
           <div className="absolute top-3 right-3">
-            <Badge className="bg-yellow-500 text-white border-0 shadow-lg text-xs">
+            <Badge className="bg-[#0066FF] text-white border-0 flex items-center gap-1 shadow-lg">
+              <Sparkles className="w-3 h-3" />
               Featured
             </Badge>
           </div>
@@ -315,105 +132,217 @@ const GalleryItem = memo(({ image, onClick }) => {
   );
 });
 
-GalleryItem.displayName = 'GalleryItem';
+GalleryItemCard.displayName = 'GalleryItemCard';
 
-// Skeleton Loading
+// Gallery Skeleton
 const GallerySkeleton = () => (
-  <div className="animate-pulse">
-    <div className="bg-gray-200 aspect-[4/3] rounded-lg" />
-  </div>
+  <Card className="overflow-hidden h-full p-0">
+    <div className="animate-pulse">
+      <div className="bg-gray-200 aspect-square w-full" />
+    </div>
+  </Card>
 );
+
+// Lightbox Modal Component
+const Lightbox = memo(({ item, onClose, onNext, onPrev, hasNext, hasPrev }) => {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft' && hasPrev) onPrev();
+      if (e.key === 'ArrowRight' && hasNext) onNext();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = 'auto';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose, onNext, onPrev, hasNext, hasPrev]);
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 p-2 bg-white/10 rounded-full backdrop-blur-sm transition-all hover:bg-white/20"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+      {/* Previous Button */}
+      {hasPrev && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-10 p-3 bg-white/10 rounded-full backdrop-blur-sm transition-all hover:bg-white/20"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Next Button */}
+      {hasNext && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-10 p-3 bg-white/10 rounded-full backdrop-blur-sm transition-all hover:bg-white/20"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Image Container */}
+      <div 
+        className="max-w-6xl max-h-[90vh] relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative max-h-[75vh]">
+          <Image
+            src={item.image_url}
+            alt={item.title}
+            width={1200}
+            height={800}
+            className="max-w-full max-h-[75vh] object-contain mx-auto"
+            priority
+          />
+        </div>
+
+        {/* Info */}
+        <div className="text-white text-center mt-6 space-y-3">
+          <h2 className="text-2xl font-bold">{item.title}</h2>
+          
+          {item.description && (
+            <p className="text-gray-300 max-w-2xl mx-auto">{item.description}</p>
+          )}
+          
+          <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
+            {item.category && (
+              <Badge className={cn(
+                "border",
+                categoryColors[item.category] || categoryColors.lainnya
+              )}>
+                <Tag className="w-3 h-3 mr-1" />
+                {item.category}
+              </Badge>
+            )}
+            
+            {item.captured_at && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                <span>{formatDate(item.captured_at)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+Lightbox.displayName = 'Lightbox';
 
 export default function GalleryPage() {
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
-  // Fetch gallery dari API
+  const categories = [
+    { value: 'all', label: 'Semua' },
+    { value: 'teknologi', label: 'Teknologi' },
+    { value: 'kesehatan', label: 'Kesehatan' },
+    { value: 'finansial', label: 'Finansial' },
+    { value: 'bisnis', label: 'Bisnis' },
+    { value: 'inovasi', label: 'Inovasi' },
+    { value: 'karir', label: 'Karir' },
+    { value: 'keberlanjutan', label: 'Keberlanjutan' },
+    { value: 'kantor', label: 'Kantor' },
+    { value: 'acara', label: 'Acara' },
+    { value: 'lainnya', label: 'Lainnya' },
+  ];
+
   useEffect(() => {
     fetchGallery();
-  }, []);
+  }, [selectedCategory]);
 
   const fetchGallery = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
+      const params = new URLSearchParams();
       
-      const response = await fetch('/api/gallery');
-      
-      if (!response.ok) {
-        throw new Error('Gagal mengambil data gallery');
+      if (selectedCategory && selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
       }
 
-      const data = await response.json();
+      const url = `/api/gallery?${params.toString()}`;
+      const res = await fetch(url);
       
-      if (data.success) {
-        // Filter hanya yang tidak soft-deleted (deleted_at = NULL)
-        const activeImages = (data.data || []).filter(item => !item.deleted_at);
-        // Sort by display_order, then featured, then captured_at
-        const sorted = activeImages.sort((a, b) => {
-          if (a.display_order !== b.display_order) {
-            return a.display_order - b.display_order;
-          }
-          if (a.featured !== b.featured) {
-            return b.featured - a.featured; // featured first
-          }
-          return new Date(b.captured_at) - new Date(a.captured_at);
-        });
-        setGalleryItems(sorted);
-      } else {
-        throw new Error(data.message || 'Gagal mengambil data gallery');
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
-    } catch (error) {
-      console.error('Error fetching gallery:', error);
-      toast.error(error.message || 'Terjadi kesalahan saat mengambil data gallery');
+
+      const data = await res.json();
+
+      if (data.success) {
+        setGalleryItems(data.data || []);
+        setTotalItems(data.total || 0);
+      } else {
+        throw new Error(data.error || 'Gagal memuat gallery');
+      }
+
+    } catch (err) {
+      console.error('[GalleryPage] Fetch error:', err);
+      setError(err.message);
       setGalleryItems([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter gallery items
-  const filteredItems = galleryItems.filter(item => 
-    activeCategory === 'all' || item.category === activeCategory
-  );
-
-  // Calculate category counts
-  const categoryCounts = {
-    all: galleryItems.length,
-    ...galleryItems.reduce((acc, item) => {
-      if (item.category) {
-        acc[item.category] = (acc[item.category] || 0) + 1;
-      }
-      return acc;
-    }, {})
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
   };
 
-  // Lightbox handlers
-  const openLightbox = useCallback((index) => {
-    setCurrentImageIndex(index);
-    setLightboxOpen(true);
-  }, []);
+  const openLightbox = (item) => {
+    const index = galleryItems.findIndex(i => i.id === item.id);
+    setSelectedImage(item);
+    setSelectedIndex(index);
+  };
 
-  const closeLightbox = useCallback(() => {
-    setLightboxOpen(false);
-  }, []);
+  const closeLightbox = () => {
+    setSelectedImage(null);
+  };
 
-  const nextImage = useCallback(() => {
-    setCurrentImageIndex((prev) => 
-      prev < filteredItems.length - 1 ? prev + 1 : prev
-    );
-  }, [filteredItems.length]);
+  const showNextImage = () => {
+    if (selectedIndex < galleryItems.length - 1) {
+      const nextIndex = selectedIndex + 1;
+      setSelectedIndex(nextIndex);
+      setSelectedImage(galleryItems[nextIndex]);
+    }
+  };
 
-  const prevImage = useCallback(() => {
-    setCurrentImageIndex((prev) => prev > 0 ? prev - 1 : prev);
-  }, []);
-
-  // Calculate stats
-  const totalPhotos = galleryItems.length;
-  const featuredPhotos = galleryItems.filter(item => item.featured).length;
-  const categoriesCount = new Set(galleryItems.map(item => item.category).filter(Boolean)).size;
+  const showPrevImage = () => {
+    if (selectedIndex > 0) {
+      const prevIndex = selectedIndex - 1;
+      setSelectedIndex(prevIndex);
+      setSelectedImage(galleryItems[prevIndex]);
+    }
+  };
 
   return (
     <>
@@ -431,40 +360,17 @@ export default function GalleryPage() {
             <FadeInSection>
               <div className="text-center max-w-4xl mx-auto">
                 <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-6 shadow-lg">
-                  <Camera className="w-4 h-4 inline-block mr-2" />
-                  Galeri Foto
+                  <Images className="w-4 h-4 inline-block mr-2" />
+                  Gallery
                 </div>
                 
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                  Galeri Barcomp
+                  Gallery Barcomp
                 </h1>
                 
                 <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed">
-                  Dokumentasi perjalanan, momen berharga, dan pencapaian kami dalam 
-                  melayani berbagai industri dan komunitas
+                  {totalItems} foto dokumentasi kegiatan dan momen berkesan kami
                 </p>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      {totalPhotos}+
-                    </div>
-                    <div className="text-sm text-white/80">Total Foto</div>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      {featuredPhotos}+
-                    </div>
-                    <div className="text-sm text-white/80">Foto Unggulan</div>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      {categoriesCount}
-                    </div>
-                    <div className="text-sm text-white/80">Kategori</div>
-                  </div>
-                </div>
               </div>
             </FadeInSection>
           </div>
@@ -477,74 +383,87 @@ export default function GalleryPage() {
         </section>
 
         {/* Category Filter */}
-        <section className="py-12 bg-gray-50 border-b border-gray-200">
+        <section className="py-8 border-b border-gray-200 bg-white shadow-sm">
           <div className="container mx-auto max-w-7xl px-6 lg:px-8">
             <FadeInSection>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4">
                 <Filter className="w-5 h-5 text-gray-600" />
-                <h3 className="text-xl font-bold text-gray-900">
-                  Filter Kategori
-                </h3>
+                <h2 className="text-lg font-semibold text-gray-900">Filter Kategori</h2>
               </div>
-
-              <CategoryTabs
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-                categoryCounts={categoryCounts}
-              />
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => (
+                  <Button
+                    key={cat.value}
+                    onClick={() => handleCategoryChange(cat.value)}
+                    className={cn(
+                      "rounded-full transition-all duration-300",
+                      selectedCategory === cat.value
+                        ? "bg-[#0066FF] text-white hover:bg-[#0052CC] shadow-lg"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-200 hover:border-[#0066FF]"
+                    )}
+                  >
+                    {cat.label}
+                    {selectedCategory === cat.value && (
+                      <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                        {totalItems}
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
             </FadeInSection>
           </div>
         </section>
 
-        {/* Gallery Grid */}
+        {/* Gallery Content */}
         <section className="py-16 lg:py-20">
           <div className="container mx-auto max-w-7xl px-6 lg:px-8">
-            <FadeInSection>
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  {activeCategory === 'all' 
-                    ? 'Semua Foto' 
-                    : categories.find(c => c.value === activeCategory)?.label}
-                </h2>
-                <p className="text-gray-600">
-                  {filteredItems.length} foto ditemukan
-                </p>
-              </div>
-            </FadeInSection>
-
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                   <GallerySkeleton key={i} />
                 ))}
               </div>
-            ) : filteredItems.length === 0 ? (
+            ) : error ? (
               <div className="text-center py-20">
-                <Camera className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <AlertCircle className="w-16 h-16 mx-auto text-red-400 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Tidak Ada Foto
+                  Terjadi Kesalahan
+                </h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <Button 
+                  onClick={fetchGallery}
+                  className="bg-[#0066FF] hover:bg-[#0052CC] text-white"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            ) : galleryItems.length === 0 ? (
+              <div className="text-center py-20">
+                <ImageOff className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Tidak Ada Foto di Kategori Ini
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {activeCategory === 'all'
-                    ? 'Belum ada foto yang tersedia'
-                    : 'Tidak ada foto dalam kategori ini'}
+                  Coba pilih kategori lain atau lihat semua foto
                 </p>
-                {activeCategory !== 'all' && (
+                {selectedCategory !== 'all' && (
                   <Button
-                    onClick={() => setActiveCategory('all')}
-                    className="bg-[#0066FF] hover:bg-[#0052CC] rounded-lg"
+                    onClick={() => handleCategoryChange('all')}
+                    variant="outline"
+                    className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-[#0066FF] hover:text-white"
                   >
                     Lihat Semua Foto
                   </Button>
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredItems.map((item, index) => (
-                  <FadeInSection key={item.id} delay={index * 0.03}>
-                    <GalleryItem 
-                      image={item} 
-                      onClick={() => openLightbox(index)}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {galleryItems.map((item, index) => (
+                  <FadeInSection key={item.id} delay={index * 0.05}>
+                    <GalleryItemCard 
+                      item={item} 
+                      onOpen={openLightbox}
                     />
                   </FadeInSection>
                 ))}
@@ -564,22 +483,23 @@ export default function GalleryPage() {
           <div className="container mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
             <FadeInSection>
               <div className="text-center max-w-3xl mx-auto">
-                <Camera className="w-16 h-16 mx-auto mb-6 text-white" />
+                <Images className="w-16 h-16 mx-auto mb-6 text-white" />
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-                  Ingin Berbagi Momen?
+                  Bagikan Momen Anda
                 </h2>
                 <p className="text-lg sm:text-xl text-blue-100 mb-8 leading-relaxed">
-                  Kirimkan foto dan dokumentasi acara Anda untuk ditampilkan di galeri kami
+                  Punya dokumentasi kegiatan atau event menarik? Bagikan dengan kami 
+                  untuk ditampilkan di gallery
                 </p>
-                <a href="mailto:gallery@barcomp.co.id">
+                <Link href="/contact">
                   <Button 
                     size="lg"
                     className="bg-white text-[#0066FF] hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
                   >
                     Hubungi Kami
-                    <ChevronRightIcon className="ml-2 h-5 w-5" />
+                    <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
-                </a>
+                </Link>
               </div>
             </FadeInSection>
           </div>
@@ -588,14 +508,15 @@ export default function GalleryPage() {
 
       <Footer />
 
-      {/* Lightbox */}
-      {lightboxOpen && (
+      {/* Lightbox Modal */}
+      {selectedImage && (
         <Lightbox
-          images={filteredItems}
-          currentIndex={currentImageIndex}
+          item={selectedImage}
           onClose={closeLightbox}
-          onNext={nextImage}
-          onPrev={prevImage}
+          onNext={showNextImage}
+          onPrev={showPrevImage}
+          hasNext={selectedIndex < galleryItems.length - 1}
+          hasPrev={selectedIndex > 0}
         />
       )}
 

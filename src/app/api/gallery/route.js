@@ -1,38 +1,87 @@
 // app/api/gallery/route.js
-// FIXED: Soft delete implementation (filter deleted_at IS NULL)
-// FIXED: Default category to NULL instead of 'general' (matches schema)
-// FIXED: Proper await verifyToken()
-// FIXED: Better error logging
-// FIXED: Handle thumbnail_url as optional
+// FIXED: Category filtering di server-side
+// FIXED: Proper response format dengan success flag
+// FIXED: Better error handling dan logging
 
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+// ============================================================================
+// GET - List gallery dengan filtering
+// ============================================================================
+export async function GET(request) {
   try {
-    console.log('[Gallery GET] Fetching active gallery items');
+    const { searchParams } = new URL(request.url);
     
-    // FIXED: Filter soft-deleted items
-    const [rows] = await pool.query(
-      'SELECT * FROM gallery WHERE deleted_at IS NULL ORDER BY display_order ASC, created_at DESC'
-    );
+    // Extract query params
+    const category = searchParams.get('category'); // 'teknologi', 'kantor', dll
+    const featured = searchParams.get('featured'); // 'true' untuk featured only
+    const eventId = searchParams.get('event_id'); // filter by event
     
-    console.log(`[Gallery GET] Found ${rows.length} active items`);
-    return NextResponse.json(rows);
+    console.log('[GET /api/gallery] Query params:', { category, featured, eventId });
+
+    // Build WHERE clause
+    const conditions = ['deleted_at IS NULL']; // CRITICAL: Always filter soft-deleted
+    const params = [];
+
+    // Filter by category
+    if (category && category !== 'all') {
+      conditions.push('category = ?');
+      params.push(category);
+    }
+
+    // Filter featured
+    if (featured === 'true') {
+      conditions.push('featured = 1');
+    }
+
+    // Filter by event
+    if (eventId) {
+      conditions.push('event_id = ?');
+      params.push(eventId);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+    // Count total
+    const countQuery = `SELECT COUNT(*) as total FROM gallery ${whereClause}`;
+    const [countResult] = await pool.query(countQuery, params);
+    const total = countResult[0]?.total || 0;
+
+    // Fetch gallery items
+    const dataQuery = `
+      SELECT * FROM gallery 
+      ${whereClause}
+      ORDER BY display_order ASC, created_at DESC
+    `;
+    
+    const [rows] = await pool.query(dataQuery, params);
+    
+    console.log(`[GET /api/gallery] Found ${rows.length} active items (total: ${total})`);
+    
+    // FIXED: Return format yang konsisten dengan articles
+    return NextResponse.json({
+      success: true,
+      data: rows,
+      total: total
+    });
   } catch (error) {
-    console.error('[Gallery GET] Error:', error);
+    console.error('[GET /api/gallery] Error:', error);
     return NextResponse.json({ 
+      success: false,
       error: 'Gagal mengambil gallery',
       details: error.message 
     }, { status: 500 });
   }
 }
 
+// ============================================================================
+// POST - Create gallery item
+// ============================================================================
 export async function POST(request) {
   console.log('[Gallery POST] Creating new gallery item');
   
-  // FIXED: Proper await for verifyToken()
   const auth = await verifyToken();
   
   if (!auth || auth.role !== 'super_admin') {
@@ -63,15 +112,15 @@ export async function POST(request) {
     } = body;
 
     // Validation
-    if (!title || !image_url) {
+    if (!title?.trim() || !image_url?.trim()) {
       console.error('[Gallery POST] Missing required fields');
       return NextResponse.json({ 
         error: 'Title dan image_url wajib diisi' 
       }, { status: 400 });
     }
 
-    // FIXED: category default to NULL (not 'general'), matches schema
-    const categoryValue = category || null;
+    // FIXED: category default to NULL, lowercase untuk ENUM
+    const categoryValue = category ? category.toLowerCase() : null;
     
     // Validate category if provided
     const validCategories = [
@@ -82,7 +131,7 @@ export async function POST(request) {
     if (categoryValue && !validCategories.includes(categoryValue)) {
       console.error('[Gallery POST] Invalid category:', categoryValue);
       return NextResponse.json({ 
-        error: `Kategori tidak valid: ${categoryValue}` 
+        error: `Kategori tidak valid: ${categoryValue}. Pilih: ${validCategories.join(', ')}` 
       }, { status: 400 });
     }
 
@@ -92,14 +141,14 @@ export async function POST(request) {
         event_id, captured_at, featured, display_order
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        title, 
-        description || null, 
-        image_url, 
-        thumbnail_url || null, // FIXED: Handle null thumbnail
-        categoryValue, // FIXED: Use null instead of 'general'
+        title.trim(), 
+        description?.trim() || null, 
+        image_url.trim(), 
+        thumbnail_url?.trim() || null,
+        categoryValue,
         JSON.stringify(tags || []), 
         event_id || null,
-        captured_at || new Date(), // Default to now if not provided
+        captured_at || new Date(),
         featured ? 1 : 0, 
         display_order || 0
       ]
@@ -111,13 +160,13 @@ export async function POST(request) {
       success: true, 
       id: result.insertId,
       message: 'Gallery item created successfully'
-    });
+    }, { status: 201 });
   } catch (error) {
     console.error('[Gallery POST] Error:', error);
-    console.error('[Gallery POST] SQL Error Code:', error.code);
-    console.error('[Gallery POST] SQL Error Message:', error.sqlMessage);
+    console.error('[Gallery POST] SQL Error:', error.sqlMessage);
     
     return NextResponse.json({ 
+      success: false,
       error: 'Gagal membuat gallery item',
       details: error.sqlMessage || error.message
     }, { status: 500 });

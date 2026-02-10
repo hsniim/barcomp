@@ -1,7 +1,6 @@
 // app/admin/gallery/page.js
-// FIXED: Soft delete confirmation (shows deleted_at in console for debugging)
-// No major changes needed as DELETE is handled by API route
-// Added better error handling for delete operations
+// FIXED: Handle API response structure { success, data, total }
+// FIXED: Array validation and error fallback
 
 'use client';
 
@@ -30,12 +29,18 @@ export default function GalleryListPage() {
         throw new Error('Gagal memuat gallery');
       }
 
-      const data = await res.json();
-      console.log('[GalleryList] Fetched items:', data.length);
-      setItems(data);
+      const response = await res.json();
+      console.log('[GalleryList] API response:', response); // Debug - bisa dihapus nanti
+      
+      // FIXED: Extract array from response.data
+      const galleryItems = Array.isArray(response.data) ? response.data : [];
+      console.log('[GalleryList] Fetched items:', galleryItems.length);
+      
+      setItems(galleryItems);
     } catch (error) {
       console.error('[GalleryList] Fetch error:', error);
       toast.error('Gagal memuat gallery');
+      setItems([]); // FIXED: Fallback to empty array on error
     } finally {
       setLoading(false);
     }

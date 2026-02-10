@@ -342,28 +342,28 @@ export default function CreateArticle() {
     }
   }, [formData.title, slugManuallyEdited]);
 
-  // Check slug availability
-  useEffect(() => {
-    const checkSlug = async () => {
-      if (!formData.slug) {
-        setSlugAvailable(null);
-        return;
-      }
+  // Check slug availability (di nonaktifkan)
+  //useEffect(() => {
+    //const checkSlug = async () => {
+      //if (!formData.slug) {
+        //setSlugAvailable(null);
+        //return;
+      //}
 
-      try {
-        const response = await fetch(`/api/articles?slug=${formData.slug}`, {
-          credentials: 'include'
-        });
-        const data = await response.json();
-        setSlugAvailable(!data.data || data.data.length === 0);
-      } catch (error) {
-        console.error('Error checking slug:', error);
-      }
-    };
+      //try {
+        //const response = await fetch(`/api/articles?slug=${formData.slug}`, {
+          //credentials: 'include'
+        //});
+        //const data = await response.json();
+        //setSlugAvailable(!data.data || data.data.length === 0);
+      //} catch (error) {
+        //console.error('Error checking slug:', error);
+      //}
+    //};
 
-    const timeoutId = setTimeout(checkSlug, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.slug]);
+    //const timeoutId = setTimeout(checkSlug, 500);
+    //return () => clearTimeout(timeoutId);
+  //}, [formData.slug]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

@@ -1,14 +1,42 @@
 // app/api/events/route.js
+// UPDATED: Menambahkan dukungan query ?slug= untuk halaman detail
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const [rows] = await pool.query(
-      `SELECT * FROM events 
-       WHERE status IN ('upcoming', 'ongoing') 
-       ORDER BY start_date ASC`
-    );
+    const { searchParams } = new URL(request.url);
+    const slug = searchParams.get('slug'); // untuk single event by slug
+    const status = searchParams.get('status'); // 'upcoming', 'ongoing', 'completed'
+    
+    console.log('[GET /api/events] Query params:', { slug, status });
+
+    // Build WHERE clause
+    const conditions = [];
+    const params = [];
+
+    // Filter by slug (untuk detail page)
+    if (slug) {
+      conditions.push('slug = ?');
+      params.push(slug);
+    }
+
+    // Filter by status
+    if (status) {
+      conditions.push('status = ?');
+      params.push(status);
+    } else if (!slug) {
+      // Default: hanya upcoming dan ongoing jika tidak ada slug
+      conditions.push('status IN (?, ?)');
+      params.push('upcoming', 'ongoing');
+    }
+
+    const whereClause = conditions.length > 0 
+      ? `WHERE ${conditions.join(' AND ')}` 
+      : '';
+
+    const query = `SELECT * FROM events ${whereClause} ORDER BY start_date ASC`;
+    const [rows] = await pool.query(query, params);
     
     console.log(`[GET /api/events] Found ${rows.length} events`);
     
