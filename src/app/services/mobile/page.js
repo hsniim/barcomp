@@ -174,273 +174,203 @@ const ProcessStep = memo(({ number, title, description, icon: Icon }) => {
 ProcessStep.displayName = 'ProcessStep';
 
 export default function MobileAppDevelopmentPage() {
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
-
   const t = useMemo(() => ({
     hero: {
-      badge: language === 'en' ? 'Mobile App Development' : 'Pengembangan Aplikasi Mobile',
-      title: language === 'en' ? 'Native Experience' : 'Pengalaman Native',
-      subtitle: language === 'en' 
-        ? 'In The Palm of Your Hand'
-        : 'di Genggaman Anda',
-      description: language === 'en'
-        ? 'Transform your ideas into powerful mobile applications for iOS and Android. We create intuitive, high-performance apps that users love, leveraging cutting-edge technologies and best practices in mobile development.'
-        : 'Transformasikan ide Anda menjadi aplikasi mobile yang powerful untuk iOS dan Android. Kami menciptakan aplikasi intuitif dan berkinerja tinggi yang disukai pengguna, memanfaatkan teknologi terdepan dan praktik terbaik dalam pengembangan mobile.',
+      badge: 'Pengembangan Aplikasi Mobile',
+      title: 'Pengalaman Native',
+      subtitle: 'di Genggaman Anda',
+      description: 'Transformasikan ide Anda menjadi aplikasi mobile yang powerful untuk iOS dan Android. Kami menciptakan aplikasi intuitif dan berkinerja tinggi yang disukai pengguna, memanfaatkan teknologi terdepan dan praktik terbaik dalam pengembangan mobile.',
       cta: {
-        primary: language === 'en' ? 'Start Your App' : 'Mulai Aplikasi Anda',
-        secondary: language === 'en' ? 'See Our Apps' : 'Lihat Aplikasi Kami'
+        primary: 'Mulai Aplikasi Anda',
+        secondary: 'Lihat Aplikasi Kami'
       }
     },
     platforms: {
-      badge: language === 'en' ? 'Supported Platforms' : 'Platform yang Didukung',
-      title: language === 'en' ? 'Build Once, Deploy Everywhere' : 'Bangun Sekali, Deploy di Mana Saja',
-      subtitle: language === 'en'
-        ? 'Reach your users on their favorite devices'
-        : 'Jangkau pengguna Anda di perangkat favorit mereka',
+      badge: 'Platform yang Didukung',
+      title: 'Bangun Sekali, Deploy di Mana Saja',
+      subtitle: 'Jangkau pengguna Anda di perangkat favorit mereka',
       items: [
         {
           name: 'iOS',
           icon: Smartphone,
-          description: language === 'en' 
-            ? 'Native iOS apps for iPhone and iPad' 
-            : 'Aplikasi iOS native untuk iPhone dan iPad'
+          description: 'Aplikasi iOS native untuk iPhone dan iPad'
         },
         {
           name: 'Android',
           icon: Tablet,
-          description: language === 'en' 
-            ? 'High-performance Android applications' 
-            : 'Aplikasi Android berkinerja tinggi'
+          description: 'Aplikasi Android berkinerja tinggi'
         },
         {
           name: 'Cross-Platform',
           icon: Layers,
-          description: language === 'en' 
-            ? 'One codebase for multiple platforms' 
-            : 'Satu codebase untuk berbagai platform'
+          description: 'Satu codebase untuk berbagai platform'
         },
         {
           name: 'Progressive Web Apps',
           icon: Globe,
-          description: language === 'en' 
-            ? 'Web apps that work like native apps' 
-            : 'Aplikasi web yang bekerja seperti aplikasi native'
+          description: 'Aplikasi web yang bekerja seperti aplikasi native'
         }
       ]
     },
     features: {
-      badge: language === 'en' ? 'Core Features' : 'Fitur Utama',
-      title: language === 'en' ? 'Complete Mobile Solutions' : 'Solusi Mobile Lengkap',
-      subtitle: language === 'en'
-        ? 'Everything you need to build world-class mobile applications'
-        : 'Semua yang Anda butuhkan untuk membangun aplikasi mobile kelas dunia',
+      badge: 'Fitur Utama',
+      title: 'Solusi Mobile Lengkap',
+      subtitle: 'Semua yang Anda butuhkan untuk membangun aplikasi mobile kelas dunia',
       items: [
         {
           icon: Layers,
-          title: language === 'en' ? 'Cross-Platform Development' : 'Pengembangan Cross-Platform',
-          description: language === 'en'
-            ? 'Build once, deploy everywhere with Flutter and React Native. Reduce development time and costs while maintaining native performance and user experience across iOS and Android platforms.'
-            : 'Bangun sekali, deploy di mana saja dengan Flutter dan React Native. Kurangi waktu dan biaya pengembangan sambil mempertahankan performa native dan pengalaman pengguna di platform iOS dan Android.',
+          title: 'Pengembangan Cross-Platform',
+          description: 'Bangun sekali, deploy di mana saja dengan Flutter dan React Native. Kurangi waktu dan biaya pengembangan sambil mempertahankan performa native dan pengalaman pengguna di platform iOS dan Android.',
           accent: 'blue'
         },
         {
           icon: Palette,
-          title: language === 'en' ? 'User-Centric UI/UX' : 'UI/UX yang Berpusat pada Pengguna',
-          description: language === 'en'
-            ? 'Beautiful, intuitive interfaces designed with users in mind. We follow platform-specific design guidelines while creating unique experiences that make your app stand out in the marketplace.'
-            : 'Antarmuka yang indah dan intuitif dirancang dengan pengguna sebagai fokus. Kami mengikuti panduan desain spesifik platform sambil menciptakan pengalaman unik yang membuat aplikasi Anda menonjol di pasar.',
+          title: 'UI/UX yang Berpusat pada Pengguna',
+          description: 'Antarmuka yang indah dan intuitif dirancang dengan pengguna sebagai fokus. Kami mengikuti panduan desain spesifik platform sambil menciptakan pengalaman unik yang membuat aplikasi Anda menonjol di pasar.',
           accent: 'purple'
         },
         {
           icon: Link2,
-          title: language === 'en' ? 'Seamless API Integration' : 'Integrasi API yang Mulus',
-          description: language === 'en'
-            ? 'Connect your app to any backend service, third-party API, or cloud platform. We ensure secure, efficient data synchronization and real-time updates for optimal app performance.'
-            : 'Hubungkan aplikasi Anda ke layanan backend, API pihak ketiga, atau platform cloud mana pun. Kami memastikan sinkronisasi data yang aman dan efisien serta pembaruan real-time untuk performa aplikasi optimal.',
+          title: 'Integrasi API yang Mulus',
+          description: 'Hubungkan aplikasi Anda ke layanan backend, API pihak ketiga, atau platform cloud mana pun. Kami memastikan sinkronisasi data yang aman dan efisien serta pembaruan real-time untuk performa aplikasi optimal.',
           accent: 'green'
         },
         {
           icon: Store,
-          title: language === 'en' ? 'App Store Publishing Support' : 'Dukungan Publikasi App Store',
-          description: language === 'en'
-            ? 'From app store optimization to submission and approval, we guide you through the entire publishing process for both Apple App Store and Google Play Store with best practices.'
-            : 'Dari optimasi app store hingga pengiriman dan persetujuan, kami membimbing Anda melalui seluruh proses publikasi untuk Apple App Store dan Google Play Store dengan praktik terbaik.',
+          title: 'Dukungan Publikasi App Store',
+          description: 'Dari optimasi app store hingga pengiriman dan persetujuan, kami membimbing Anda melalui seluruh proses publikasi untuk Apple App Store dan Google Play Store dengan praktik terbaik.',
           accent: 'orange'
         }
       ]
     },
     process: {
-      badge: language === 'en' ? 'Development Process' : 'Proses Pengembangan',
-      title: language === 'en' ? 'From Concept to Launch' : 'Dari Konsep hingga Peluncuran',
-      subtitle: language === 'en'
-        ? 'Our proven methodology for successful mobile app development'
-        : 'Metodologi terbukti kami untuk pengembangan aplikasi mobile yang sukses',
+      badge: 'Proses Pengembangan',
+      title: 'Dari Konsep hingga Peluncuran',
+      subtitle: 'Metodologi terbukti kami untuk pengembangan aplikasi mobile yang sukses',
       steps: [
         {
           number: '01',
           icon: Search,
-          title: language === 'en' ? 'Planning & Discovery' : 'Perencanaan & Penemuan',
-          description: language === 'en'
-            ? 'We start by understanding your business goals, target audience, and technical requirements. Through detailed research and competitor analysis, we create a comprehensive app strategy and feature roadmap.'
-            : 'Kami mulai dengan memahami tujuan bisnis, target audiens, dan persyaratan teknis Anda. Melalui riset mendalam dan analisis kompetitor, kami membuat strategi aplikasi dan roadmap fitur yang komprehensif.'
+          title: 'Perencanaan & Penemuan',
+          description: 'Kami mulai dengan memahami tujuan bisnis, target audiens, dan persyaratan teknis Anda. Melalui riset mendalam dan analisis kompetitor, kami membuat strategi aplikasi dan roadmap fitur yang komprehensif.'
         },
         {
           number: '02',
           icon: Palette,
-          title: language === 'en' ? 'UI/UX Design' : 'Desain UI/UX',
-          description: language === 'en'
-            ? 'Our designers create beautiful, intuitive interfaces with interactive prototypes. We focus on user flows, accessibility, and platform-specific design guidelines to ensure the best user experience.'
-            : 'Desainer kami menciptakan antarmuka yang indah dan intuitif dengan prototipe interaktif. Kami fokus pada alur pengguna, aksesibilitas, dan panduan desain spesifik platform untuk memastikan pengalaman pengguna terbaik.'
+          title: 'Desain UI/UX',
+          description: 'Desainer kami menciptakan antarmuka yang indah dan intuitif dengan prototipe interaktif. Kami fokus pada alur pengguna, aksesibilitas, dan panduan desain spesifik platform untuk memastikan pengalaman pengguna terbaik.'
         },
         {
           number: '03',
           icon: Code2,
-          title: language === 'en' ? 'Development & Integration' : 'Pengembangan & Integrasi',
-          description: language === 'en'
-            ? 'Using Flutter or React Native, we build your app with clean, scalable code. We integrate APIs, implement features, and ensure smooth performance across all target devices and operating systems.'
-            : 'Menggunakan Flutter atau React Native, kami membangun aplikasi Anda dengan kode yang bersih dan scalable. Kami mengintegrasikan API, menerapkan fitur, dan memastikan performa mulus di semua perangkat dan sistem operasi target.'
+          title: 'Pengembangan & Integrasi',
+          description: 'Menggunakan Flutter atau React Native, kami membangun aplikasi Anda dengan kode yang bersih dan scalable. Kami mengintegrasikan API, menerapkan fitur, dan memastikan performa mulus di semua perangkat dan sistem operasi target.'
         },
         {
           number: '04',
           icon: TestTube,
-          title: language === 'en' ? 'QA Testing & Launch' : 'QA Testing & Peluncuran',
-          description: language === 'en'
-            ? 'Rigorous testing across multiple devices and scenarios ensures bug-free performance. We handle app store submissions, optimization, and provide post-launch support to ensure your app succeeds.'
-            : 'Pengujian ketat di berbagai perangkat dan skenario memastikan performa bebas bug. Kami menangani pengiriman app store, optimasi, dan memberikan dukungan pasca-peluncuran untuk memastikan aplikasi Anda sukses.'
+          title: 'QA Testing & Peluncuran',
+          description: 'Pengujian ketat di berbagai perangkat dan skenario memastikan performa bebas bug. Kami menangani pengiriman app store, optimasi, dan memberikan dukungan pasca-peluncuran untuk memastikan aplikasi Anda sukses.'
         }
       ]
     },
     technologies: {
-      badge: language === 'en' ? 'Technologies' : 'Teknologi',
-      title: language === 'en' ? 'Cutting-Edge Tech Stack' : 'Stack Teknologi Terdepan',
-      subtitle: language === 'en'
-        ? 'We use the best tools for mobile app development'
-        : 'Kami menggunakan tools terbaik untuk pengembangan aplikasi mobile',
+      badge: 'Teknologi',
+      title: 'Stack Teknologi Terdepan',
+      subtitle: 'Kami menggunakan tools terbaik untuk pengembangan aplikasi mobile',
       items: [
         {
-          category: language === 'en' ? 'Frameworks' : 'Framework',
+          category: 'Framework',
           technologies: ['Flutter', 'React Native', 'Swift', 'Kotlin']
         },
         {
-          category: language === 'en' ? 'Backend' : 'Backend',
+          category: 'Backend',
           technologies: ['Firebase', 'Node.js', 'GraphQL', 'REST APIs']
         },
         {
-          category: language === 'en' ? 'Tools' : 'Tools',
+          category: 'Tools',
           technologies: ['Xcode', 'Android Studio', 'VS Code', 'Figma']
         },
         {
-          category: language === 'en' ? 'Cloud & Services' : 'Cloud & Layanan',
+          category: 'Cloud & Layanan',
           technologies: ['AWS', 'Google Cloud', 'Azure', 'Supabase']
         }
       ]
     },
     performance: {
-      badge: language === 'en' ? 'Why Choose Us' : 'Mengapa Memilih Kami',
-      title: language === 'en' ? 'Mobile Excellence Delivered' : 'Keunggulan Mobile yang Terkirim',
-      subtitle: language === 'en'
-        ? 'Our commitment to quality and performance'
-        : 'Komitmen kami terhadap kualitas dan performa',
+      badge: 'Mengapa Memilih Kami',
+      title: 'Keunggulan Mobile yang Terkirim',
+      subtitle: 'Komitmen kami terhadap kualitas dan performa',
       stats: [
         { 
           value: '200', 
           suffix: '+',
-          label: language === 'en' ? 'Apps Launched' : 'Aplikasi Diluncurkan', 
+          label: 'Aplikasi Diluncurkan', 
           icon: Smartphone 
         },
         { 
           value: '4.8', 
           suffix: '★',
-          label: language === 'en' ? 'Average Rating' : 'Rating Rata-rata', 
+          label: 'Rating Rata-rata', 
           icon: Star 
         },
         { 
           value: '1M', 
           suffix: '+',
-          label: language === 'en' ? 'Total Downloads' : 'Total Unduhan', 
+          label: 'Total Unduhan', 
           icon: TrendingUp 
         },
         { 
           value: '99', 
           suffix: '%',
-          label: language === 'en' ? 'Client Satisfaction' : 'Kepuasan Klien', 
+          label: 'Kepuasan Klien', 
           icon: Award 
         }
       ]
     },
     benefits: {
-      badge: language === 'en' ? 'Additional Benefits' : 'Manfaat Tambahan',
-      title: language === 'en' ? 'More Than Just Development' : 'Lebih dari Sekadar Pengembangan',
-      subtitle: language === 'en'
-        ? 'Comprehensive services for your mobile success'
-        : 'Layanan komprehensif untuk kesuksesan mobile Anda',
+      badge: 'Manfaat Tambahan',
+      title: 'Lebih dari Sekadar Pengembangan',
+      subtitle: 'Layanan komprehensif untuk kesuksesan mobile Anda',
       items: [
         {
           icon: Zap,
-          title: language === 'en' ? 'Fast Performance' : 'Performa Cepat',
-          description: language === 'en'
-            ? 'Optimized for speed and efficiency'
-            : 'Dioptimalkan untuk kecepatan dan efisiensi'
+          title: 'Performa Cepat',
+          description: 'Dioptimalkan untuk kecepatan dan efisiensi'
         },
         {
           icon: Shield,
-          title: language === 'en' ? 'Secure & Reliable' : 'Aman & Andal',
-          description: language === 'en'
-            ? 'Enterprise-grade security measures'
-            : 'Langkah keamanan tingkat enterprise'
+          title: 'Aman & Andal',
+          description: 'Langkah keamanan tingkat enterprise'
         },
         {
           icon: Users,
-          title: language === 'en' ? 'User Analytics' : 'Analitik Pengguna',
-          description: language === 'en'
-            ? 'Track user behavior and engagement'
-            : 'Lacak perilaku dan keterlibatan pengguna'
+          title: 'Analitik Pengguna',
+          description: 'Lacak perilaku dan keterlibatan pengguna'
         },
         {
           icon: Boxes,
-          title: language === 'en' ? 'Scalable Architecture' : 'Arsitektur Scalable',
-          description: language === 'en'
-            ? 'Built to grow with your business'
-            : 'Dibangun untuk tumbuh bersama bisnis Anda'
+          title: 'Arsitektur Scalable',
+          description: 'Dibangun untuk tumbuh bersama bisnis Anda'
         },
         {
           icon: Settings,
-          title: language === 'en' ? 'Easy Maintenance' : 'Pemeliharaan Mudah',
-          description: language === 'en'
-            ? 'Clean code for easy updates'
-            : 'Kode bersih untuk pembaruan mudah'
+          title: 'Pemeliharaan Mudah',
+          description: 'Kode bersih untuk pembaruan mudah'
         },
         {
           icon: Cpu,
-          title: language === 'en' ? 'Offline Support' : 'Dukungan Offline',
-          description: language === 'en'
-            ? 'Work seamlessly without internet'
-            : 'Bekerja mulus tanpa internet'
+          title: 'Dukungan Offline',
+          description: 'Bekerja mulus tanpa internet'
         }
       ]
     },
     cta: {
-      title: language === 'en' 
-        ? "Let's Build Your Next Mobile App" 
-        : 'Mari Bangun Aplikasi Mobile Anda Berikutnya',
-      subtitle: language === 'en'
-        ? "Transform your vision into a powerful mobile experience that users will love"
-        : 'Transformasikan visi Anda menjadi pengalaman mobile yang powerful yang akan disukai pengguna',
-      button: language === 'en' ? 'Get Started Now' : 'Mulai Sekarang'
+      title: 'Mari Bangun Aplikasi Mobile Anda Berikutnya',
+      subtitle: 'Transformasikan visi Anda menjadi pengalaman mobile yang powerful yang akan disukai pengguna',
+      button: 'Mulai Sekarang'
     }
-  }), [language]);
+  }), []);
 
   return (
     <>

@@ -174,228 +174,168 @@ const ProcessStep = memo(({ number, title, description, icon: Icon }) => {
 ProcessStep.displayName = 'ProcessStep';
 
 export default function WebDevelopmentPage() {
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
-
   const t = useMemo(() => ({
     hero: {
-      badge: language === 'en' ? 'Web Development Excellence' : 'Keunggulan Pengembangan Web',
-      title: language === 'en' ? 'High-Performance Web Solutions' : 'Solusi Web Berkinerja Tinggi',
-      subtitle: language === 'en' 
-        ? 'Built for Scale, Optimized for Success'
-        : 'Dibangun untuk Skala, Dioptimalkan untuk Sukses',
-      description: language === 'en'
-        ? 'We create modern, scalable web applications that deliver exceptional user experiences and drive business growth. From custom platforms to e-commerce solutions, our expertise ensures your digital presence stands out.'
-        : 'Kami menciptakan aplikasi web modern dan scalable yang memberikan pengalaman pengguna luar biasa dan mendorong pertumbuhan bisnis. Dari platform custom hingga solusi e-commerce, keahlian kami memastikan kehadiran digital Anda menonjol.',
+      badge:  'Keunggulan Pengembangan Web',
+      title:  'Solusi Web Berkinerja Tinggi',
+      subtitle: 'Dibangun untuk Skala, Dioptimalkan untuk Sukses',
+      description: 'Kami menciptakan aplikasi web modern dan scalable yang memberikan pengalaman pengguna luar biasa dan mendorong pertumbuhan bisnis. Dari platform custom hingga solusi e-commerce, keahlian kami memastikan kehadiran digital Anda menonjol.',
       cta: {
-        primary: language === 'en' ? 'Start Your Project' : 'Mulai Proyek Anda',
-        secondary: language === 'en' ? 'View Portfolio' : 'Lihat Portfolio'
+        primary:  'Mulai Proyek Anda',
+        secondary:  'Lihat Portfolio'
       }
     },
     features: {
-      badge: language === 'en' ? 'Key Features' : 'Fitur Utama',
-      title: language === 'en' ? 'Comprehensive Web Solutions' : 'Solusi Web Komprehensif',
-      subtitle: language === 'en'
-        ? 'Everything you need to build and scale your digital presence'
-        : 'Semua yang Anda butuhkan untuk membangun dan menskalakan kehadiran digital Anda',
+      badge:  'Fitur Utama',
+      title:  'Solusi Web Komprehensif',
+      subtitle: 'Semua yang Anda butuhkan untuk membangun dan menskalakan kehadiran digital Anda',
       items: [
         {
           icon: Code2,
-          title: language === 'en' ? 'Custom Web Applications' : 'Aplikasi Web Custom',
-          description: language === 'en'
-            ? 'Tailored solutions built from the ground up to meet your unique business requirements. We leverage modern frameworks and best practices to deliver robust, maintainable applications.'
-            : 'Solusi yang disesuaikan dibangun dari awal untuk memenuhi kebutuhan bisnis unik Anda. Kami memanfaatkan framework modern dan praktik terbaik untuk menghasilkan aplikasi yang robust dan mudah dipelihara.',
+          title: 'Aplikasi Web Custom',
+          description: 'Solusi yang disesuaikan dibangun dari awal untuk memenuhi kebutuhan bisnis unik Anda. Kami memanfaatkan framework modern dan praktik terbaik untuk menghasilkan aplikasi yang robust dan mudah dipelihara.',
           accent: 'blue'
         },
         {
           icon: Smartphone,
-          title: language === 'en' ? 'Responsive Design' : 'Desain Responsif',
-          description: language === 'en'
-            ? 'Seamless experiences across all devices. Our mobile-first approach ensures your website looks and performs beautifully on smartphones, tablets, and desktops.'
-            : 'Pengalaman mulus di semua perangkat. Pendekatan mobile-first kami memastikan website Anda terlihat dan berkinerja indah di smartphone, tablet, dan desktop.',
+          title:  'Desain Responsif',
+          description: 'Pengalaman mulus di semua perangkat. Pendekatan mobile-first kami memastikan website Anda terlihat dan berkinerja indah di smartphone, tablet, dan desktop.',
           accent: 'purple'
         },
         {
           icon: ShoppingCart,
-          title: language === 'en' ? 'E-commerce Solutions' : 'Solusi E-commerce',
-          description: language === 'en'
-            ? 'Complete e-commerce platforms with secure payment integration, inventory management, and analytics. Turn your online store into a revenue-generating machine.'
-            : 'Platform e-commerce lengkap dengan integrasi pembayaran aman, manajemen inventori, dan analitik. Ubah toko online Anda menjadi mesin penghasil pendapatan.',
+          title: 'Solusi E-commerce',
+          description: 'Platform e-commerce lengkap dengan integrasi pembayaran aman, manajemen inventori, dan analitik. Ubah toko online Anda menjadi mesin penghasil pendapatan.',
           accent: 'green'
         },
         {
           icon: Shield,
-          title: language === 'en' ? 'Web Security' : 'Keamanan Web',
-          description: language === 'en'
-            ? 'Enterprise-grade security measures to protect your data and users. We implement SSL/TLS, secure authentication, data encryption, and regular security audits.'
-            : 'Langkah keamanan tingkat enterprise untuk melindungi data dan pengguna Anda. Kami menerapkan SSL/TLS, otentikasi aman, enkripsi data, dan audit keamanan rutin.',
+          title: 'Keamanan Web',
+          description: 'Langkah keamanan tingkat enterprise untuk melindungi data dan pengguna Anda. Kami menerapkan SSL/TLS, otentikasi aman, enkripsi data, dan audit keamanan rutin.',
           accent: 'orange'
         }
       ]
     },
     techStack: {
-      badge: language === 'en' ? 'Technology Stack' : 'Stack Teknologi',
-      title: language === 'en' ? 'Modern Web Technologies' : 'Teknologi Web Modern',
-      subtitle: language === 'en'
-        ? 'Powered by industry-leading frameworks and tools'
-        : 'Didukung oleh framework dan tools terkemuka di industri',
+      badge: 'Stack Teknologi',
+      title: 'Teknologi Web Modern',
+      subtitle: 'Didukung oleh framework dan tools terkemuka di industri',
       items: [
-        { name: 'Next.js', icon: Layers, category: language === 'en' ? 'React Framework' : 'Framework React' },
-        { name: 'React', icon: Code2, category: language === 'en' ? 'UI Library' : 'Library UI' },
-        { name: 'Node.js', icon: Server, category: language === 'en' ? 'Backend Runtime' : 'Runtime Backend' },
-        { name: 'Tailwind CSS', icon: Palette, category: language === 'en' ? 'CSS Framework' : 'Framework CSS' },
-        { name: 'TypeScript', icon: Code2, category: language === 'en' ? 'Type Safety' : 'Keamanan Tipe' },
-        { name: 'PostgreSQL', icon: Database, category: language === 'en' ? 'Database' : 'Basis Data' },
-        { name: 'AWS/GCP', icon: Cloud, category: language === 'en' ? 'Cloud Infrastructure' : 'Infrastruktur Cloud' },
-        { name: 'Docker', icon: Cpu, category: language === 'en' ? 'Containerization' : 'Kontainerisasi' }
+        { name: 'Next.js', icon: Layers, category: 'Framework React' },
+        { name: 'React', icon: Code2, category: 'Library UI' },
+        { name: 'Node.js', icon: Server, category: 'Runtime Backend' },
+        { name: 'Tailwind CSS', icon: Palette, category: 'Framework CSS' },
+        { name: 'TypeScript', icon: Code2, category: 'Keamanan Tipe' },
+        { name: 'PostgreSQL', icon: Database, category: 'Basis Data' },
+        { name: 'AWS/GCP', icon: Cloud, category: 'Infrastruktur Cloud' },
+        { name: 'Docker', icon: Cpu, category: 'Kontainerisasi' }
       ]
     },
     performance: {
-      badge: language === 'en' ? 'Performance Metrics' : 'Metrik Performa',
-      title: language === 'en' ? 'Built for Speed & Reliability' : 'Dibangun untuk Kecepatan & Keandalan',
-      subtitle: language === 'en'
-        ? 'Real-world performance that drives results'
-        : 'Performa dunia nyata yang menghasilkan hasil',
+      badge:  'Metrik Performa',
+      title:  'Dibangun untuk Kecepatan & Keandalan',
+      subtitle: 'Performa dunia nyata yang menghasilkan hasil',
       stats: [
         { 
           value: '99.9', 
           suffix: '%',
-          label: language === 'en' ? 'Uptime Guarantee' : 'Jaminan Uptime', 
+          label:  'Jaminan Uptime', 
           icon: Server 
         },
         { 
           value: '<2', 
           suffix: 's',
-          label: language === 'en' ? 'Load Time' : 'Waktu Muat', 
+          label:  'Waktu Muat', 
           icon: Zap 
         },
         { 
           value: '95', 
           suffix: '+',
-          label: language === 'en' ? 'PageSpeed Score' : 'Skor PageSpeed', 
+          label:  'Skor PageSpeed', 
           icon: Gauge 
         },
         { 
           value: '100', 
           suffix: '%',
-          label: language === 'en' ? 'Mobile Optimized' : 'Optimasi Mobile', 
+          label:  'Optimasi Mobile', 
           icon: Smartphone 
         }
       ]
     },
     process: {
-      badge: language === 'en' ? 'Our Process' : 'Proses Kami',
-      title: language === 'en' ? 'How We Build Your Success' : 'Bagaimana Kami Membangun Kesuksesan Anda',
-      subtitle: language === 'en'
-        ? 'A proven methodology from concept to launch'
-        : 'Metodologi terbukti dari konsep hingga peluncuran',
+      badge: 'Proses Kami',
+      title: 'Bagaimana Kami Membangun Kesuksesan Anda',
+      subtitle: 'Metodologi terbukti dari konsep hingga peluncuran',
       steps: [
         {
           number: '01',
           icon: Search,
-          title: language === 'en' ? 'Discovery & Planning' : 'Penemuan & Perencanaan',
-          description: language === 'en'
-            ? 'We dive deep into understanding your business goals, target audience, and technical requirements to create a comprehensive project roadmap.'
-            : 'Kami menyelami pemahaman mendalam tentang tujuan bisnis, target audiens, dan persyaratan teknis Anda untuk membuat roadmap proyek yang komprehensif.'
+          title: 'Penemuan & Perencanaan',
+          description: 'Kami menyelami pemahaman mendalam tentang tujuan bisnis, target audiens, dan persyaratan teknis Anda untuk membuat roadmap proyek yang komprehensif.'
         },
         {
           number: '02',
           icon: Palette,
-          title: language === 'en' ? 'Design & Prototyping' : 'Desain & Prototipe',
-          description: language === 'en'
-            ? 'Our design team creates intuitive, visually stunning interfaces with interactive prototypes for your feedback and validation.'
-            : 'Tim desain kami menciptakan antarmuka intuitif dan visual yang menakjubkan dengan prototipe interaktif untuk umpan balik dan validasi Anda.'
+          title: 'Desain & Prototipe',
+          description: 'Tim desain kami menciptakan antarmuka intuitif dan visual yang menakjubkan dengan prototipe interaktif untuk umpan balik dan validasi Anda.'
         },
         {
           number: '03',
           icon: Code2,
-          title: language === 'en' ? 'Development & Testing' : 'Pengembangan & Pengujian',
-          description: language === 'en'
-            ? 'We build your application using cutting-edge technologies with rigorous testing at every stage to ensure quality and performance.'
-            : 'Kami membangun aplikasi Anda menggunakan teknologi terdepan dengan pengujian ketat di setiap tahap untuk memastikan kualitas dan performa.'
+          title: 'Pengembangan & Pengujian',
+          description: 'Kami membangun aplikasi Anda menggunakan teknologi terdepan dengan pengujian ketat di setiap tahap untuk memastikan kualitas dan performa.'
         },
         {
           number: '04',
           icon: TrendingUp,
-          title: language === 'en' ? 'Launch & Optimization' : 'Peluncuran & Optimasi',
-          description: language === 'en'
-            ? 'After successful deployment, we monitor performance, gather user insights, and continuously optimize for better results.'
-            : 'Setelah deployment berhasil, kami memantau performa, mengumpulkan wawasan pengguna, dan terus mengoptimalkan untuk hasil yang lebih baik.'
+          title: 'Peluncuran & Optimasi',
+          description: 'Setelah deployment berhasil, kami memantau performa, mengumpulkan wawasan pengguna, dan terus mengoptimalkan untuk hasil yang lebih baik.'
         }
       ]
     },
     benefits: {
-      badge: language === 'en' ? 'Why Choose Us' : 'Mengapa Memilih Kami',
-      title: language === 'en' ? 'The Barcomp Advantage' : 'Keunggulan Barcomp',
-      subtitle: language === 'en'
-        ? 'What sets us apart in web development'
-        : 'Apa yang membedakan kami dalam pengembangan web',
+      badge: 'Mengapa Memilih Kami',
+      title: 'Keunggulan Barcomp',
+      subtitle: 'Apa yang membedakan kami dalam pengembangan web',
       items: [
         {
           icon: Search,
-          title: language === 'en' ? 'SEO Optimized' : 'SEO Teroptimasi',
-          description: language === 'en'
-            ? 'Built with search engine visibility in mind from day one'
-            : 'Dibangun dengan visibilitas mesin pencari sejak hari pertama'
+          title: 'SEO Teroptimasi',
+          description: 'Dibangun dengan visibilitas mesin pencari sejak hari pertama'
         },
         {
           icon: Zap,
-          title: language === 'en' ? 'Lightning Fast' : 'Sangat Cepat',
-          description: language === 'en'
-            ? 'Optimized performance for exceptional user experiences'
-            : 'Performa optimal untuk pengalaman pengguna yang luar biasa'
+          title: 'Sangat Cepat',
+          description: 'Performa optimal untuk pengalaman pengguna yang luar biasa'
         },
         {
           icon: Globe,
-          title: language === 'en' ? 'Scalable Architecture' : 'Arsitektur Scalable',
-          description: language === 'en'
-            ? 'Built to grow with your business needs'
-            : 'Dibangun untuk tumbuh dengan kebutuhan bisnis Anda'
+          title: 'Arsitektur Scalable',
+          description: 'Dibangun untuk tumbuh dengan kebutuhan bisnis Anda'
         },
         {
           icon: Lock,
-          title: language === 'en' ? 'Enterprise Security' : 'Keamanan Enterprise',
-          description: language === 'en'
-            ? 'Industry-standard security protocols and compliance'
-            : 'Protokol keamanan standar industri dan kepatuhan'
+          title: 'Keamanan Enterprise',
+          description: 'Protokol keamanan standar industri dan kepatuhan'
         },
         {
           icon: Users,
-          title: language === 'en' ? 'Expert Team' : 'Tim Ahli',
-          description: language === 'en'
-            ? 'Experienced developers dedicated to your success'
-            : 'Developer berpengalaman yang berdedikasi untuk kesuksesan Anda'
+          title: 'Tim Ahli',
+          description: 'Developer berpengalaman yang berdedikasi untuk kesuksesan Anda'
         },
         {
           icon: Award,
-          title: language === 'en' ? 'Proven Track Record' : 'Rekam Jejak Terbukti',
-          description: language === 'en'
-            ? 'Successfully delivered 500+ projects across industries'
-            : 'Berhasil menyelesaikan 500+ proyek di berbagai industri'
+          title: 'Rekam Jejak Terbukti',
+          description: 'Berhasil menyelesaikan 500+ proyek di berbagai industri'
         }
       ]
     },
     cta: {
-      title: language === 'en' 
-        ? "Ready to Build Something Amazing?" 
-        : 'Siap Membangun Sesuatu yang Luar Biasa?',
-      subtitle: language === 'en'
-        ? "Let's discuss your web development needs and create a solution that exceeds expectations"
-        : 'Mari diskusikan kebutuhan pengembangan web Anda dan ciptakan solusi yang melampaui ekspektasi',
-      button: language === 'en' ? 'Get Started Today' : 'Mulai Hari Ini'
+      title: 'Siap Membangun Sesuatu yang Luar Biasa?',
+      subtitle: 'Mari diskusikan kebutuhan pengembangan web Anda dan ciptakan solusi yang melampaui ekspektasi',
+      button:  'Mulai Hari Ini'
     }
-  }), [language]);
+  }), []);
 
   return (
     <>

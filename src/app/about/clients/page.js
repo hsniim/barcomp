@@ -350,29 +350,10 @@ CaseStudyCard.displayName = 'CaseStudyCard';
 
 // Main Component
 export default function ClientsPage() {
-  const [language, setLanguage] = useState('en'); // Default to English
   const testimonialsScrollRef = useRef(null);
   const clientsScrollRef = useRef(null);
   const industriesScrollRef = useRef(null);
   const caseStudiesScrollRef = useRef(null);
-
-  // Initialize language from localStorage and listen for changes
-  useEffect(() => {
-    // Get initial language from localStorage (default to 'en')
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    // Listen for language change events from Navbar
-    const handleLanguageChange = (event) => {
-      setLanguage(event.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-
-    return () => {
-      window.removeEventListener('languageChange', handleLanguageChange);
-    };
-  }, []);
 
   const scrollTestimonials = (direction) => {
     if (testimonialsScrollRef.current) {
@@ -903,7 +884,7 @@ export default function ClientsPage() {
     }
   };
 
-  const t = content[language];
+  const t = content.id;
 
   return (
     <>
@@ -1062,9 +1043,7 @@ export default function ClientsPage() {
             <FadeInSection delay={0.3}>
               <div className="mt-12 text-center">
                 <p className="text-gray-600 mb-6">
-                  {language === 'id' 
-                    ? 'Dan masih banyak lagi perusahaan terkemuka lainnya...' 
-                    : 'And many more leading companies...'}
+                  {'Dan masih banyak lagi perusahaan terkemuka lainnya...'}
                 </p>
                 <Link href="/contact">
                   <Button 
@@ -1072,7 +1051,7 @@ export default function ClientsPage() {
                     size="lg"
                     className="border-[#0066FF] text-[#0066FF] hover:bg-[#0066FF] hover:text-white"
                   >
-                    {language === 'id' ? 'Bergabung dengan Mereka' : 'Join Them'}
+                    {'Join Them'}
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

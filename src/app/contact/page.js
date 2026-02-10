@@ -7,64 +7,7 @@ import ContactForm from '@/components/ContactForm';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 
 export default function Contact() {
-  const [language, setLanguage] = useState('en');
-
-  // Listen for language changes
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    if (savedLang !== language) {
-      setLanguage(savedLang);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleLanguageChange = (e) => {
-      if (e.detail && e.detail !== language) {
-        setLanguage(e.detail);
-      }
-    };
-
-    const handleStorageChange = (e) => {
-      if (e.key === 'language' && e.newValue && e.newValue !== language) {
-        setLanguage(e.newValue);
-      }
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('languageChange', handleLanguageChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [language]);
-
   const t = {
-    en: {
-      title: 'Get in Touch',
-      subtitle: 'Have a project in mind? Let\'s discuss how we can help bring your ideas to life.',
-      formTitle: 'Send us a Message',
-      formDescription: 'Fill out the form below and we\'ll get back to you as soon as possible.',
-      name: 'Name',
-      email: 'Email',
-      phone: 'Phone',
-      subject: 'Subject',
-      message: 'Message',
-      send: 'Send Message',
-      sending: 'Sending...',
-      contactInfo: 'Contact Information',
-      contactDesc: 'Get in touch with us through any of these channels',
-      emailLabel: 'Email',
-      phoneLabel: 'Phone',
-      office: 'Office',
-      businessHours: 'Business Hours',
-      monday: 'Monday - Friday:',
-      saturday: 'Saturday:',
-      sunday: 'Sunday:',
-      closed: 'Closed',
-      successMsg: 'Message sent successfully! We\'ll get back to you soon.',
-      errorMsg: 'Failed to send message. Please try again.'
-    },
     id: {
       title: 'Hubungi Kami',
       subtitle: 'Punya proyek yang ingin didiskusikan? Mari bicarakan bagaimana kami dapat membantu mewujudkan ide Anda.',
@@ -92,7 +35,7 @@ export default function Contact() {
     }
   };
 
-  const content = t[language];
+  const content = t.id;
 
   return (
     <>
@@ -129,12 +72,10 @@ export default function Contact() {
                 <div className="text-center">
                   <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <p className="text-lg font-medium">
-                    {language === 'en' ? 'Map will be displayed here' : 'Peta akan ditampilkan di sini'}
+                    {'Peta akan ditampilkan di sini'}
                   </p>
                   <p className="text-sm mt-2">
-                    {language === 'en' 
-                      ? 'Integrate with Google Maps API' 
-                      : 'Integrasi dengan Google Maps API'}
+                    {'Integrasi dengan Google Maps API'}
                   </p>
                 </div>
               </div>

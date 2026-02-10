@@ -184,57 +184,40 @@ const FilterButton = memo(({ label, icon: Icon, isActive, onClick }) => {
 FilterButton.displayName = 'FilterButton';
 
 export default function MobilePortfolioPage() {
-  const [language, setLanguage] = useState('en');
   const [activeFilter, setActiveFilter] = useState('all');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
 
   const t = useMemo(() => ({
     hero: {
-      badge: language === 'en' ? 'Mobile Portfolio' : 'Portofolio Mobile',
-      title: language === 'en' ? 'Crafting Excellence' : 'Menciptakan Keunggulan',
-      subtitle: language === 'en' 
-        ? 'One App at a Time'
-        : 'Satu Aplikasi pada Satu Waktu',
-      description: language === 'en'
-        ? 'Explore our collection of innovative mobile applications designed for iOS and Android. Each project represents our commitment to quality, user experience, and cutting-edge technology.'
-        : 'Jelajahi koleksi aplikasi mobile inovatif kami yang dirancang untuk iOS dan Android. Setiap proyek mewakili komitmen kami terhadap kualitas, pengalaman pengguna, dan teknologi terdepan.'
+      badge: 'Portofolio Mobile',
+      title: 'Menciptakan Keunggulan',
+      subtitle: 'Satu Aplikasi pada Satu Waktu',
+      description: 'Jelajahi koleksi aplikasi mobile inovatif kami yang dirancang untuk iOS dan Android. Setiap proyek mewakili komitmen kami terhadap kualitas, pengalaman pengguna, dan teknologi terdepan.'
     },
     stats: {
-      badge: language === 'en' ? 'Our Impact' : 'Dampak Kami',
+      badge: 'Dampak Kami',
       items: [
         {
           value: '80',
           suffix: '+',
-          label: language === 'en' ? 'Mobile Apps' : 'Aplikasi Mobile',
+          label: 'Aplikasi Mobile',
           icon: Smartphone
         },
         {
           value: '2M',
           suffix: '+',
-          label: language === 'en' ? 'Active Users' : 'Pengguna Aktif',
+          label: 'Pengguna Aktif',
           icon: Users
         },
         {
           value: '4.8',
           suffix: '/5',
-          label: language === 'en' ? 'Avg. Rating' : 'Rating Rata-rata',
+          label: 'Rating Rata-rata',
           icon: Star
         },
         {
           value: '15',
           suffix: '+',
-          label: language === 'en' ? 'Awards' : 'Penghargaan',
+          label: 'Penghargaan',
           icon: Award
         }
       ]
@@ -243,27 +226,27 @@ export default function MobilePortfolioPage() {
       items: [
         {
           id: 'all',
-          label: language === 'en' ? 'All Apps' : 'Semua Aplikasi',
+          label: 'Semua Aplikasi',
           icon: Layers
         },
         {
           id: 'fintech',
-          label: language === 'en' ? 'Fintech' : 'Fintech',
+          label: 'Fintech',
           icon: TrendingUp
         },
         {
           id: 'ecommerce',
-          label: language === 'en' ? 'E-Commerce' : 'E-Commerce',
+          label: 'E-Commerce',
           icon: ShoppingCart
         },
         {
           id: 'social',
-          label: language === 'en' ? 'Social' : 'Sosial',
+          label: 'Sosial',
           icon: Users
         },
         {
           id: 'enterprise',
-          label: language === 'en' ? 'Enterprise' : 'Enterprise',
+          label: 'Enterprise',
           icon: Building2
         }
       ]
@@ -271,195 +254,173 @@ export default function MobilePortfolioPage() {
     projects: [
       {
         id: 1,
-        title: language === 'en' ? 'FinanceFlow - Digital Banking' : 'FinanceFlow - Perbankan Digital',
-        description: language === 'en' 
-          ? 'A comprehensive mobile banking solution with advanced security, real-time transactions, and AI-powered financial insights for modern users.'
-          : 'Solusi perbankan mobile komprehensif dengan keamanan canggih, transaksi real-time, dan wawasan keuangan bertenaga AI untuk pengguna modern.',
+        title: 'FinanceFlow - Perbankan Digital',
+        description: 'Solusi perbankan mobile komprehensif dengan keamanan canggih, transaksi real-time, dan wawasan keuangan bertenaga AI untuk pengguna modern.',
         category: 'Fintech',
         image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop',
         technologies: ['React Native', 'Node.js', 'PostgreSQL', 'AWS'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '9 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '8',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'fintech'
       },
       {
         id: 2,
-        title: language === 'en' ? 'ShopMart - Shopping Experience' : 'ShopMart - Pengalaman Berbelanja',
-        description: language === 'en'
-          ? 'Feature-rich e-commerce mobile app with AR try-on, personalized recommendations, and seamless checkout experience.'
-          : 'Aplikasi mobile e-commerce kaya fitur dengan AR try-on, rekomendasi personal, dan pengalaman checkout yang mulus.',
+        title: 'ShopMart - Pengalaman Berbelanja',
+        description: 'Aplikasi mobile e-commerce kaya fitur dengan AR try-on, rekomendasi personal, dan pengalaman checkout yang mulus.',
         category: 'E-Commerce',
         image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=600&fit=crop',
         technologies: ['Flutter', 'Firebase', 'Stripe', 'TensorFlow'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '7 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '10',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'ecommerce'
       },
       {
         id: 3,
-        title: language === 'en' ? 'SocialConnect - Community Platform' : 'SocialConnect - Platform Komunitas',
-        description: language === 'en'
-          ? 'Innovative social networking app with video sharing, live streaming, and AI-moderated content for safe community building.'
-          : 'Aplikasi jejaring sosial inovatif dengan berbagi video, live streaming, dan konten yang dimoderasi AI untuk membangun komunitas yang aman.',
-        category: language === 'en' ? 'Social' : 'Sosial',
+        title: 'SocialConnect - Platform Komunitas',
+        description: 'Aplikasi jejaring sosial inovatif dengan berbagi video, live streaming, dan konten yang dimoderasi AI untuk membangun komunitas yang aman.',
+        category: 'Sosial',
         image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop',
         technologies: ['React Native', 'WebRTC', 'MongoDB', 'Redis'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '10 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '12',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'social'
       },
       {
         id: 4,
-        title: language === 'en' ? 'HealthTrack - Wellness Companion' : 'HealthTrack - Pendamping Kesehatan',
-        description: language === 'en'
-          ? 'Personal health and fitness tracking app with AI coach, nutrition planning, and wearable device integration.'
-          : 'Aplikasi pelacakan kesehatan dan kebugaran pribadi dengan pelatih AI, perencanaan nutrisi, dan integrasi perangkat wearable.',
-        category: language === 'en' ? 'Health' : 'Kesehatan',
+        title: 'HealthTrack - Pendamping Kesehatan',
+        description: 'Aplikasi pelacakan kesehatan dan kebugaran pribadi dengan pelatih AI, perencanaan nutrisi, dan integrasi perangkat wearable.',
+        category: 'Kesehatan',
         image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop',
         technologies: ['Flutter', 'Firebase', 'TensorFlow', 'HealthKit'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '8 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '6',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'all'
       },
       {
         id: 5,
-        title: language === 'en' ? 'TaskMaster Pro - Productivity' : 'TaskMaster Pro - Produktivitas',
-        description: language === 'en'
-          ? 'Enterprise-grade task management app with team collaboration, time tracking, and advanced project analytics.'
-          : 'Aplikasi manajemen tugas tingkat enterprise dengan kolaborasi tim, pelacakan waktu, dan analitik proyek canggih.',
+        title: 'TaskMaster Pro - Produktivitas',
+        description: 'Aplikasi manajemen tugas tingkat enterprise dengan kolaborasi tim, pelacakan waktu, dan analitik proyek canggih.',
         category: 'Enterprise',
         image: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=800&h=600&fit=crop',
         technologies: ['React Native', 'GraphQL', 'PostgreSQL', 'AWS'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '11 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '14',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'enterprise'
       },
       {
         id: 6,
-        title: language === 'en' ? 'FoodieDelight - Food Delivery' : 'FoodieDelight - Pengiriman Makanan',
-        description: language === 'en'
-          ? 'On-demand food delivery app with real-time tracking, smart recommendations, and contactless delivery options.'
-          : 'Aplikasi pengiriman makanan on-demand dengan pelacakan real-time, rekomendasi pintar, dan opsi pengiriman tanpa kontak.',
+        title: 'FoodieDelight - Pengiriman Makanan',
+        description: 'Aplikasi pengiriman makanan on-demand dengan pelacakan real-time, rekomendasi pintar, dan opsi pengiriman tanpa kontak.',
         category: 'E-Commerce',
         image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=600&fit=crop',
         technologies: ['Flutter', 'Node.js', 'MongoDB', 'Socket.io'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '6 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '9',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'ecommerce'
       },
       {
         id: 7,
-        title: language === 'en' ? 'InvestSmart - Trading Platform' : 'InvestSmart - Platform Trading',
-        description: language === 'en'
-          ? 'Advanced investment app with real-time market data, portfolio management, and AI-driven trading insights.'
-          : 'Aplikasi investasi canggih dengan data pasar real-time, manajemen portofolio, dan wawasan trading bertenaga AI.',
+        title: 'InvestSmart - Platform Trading',
+        description: 'Aplikasi investasi canggih dengan data pasar real-time, manajemen portofolio, dan wawasan trading bertenaga AI.',
         category: 'Fintech',
         image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop',
         technologies: ['React Native', 'Python', 'Redis', 'WebSocket'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '12 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '15',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'fintech'
       },
       {
         id: 8,
-        title: language === 'en' ? 'LearnHub - Education App' : 'LearnHub - Aplikasi Edukasi',
-        description: language === 'en'
-          ? 'Interactive learning platform with video courses, quizzes, and gamification for engaging educational experience.'
-          : 'Platform pembelajaran interaktif dengan kursus video, kuis, dan gamifikasi untuk pengalaman edukasi yang menarik.',
-        category: language === 'en' ? 'Education' : 'Edukasi',
+        title: 'LearnHub - Aplikasi Edukasi',
+        description: 'Platform pembelajaran interaktif dengan kursus video, kuis, dan gamifikasi untuk pengalaman edukasi yang menarik.',
+        category: 'Edukasi',
         image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&h=600&fit=crop',
         technologies: ['Flutter', 'Django', 'PostgreSQL', 'WebRTC'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '8 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '7',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'all'
       },
       {
         id: 9,
-        title: language === 'en' ? 'RideShare - Transportation' : 'RideShare - Transportasi',
-        description: language === 'en'
-          ? 'Smart ride-sharing app with route optimization, driver matching, and secure payment integration for seamless travel.'
-          : 'Aplikasi ride-sharing pintar dengan optimasi rute, pencocokan driver, dan integrasi pembayaran aman untuk perjalanan mulus.',
-        category: language === 'en' ? 'Transportation' : 'Transportasi',
+        title: 'RideShare - Transportasi',
+        description: 'Aplikasi ride-sharing pintar dengan optimasi rute, pencocokan driver, dan integrasi pembayaran aman untuk perjalanan mulus.',
+        category: 'Transportasi',
         image: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&h=600&fit=crop',
         technologies: ['React Native', 'Node.js', 'Google Maps', 'Stripe'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '10 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '11',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'all'
       }
     ],
     cta: {
-      title: language === 'en' 
-        ? "Ready to Build Your App?" 
-        : 'Siap Membangun Aplikasi Anda?',
-      subtitle: language === 'en'
-        ? "Let's create a mobile experience that your users will love and your business will benefit from"
-        : 'Mari ciptakan pengalaman mobile yang akan disukai pengguna Anda dan menguntungkan bisnis Anda',
-      button: language === 'en' ? 'Start Your Project' : 'Mulai Proyek Anda'
+      title: 'Siap Membangun Aplikasi Anda?',
+      subtitle: 'Mari ciptakan pengalaman mobile yang akan disukai pengguna Anda dan menguntungkan bisnis Anda',
+      button: 'Mulai Proyek Anda'
     }
-  }), [language]);
+  }), []);
 
   // Filter projects based on active filter
   const filteredProjects = useMemo(() => {
@@ -569,7 +530,7 @@ export default function MobilePortfolioPage() {
                 <div className="text-center py-20">
                   <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-lg">
-                    {language === 'en' ? 'No projects found in this category' : 'Tidak ada proyek dalam kategori ini'}
+                    {'Tidak ada proyek dalam kategori ini'}
                   </p>
                 </div>
               </FadeInSection>

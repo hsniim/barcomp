@@ -217,93 +217,61 @@ const LeadershipCard = memo(({ name, position, image, bio, linkedin, email, inst
 LeadershipCard.displayName = 'LeadershipCard';
 
 export default function ProfilePage() {
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
-
   const t = {
     hero: {
-      badge: language === 'en' ? 'Our Dedication and Journey' : 'Dedikasi dan Perjalanan Kami',
-      title: language === 'en' ? 'Building Digital Future' : 'Membangun Masa Depan Digital',
-      subtitle: language === 'en' ? 'Since 2015' : 'Sejak 2015',
-      description: language === 'en'
-        ? "PT Barcomp Digital Solusindo was born from a simple belief: the right technology can transform the way businesses grow and evolve. More than just a service provider, we are strategic partners committed to helping every client reach their maximum potential."
-        : 'PT Barcomp Digital Solusindo lahir dari keyakinan sederhana: teknologi yang tepat dapat mengubah cara bisnis tumbuh dan berkembang. Lebih dari sekadar penyedia layanan, kami adalah mitra strategis yang berkomitmen membantu setiap klien mencapai potensi maksimalnya.',
-      established: language === 'en' ? 'Established 2015' : 'Berdiri 2015'
+      badge: 'Dedikasi dan Perjalanan Kami',
+      title: 'Membangun Masa Depan Digital',
+      subtitle: 'Sejak 2015',
+      description: 'PT Barcomp Digital Solusindo lahir dari keyakinan sederhana: teknologi yang tepat dapat mengubah cara bisnis tumbuh dan berkembang. Lebih dari sekadar penyedia layanan, kami adalah mitra strategis yang berkomitmen membantu setiap klien mencapai potensi maksimalnya.',
+      established: 'Berdiri 2015'
     },
     stats: [
-      { number: '9+', label: language === 'en' ? 'Years Experience' : 'Tahun Pengalaman', icon: Calendar },
-      { number: '500+', label: language === 'en' ? 'Projects Completed' : 'Proyek Selesai', icon: Target },
-      { number: '200+', label: language === 'en' ? 'Trusted Clients' : 'Klien Terpercaya', icon: Users },
-      { number: '50+', label: language === 'en' ? 'Expert Team' : 'Tim Ahli', icon: Award }
+      { number: '9+', label: 'Tahun Pengalaman', icon: Calendar },
+      { number: '500+', label: 'Proyek Selesai', icon: Target },
+      { number: '200+', label: 'Klien Terpercaya', icon: Users },
+      { number: '50+', label: 'Tim Ahli', icon: Award }
     ],
     story: {
-      badge: language === 'en' ? 'Our Story' : 'Cerita Kami',
-      title: language === 'en' ? 'From Simple Vision to Regional Leadership' : 'Dari Visi Sederhana Menuju Kepemimpinan Regional',
-      paragraph1: language === 'en'
-        ? 'Barcomp was founded in 2015 with a strong determination: to bring digital transformation that makes a real impact for Indonesian businesses. We started with a small, passionate team, serving our first clients with full dedication.'
-        : 'Barcomp lahir di tahun 2015 dengan tekad kuat: menghadirkan transformasi digital yang berdampak nyata bagi bisnis Indonesia. Kami memulai dengan tim kecil yang penuh semangat, melayani klien pertama kami dengan dedikasi penuh.',
-      paragraph2: language === 'en'
-        ? 'Throughout our journey, we have grown not only in scale but also in depth of expertise. Every project is an opportunity to learn, innovate, and deliver greater value to our clients.'
-        : 'Sepanjang perjalanan, kami tidak hanya berkembang dalam skala, tetapi juga dalam kedalaman keahlian. Setiap proyek adalah kesempatan untuk belajar, berinovasi, dan memberikan nilai lebih kepada klien.',
-      paragraph3: language === 'en'
-        ? 'Today, with over 500 completed projects and the trust of 200+ clients, we are proud to be a digital partner relied upon by various industries—from startups to large corporations.'
-        : 'Hari ini, dengan lebih dari 500 proyek yang telah diselesaikan dan kepercayaan dari 200+ klien, kami bangga menjadi mitra digital yang diandalkan oleh berbagai industri—dari startup hingga korporasi besar.'
+      badge: 'Cerita Kami',
+      title: 'Dari Visi Sederhana Menuju Kepemimpinan Regional',
+      paragraph1: 'Barcomp lahir di tahun 2015 dengan tekad kuat: menghadirkan transformasi digital yang berdampak nyata bagi bisnis Indonesia. Kami memulai dengan tim kecil yang penuh semangat, melayani klien pertama kami dengan dedikasi penuh.',
+      paragraph2: 'Sepanjang perjalanan, kami tidak hanya berkembang dalam skala, tetapi juga dalam kedalaman keahlian. Setiap proyek adalah kesempatan untuk belajar, berinovasi, dan memberikan nilai lebih kepada klien.',
+      paragraph3: 'Hari ini, dengan lebih dari 500 proyek yang telah diselesaikan dan kepercayaan dari 200+ klien, kami bangga menjadi mitra digital yang diandalkan oleh berbagai industri—dari startup hingga korporasi besar.'
     },
     teamPhoto: {
-      badge: language === 'en' ? 'Our Team' : 'Tim Kami',
-      title: language === 'en' ? 'The People Behind Our Success' : 'Orang-Orang di Balik Kesuksesan Kami',
-      subtitle: language === 'en'
-        ? 'Meet the talented professionals who bring innovation and excellence to every project.'
-        : 'Kenali para profesional berbakat yang membawa inovasi dan keunggulan ke setiap proyek.',
+      badge: 'Tim Kami',
+      title: 'Orang-Orang di Balik Kesuksesan Kami',
+      subtitle: 'Kenali para profesional berbakat yang membawa inovasi dan keunggulan ke setiap proyek.',
       imagePlaceholder: '/images/team-photo.webp',
     },
     leadership: {
-      badge: language === 'en' ? 'Leadership Team' : 'Tim Kepemimpinan',
-      title: language === 'en' ? 'Meet Our Leaders' : 'Kenali Pemimpin Kami',
-      subtitle: language === 'en'
-        ? 'Experienced leaders guiding our vision and driving innovation across the organization.'
-        : 'Pemimpin berpengalaman yang memandu visi kami dan mendorong inovasi di seluruh organisasi.',
+      badge: 'Tim Kepemimpinan',
+      title: 'Kenali Pemimpin Kami',
+      subtitle: 'Pemimpin berpengalaman yang memandu visi kami dan mendorong inovasi di seluruh organisasi.',
       members: [
         {
-          name: language === 'en' ? 'Agus Subianto' : 'Agus Subianto',
-          position: language === 'en' ? 'Chief Executive Officer' : 'Chief Executive Officer',
+          name: 'Agus Subianto',
+          position: 'Chief Executive Officer',
           image: '/images/ceo.webp',
-          bio: language === 'en'
-            ? 'Leading Barcomp with 15+ years of experience in digital transformation and technology innovation.'
-            : 'Memimpin Barcomp dengan pengalaman 15+ tahun dalam transformasi digital dan inovasi teknologi.',
+          bio: 'Memimpin Barcomp dengan pengalaman 15+ tahun dalam transformasi digital dan inovasi teknologi.',
           linkedin: 'https://linkedin.com/in/your-ceo-profile',
           email: 'ceo@barcomp.co.id',
           instagram: 'https://instagram.com/your-ceo-handle'
         },
         {
-          name: language === 'en' ? 'Ahmad Suhandi' : 'Ahmad Suhandi',
-          position: language === 'en' ? 'Chief Technology Officer' : 'Chief Technology Officer',
+          name: 'Ahmad Suhandi',
+          position: 'Chief Technology Officer',
           image: '/images/cto.webp',
-          bio: language === 'en'
-            ? 'Driving technical excellence and innovation strategy with expertise in cloud architecture and AI.'
-            : 'Mendorong keunggulan teknis dan strategi inovasi dengan keahlian dalam arsitektur cloud dan AI.',
+          bio: 'Mendorong keunggulan teknis dan strategi inovasi dengan keahlian dalam arsitektur cloud dan AI.',
           linkedin: 'https://linkedin.com/in/your-cto-profile',
           email: 'cto@barcomp.co.id',
           instagram: 'https://instagram.com/your-cto-handle'
         },
         {
-          name: language === 'en' ? 'Medina Putri' : 'Medina Putri',
-          position: language === 'en' ? 'Chief Operating Officer' : 'Chief Operating Officer',
+          name: 'Medina Putri',
+          position: 'Chief Operating Officer',
           image: '/images/coo.webp',
-          bio: language === 'en'
-            ? 'Ensuring operational excellence and client satisfaction across all projects and teams.'
-            : 'Memastikan keunggulan operasional dan kepuasan klien di semua proyek dan tim.',
+          bio: 'Memastikan keunggulan operasional dan kepuasan klien di semua proyek dan tim.',
           linkedin: 'https://linkedin.com/in/your-coo-profile',
           email: 'coo@barcomp.co.id',
           instagram: 'https://instagram.com/your-coo-handle'
@@ -311,112 +279,90 @@ export default function ProfilePage() {
       ]
     },
     office: {
-      badge: language === 'en' ? 'Our Office' : 'Kantor Kami',
-      title: language === 'en' ? 'Where Innovation Happens' : 'Tempat Inovasi Terjadi',
-      subtitle: language === 'en'
-        ? 'Our modern workspace in Jakarta, designed to foster creativity, collaboration, and productivity.'
-        : 'Ruang kerja modern kami di Jakarta, dirancang untuk mendorong kreativitas, kolaborasi, dan produktivitas.',
+      badge: 'Kantor Kami',
+      title: 'Tempat Inovasi Terjadi',
+      subtitle: 'Ruang kerja modern kami di Jakarta, dirancang untuk mendorong kreativitas, kolaborasi, dan produktivitas.',
       address: 'Jakarta, Indonesia',
       imagePlaceholder: '/images/off.webp'
     },
     legal: {
-      title: language === 'en' ? 'Legal Foundation & Credibility' : 'Landasan Legal & Kredibilitas',
+      title: 'Landasan Legal & Kredibilitas',
       entity: {
-        title: language === 'en' ? 'Legal Entity' : 'Badan Hukum',
+        title: 'Badan Hukum',
         subtitle: 'PT Barcomp Digital Solusindo',
-        desc: language === 'en' ? 'Officially registered and operating in accordance with Indonesian law' : 'Terdaftar resmi dan beroperasi sesuai hukum Indonesia'
+        desc: 'Terdaftar resmi dan beroperasi sesuai hukum Indonesia'
       },
       license: {
-        title: language === 'en' ? 'NIB & Business License' : 'NIB & Izin Usaha',
-        subtitle: language === 'en' ? 'Integrated Business Identification Number' : 'Nomor Induk Berusaha Terintegrasi',
-        desc: language === 'en' ? 'Meeting all government regulations' : 'Memenuhi seluruh regulasi pemerintah'
+        title: 'NIB & Izin Usaha',
+        subtitle: 'Nomor Induk Berusaha Terintegrasi',
+        desc: 'Memenuhi seluruh regulasi pemerintah'
       },
       tax: {
-        title: language === 'en' ? 'NPWP & Tax' : 'NPWP & Pajak',
-        subtitle: language === 'en' ? 'PKP (Taxable Enterprise)' : 'PKP (Pengusaha Kena Pajak)',
-        desc: language === 'en' ? 'Tax compliant and financial administration' : 'Taat pajak dan administrasi keuangan'
+        title: 'NPWP & Pajak',
+        subtitle: 'PKP (Pengusaha Kena Pajak)',
+        desc: 'Taat pajak dan administrasi keuangan'
       },
       commitment: {
-        title: language === 'en' ? 'Commitment to Transparency' : 'Komitmen Transparansi',
-        desc: language === 'en'
-          ? 'We operate with the highest standards in corporate governance, ensuring every client works with a credible and trusted partner.'
-          : 'Kami beroperasi dengan standar tertinggi dalam tata kelola perusahaan, memastikan setiap klien bekerja dengan mitra yang kredibel dan terpercaya.'
+        title: 'Komitmen Transparansi',
+        desc: 'Kami beroperasi dengan standar tertinggi dalam tata kelola perusahaan, memastikan setiap klien bekerja dengan mitra yang kredibel dan terpercaya.'
       }
     },
     timeline: {
-      badge: language === 'en' ? 'Our Journey' : 'Perjalanan Kami',
-      title: language === 'en' ? 'Milestones That Shape Us' : 'Milestone yang Membentuk Kami',
-      subtitle: language === 'en' 
-        ? 'Every step is proof of our commitment to excellence and continuous innovation'
-        : 'Setiap langkah adalah bukti komitmen kami terhadap keunggulan dan inovasi berkelanjutan',
+      badge: 'Perjalanan Kami',
+      title: 'Milestone yang Membentuk Kami',
+      subtitle: 'Setiap langkah adalah bukti komitmen kami terhadap keunggulan dan inovasi berkelanjutan',
       items: [
         {
           year: '2015',
-          title: language === 'en' ? 'Founding of Barcomp' : 'Berdirinya Barcomp',
-          description: language === 'en'
-            ? 'Started with a vision to deliver digital solutions that transform how businesses operate in Indonesia. From a small office with a team of 5, we committed to delivering the best quality.'
-            : 'Dimulai dengan visi untuk menghadirkan solusi digital yang mengubah cara bisnis beroperasi di Indonesia. Dari kantor kecil dengan tim 5 orang, kami berkomitmen untuk memberikan kualitas terbaik.',
+          title: 'Berdirinya Barcomp',
+          description: 'Dimulai dengan visi untuk menghadirkan solusi digital yang mengubah cara bisnis beroperasi di Indonesia. Dari kantor kecil dengan tim 5 orang, kami berkomitmen untuk memberikan kualitas terbaik.',
           icon: Building2
         },
         {
           year: '2017',
-          title: language === 'en' ? 'Service Expansion' : 'Ekspansi Layanan',
-          description: language === 'en'
-            ? 'Launched custom software development and cloud solutions divisions. Expanded our team to 20+ professionals and served clients from various industries.'
-            : 'Meluncurkan divisi custom software development dan cloud solutions. Memperluas tim menjadi 20+ profesional dan melayani klien dari berbagai industri.',
+          title: 'Ekspansi Layanan',
+          description: 'Meluncurkan divisi custom software development dan cloud solutions. Memperluas tim menjadi 20+ profesional dan melayani klien dari berbagai industri.',
           icon: TrendingUp
         },
         {
           year: '2019',
-          title: language === 'en' ? 'International Certification' : 'Sertifikasi Internasional',
-          description: language === 'en'
-            ? 'Obtained ISO 9001:2015 certification and became a Microsoft Gold Partner. Marking our commitment to global quality standards.'
-            : 'Memperoleh sertifikasi ISO 9001:2015 dan menjadi Microsoft Gold Partner. Menandai komitmen kami terhadap standar kualitas global.',
+          title: 'Sertifikasi Internasional',
+          description: 'Memperoleh sertifikasi ISO 9001:2015 dan menjadi Microsoft Gold Partner. Menandai komitmen kami terhadap standar kualitas global.',
           icon: Award
         },
         {
           year: '2021',
-          title: language === 'en' ? 'Partnership Era' : 'Era Partnership',
-          description: language === 'en'
-            ? 'Became AWS Partner and Google Cloud Partner. Opening opportunities to deliver enterprise-grade cloud solutions to clients across Southeast Asia.'
-            : 'Menjadi AWS Partner dan Google Cloud Partner. Membuka peluang untuk memberikan solusi cloud enterprise-grade kepada klien di seluruh Asia Tenggara.',
+          title: 'Era Partnership',
+          description: 'Menjadi AWS Partner dan Google Cloud Partner. Membuka peluang untuk memberikan solusi cloud enterprise-grade kepada klien di seluruh Asia Tenggara.',
           icon: Shield
         },
         {
           year: '2025',
-          title: language === 'en' ? 'Regional Leadership' : 'Kepemimpinan Regional',
-          description: language === 'en'
-            ? 'With 200+ clients and 50+ expert team members, we continue to innovate to become a leading digital solutions provider in Southeast Asia.'
-            : 'Dengan 200+ klien dan 50+ tim ahli, kami terus berinovasi untuk menjadi penyedia solusi digital terkemuka di Asia Tenggara.',
+          title: 'Kepemimpinan Regional',
+          description: 'Dengan 200+ klien dan 50+ tim ahli, kami terus berinovasi untuk menjadi penyedia solusi digital terkemuka di Asia Tenggara.',
           icon: Sparkles
         }
       ]
     },
     certifications: {
-      badge: language === 'en' ? 'Global Standards' : 'Standar Global',
-      title: language === 'en' ? 'Certifications & Partnerships' : 'Sertifikasi & Kemitraan',
-      subtitle: language === 'en'
-        ? 'Trusted by world technology leaders and internationally certified'
-        : 'Dipercaya oleh pemimpin teknologi dunia dan berstandar internasional',
+      badge: 'Standar Global',
+      title: 'Sertifikasi & Kemitraan',
+      subtitle: 'Dipercaya oleh pemimpin teknologi dunia dan berstandar internasional',
       items: [
-        { name: 'ISO 9001:2015', issuer: language === 'en' ? 'Quality Management System' : 'Sistem Manajemen Mutu', icon: Shield },
+        { name: 'ISO 9001:2015', issuer: 'Sistem Manajemen Mutu', icon: Shield },
         { name: 'Microsoft Gold Partner', issuer: 'Microsoft Corporation', icon: Award },
         { name: 'AWS Partner', issuer: 'Amazon Web Services', icon: Shield },
         { name: 'Google Cloud Partner', issuer: 'Google Cloud Platform', icon: Award }
       ],
       commitment: {
-        title: language === 'en' ? 'Commitment to Excellence' : 'Komitmen pada Keunggulan',
-        desc: language === 'en'
-          ? 'Our international certifications are not just achievements—they are guarantees that every solution we provide meets the highest quality standards in the industry.'
-          : 'Sertifikasi internasional kami bukan sekadar pencapaian—ini adalah jaminan bahwa setiap solusi yang kami berikan memenuhi standar kualitas tertinggi di industri.'
+        title: 'Komitmen pada Keunggulan',
+        desc: 'Sertifikasi internasional kami bukan sekadar pencapaian—ini adalah jaminan bahwa setiap solusi yang kami berikan memenuhi standar kualitas tertinggi di industri.'
       }
     },
     cta: {
-      title: language === 'en' ? "Let's Realize Your Digital Vision" : 'Mari Wujudkan Visi Digital Anda',
-      subtitle: language === 'en'
-        ? 'Join 200+ companies that have trusted us as their digital transformation partner'
-        : 'Bergabunglah dengan 200+ perusahaan yang telah mempercayai kami sebagai mitra transformasi digital mereka',
-      button: language === 'en' ? 'Start Free Consultation' : 'Mulai Konsultasi Gratis'
+      title: 'Mari Wujudkan Visi Digital Anda',
+      subtitle: 'Bergabunglah dengan 200+ perusahaan yang telah mempercayai kami sebagai mitra transformasi digital mereka',
+      button: 'Mulai Konsultasi Gratis'
     }
   };
 
@@ -518,12 +464,10 @@ export default function ProfilePage() {
                     <div className="text-center">
                       <Users className="w-24 h-24 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500 font-medium">
-                        {language === 'en' ? 'Team Photo Placeholder' : 'Placeholder Foto Tim'}
+                        {'Placeholder Foto Tim'}
                       </p>
                       <p className="text-sm text-gray-400 mt-2">
-                        {language === 'en' 
-                          ? 'Replace with: /images/team/team-photo.jpg'
-                          : 'Ganti dengan: /images/team/team-photo.jpg'}
+                        {'Ganti dengan: /images/team/team-photo.jpg'}
                       </p>
                     </div>
                   </div>
@@ -714,12 +658,10 @@ export default function ProfilePage() {
                     <div className="text-center">
                       <Building2 className="w-24 h-24 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500 font-medium">
-                        {language === 'en' ? 'Office Photo Placeholder' : 'Placeholder Foto Kantor'}
+                        {'Placeholder Foto Kantor'}
                       </p>
                       <p className="text-sm text-gray-400 mt-2">
-                        {language === 'en' 
-                          ? 'Replace with: /images/office/workspace.jpg'
-                          : 'Ganti dengan: /images/office/workspace.jpg'}
+                        {'Ganti dengan: /images/office/workspace.jpg'}
                       </p>
                     </div>
                   </div>

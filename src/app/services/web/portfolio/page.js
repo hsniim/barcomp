@@ -184,264 +184,225 @@ const FilterButton = memo(({ label, icon: Icon, isActive, onClick }) => {
 FilterButton.displayName = 'FilterButton';
 
 export default function PortfolioPage() {
-  const [language, setLanguage] = useState('en');
   const [activeFilter, setActiveFilter] = useState('all');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
 
   const t = useMemo(() => ({
     hero: {
-      badge: language === 'en' ? 'Our Work' : 'Karya Kami',
-      title: language === 'en' ? 'Delivering Excellence' : 'Menghadirkan Keunggulan',
-      subtitle: language === 'en' 
-        ? 'Through Every Project'
-        : 'Melalui Setiap Proyek',
-      description: language === 'en'
-        ? 'Explore our portfolio of successful projects across various industries. From enterprise platforms to innovative startups, we bring ideas to life with cutting-edge technology and exceptional design.'
-        : 'Jelajahi portofolio proyek sukses kami di berbagai industri. Dari platform enterprise hingga startup inovatif, kami mewujudkan ide dengan teknologi terdepan dan desain yang luar biasa.',
+      badge: 'Karya Kami',
+      title: 'Menghadirkan Keunggulan',
+      subtitle: 'Melalui Setiap Proyek',
+      description: 'Jelajahi portofolio proyek sukses kami di berbagai industri. Dari platform enterprise hingga startup inovatif, kami mewujudkan ide dengan teknologi terdepan dan desain yang luar biasa.',
     },
     stats: {
-      badge: language === 'en' ? 'By The Numbers' : 'Dalam Angka',
+      badge: 'Dalam Angka',
       items: [
         { 
           value: '500', 
           suffix: '+',
-          label: language === 'en' ? 'Projects Delivered' : 'Proyek Selesai', 
+          label: 'Proyek Selesai', 
           icon: Briefcase 
         },
         { 
           value: '200', 
           suffix: '+',
-          label: language === 'en' ? 'Happy Clients' : 'Klien Puas', 
+          label: 'Klien Puas', 
           icon: Users 
         },
         { 
           value: '15', 
           suffix: '+',
-          label: language === 'en' ? 'Countries Served' : 'Negara Dilayani', 
+          label: 'Negara Dilayani', 
           icon: Globe 
         },
         { 
           value: '98', 
           suffix: '%',
-          label: language === 'en' ? 'Client Satisfaction' : 'Kepuasan Klien', 
+          label: 'Kepuasan Klien', 
           icon: Star 
         }
       ]
     },
     filters: {
-      title: language === 'en' ? 'Filter by Category' : 'Filter berdasarkan Kategori',
-      all: language === 'en' ? 'All Projects' : 'Semua Proyek',
+      title: 'Filter berdasarkan Kategori',
+      all: 'Semua Proyek',
       items: [
-        { id: 'all', label: language === 'en' ? 'All Projects' : 'Semua Proyek', icon: Layers },
-        { id: 'web', label: language === 'en' ? 'Web Development' : 'Pengembangan Web', icon: Code2 },
-        { id: 'ecommerce', label: language === 'en' ? 'E-commerce' : 'E-commerce', icon: ShoppingCart },
-        { id: 'mobile', label: language === 'en' ? 'Mobile Apps' : 'Aplikasi Mobile', icon: Smartphone },
-        { id: 'enterprise', label: language === 'en' ? 'Enterprise' : 'Enterprise', icon: Building2 }
+        { id: 'all', label: 'Semua Proyek', icon: Layers },
+        { id: 'web', label: 'Pengembangan Web', icon: Code2 },
+        { id: 'ecommerce', label: 'E-commerce', icon: ShoppingCart },
+        { id: 'mobile', label: 'Aplikasi Mobile', icon: Smartphone },
+        { id: 'enterprise', label: 'Enterprise', icon: Building2 }
       ]
     },
     projects: [
       {
         id: 1,
-        title: language === 'en' ? 'TechCorp Enterprise Platform' : 'Platform Enterprise TechCorp',
-        description: language === 'en' 
-          ? 'Comprehensive enterprise resource planning system with AI-powered analytics and real-time collaboration features.'
-          : 'Sistem perencanaan sumber daya enterprise yang komprehensif dengan analitik bertenaga AI dan fitur kolaborasi real-time.',
-        category: language === 'en' ? 'Enterprise' : 'Enterprise',
+        title: 'Platform Enterprise TechCorp',
+        description: 'Sistem perencanaan sumber daya enterprise yang komprehensif dengan analitik bertenaga AI dan fitur kolaborasi real-time.',
+        category: 'Enterprise',
         image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
         technologies: ['Next.js', 'Node.js', 'PostgreSQL', 'AWS'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '8 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '12',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'enterprise'
       },
       {
         id: 2,
-        title: language === 'en' ? 'FashionHub E-commerce' : 'FashionHub E-commerce',
-        description: language === 'en'
-          ? 'Modern e-commerce platform with seamless checkout, inventory management, and personalized shopping experience.'
-          : 'Platform e-commerce modern dengan checkout mulus, manajemen inventori, dan pengalaman belanja personal.',
-        category: language === 'en' ? 'E-commerce' : 'E-commerce',
+        title: 'FashionHub E-commerce',
+        description: 'Platform e-commerce modern dengan checkout mulus, manajemen inventori, dan pengalaman belanja personal.',
+        category: 'E-commerce',
         image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=600&fit=crop',
         technologies: ['React', 'Shopify', 'Stripe', 'Tailwind'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '5 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '8',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'ecommerce'
       },
       {
         id: 3,
-        title: language === 'en' ? 'HealthTrack Mobile App' : 'Aplikasi Mobile HealthTrack',
-        description: language === 'en'
-          ? 'Comprehensive health tracking application with real-time monitoring, doctor consultations, and wellness insights.'
-          : 'Aplikasi pelacakan kesehatan komprehensif dengan monitoring real-time, konsultasi dokter, dan wawasan kesehatan.',
-        category: language === 'en' ? 'Mobile App' : 'Aplikasi Mobile',
+        title: 'Aplikasi Mobile HealthTrack',
+        description: 'Aplikasi pelacakan kesehatan komprehensif dengan monitoring real-time, konsultasi dokter, dan wawasan kesehatan.',
+        category: 'Aplikasi Mobile',
         image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop',
         technologies: ['React Native', 'Firebase', 'Node.js', 'MongoDB'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '6 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '10',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'mobile'
       },
       {
         id: 4,
-        title: language === 'en' ? 'FinanceFlow Dashboard' : 'Dashboard FinanceFlow',
-        description: language === 'en'
-          ? 'Advanced financial analytics dashboard with real-time data visualization and predictive insights.'
-          : 'Dashboard analitik keuangan canggih dengan visualisasi data real-time dan wawasan prediktif.',
-        category: language === 'en' ? 'Web Development' : 'Pengembangan Web',
+        title: 'Dashboard FinanceFlow',
+        description: 'Dashboard analitik keuangan canggih dengan visualisasi data real-time dan wawasan prediktif.',
+        category: 'Pengembangan Web',
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
         technologies: ['Vue.js', 'D3.js', 'Python', 'PostgreSQL'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '7 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '9',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'web'
       },
       {
         id: 5,
-        title: language === 'en' ? 'EduLearn Learning Management System' : 'Sistem Manajemen Pembelajaran EduLearn',
-        description: language === 'en'
-          ? 'Complete LMS platform with interactive courses, live classes, assessments, and progress tracking.'
-          : 'Platform LMS lengkap dengan kursus interaktif, kelas live, penilaian, dan pelacakan progres.',
-        category: language === 'en' ? 'Web Development' : 'Pengembangan Web',
+        title: 'Sistem Manajemen Pembelajaran EduLearn',
+        description: 'Platform LMS lengkap dengan kursus interaktif, kelas live, penilaian, dan pelacakan progres.',
+        category: 'Pengembangan Web',
         image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&h=600&fit=crop',
         technologies: ['Next.js', 'WebRTC', 'Redis', 'AWS'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '10 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '15',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'web'
       },
       {
         id: 6,
-        title: language === 'en' ? 'FoodieExpress Delivery App' : 'Aplikasi Pengiriman FoodieExpress',
-        description: language === 'en'
-          ? 'On-demand food delivery platform with real-time tracking, multiple payment options, and loyalty rewards.'
-          : 'Platform pengiriman makanan on-demand dengan pelacakan real-time, berbagai opsi pembayaran, dan rewards loyalitas.',
-        category: language === 'en' ? 'Mobile App' : 'Aplikasi Mobile',
+        title: 'Aplikasi Pengiriman FoodieExpress',
+        description: 'Platform pengiriman makanan on-demand dengan pelacakan real-time, berbagai opsi pembayaran, dan rewards loyalitas.',
+        category: 'Aplikasi Mobile',
         image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=800&h=600&fit=crop',
         technologies: ['Flutter', 'Firebase', 'Google Maps', 'Stripe'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '6 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '11',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'mobile'
       },
       {
         id: 7,
-        title: language === 'en' ? 'GlobalRetail Multi-Store Platform' : 'Platform Multi-Toko GlobalRetail',
-        description: language === 'en'
-          ? 'Enterprise e-commerce solution managing multiple stores, currencies, and languages with centralized inventory.'
-          : 'Solusi e-commerce enterprise yang mengelola banyak toko, mata uang, dan bahasa dengan inventori terpusat.',
-        category: language === 'en' ? 'E-commerce' : 'E-commerce',
+        title: 'Platform Multi-Toko GlobalRetail',
+        description: 'Solusi e-commerce enterprise yang mengelola banyak toko, mata uang, dan bahasa dengan inventori terpusat.',
+        category: 'E-commerce',
         image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop',
         technologies: ['Next.js', 'Microservices', 'Kubernetes', 'PostgreSQL'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '12 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '18',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'ecommerce'
       },
       {
         id: 8,
-        title: language === 'en' ? 'SmartOffice Management Suite' : 'Suite Manajemen SmartOffice',
-        description: language === 'en'
-          ? 'Integrated office management system with HR, project management, time tracking, and communication tools.'
-          : 'Sistem manajemen kantor terintegrasi dengan HR, manajemen proyek, pelacakan waktu, dan alat komunikasi.',
-        category: language === 'en' ? 'Enterprise' : 'Enterprise',
+        title: 'Suite Manajemen SmartOffice',
+        description: 'Sistem manajemen kantor terintegrasi dengan HR, manajemen proyek, pelacakan waktu, dan alat komunikasi.',
+        category: 'Enterprise',
         image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&h=600&fit=crop',
         technologies: ['React', 'Node.js', 'MongoDB', 'Docker'],
         stats: {
           completion: '2023',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '9 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '14',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'enterprise'
       },
       {
         id: 9,
-        title: language === 'en' ? 'TravelMate Booking Platform' : 'Platform Booking TravelMate',
-        description: language === 'en'
-          ? 'Comprehensive travel booking system for flights, hotels, and experiences with AI-powered recommendations.'
-          : 'Sistem booking travel komprehensif untuk penerbangan, hotel, dan pengalaman dengan rekomendasi bertenaga AI.',
-        category: language === 'en' ? 'Web Development' : 'Pengembangan Web',
+        title: 'Platform Booking TravelMate',
+        description: 'Sistem booking travel komprehensif untuk penerbangan, hotel, dan pengalaman dengan rekomendasi bertenaga AI.',
+        category: 'Pengembangan Web',
         image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop',
         technologies: ['Next.js', 'Python', 'TensorFlow', 'Redis'],
         stats: {
           completion: '2024',
-          completionLabel: language === 'en' ? 'Year' : 'Tahun',
+          completionLabel: 'Tahun',
           duration: '11 mo',
-          durationLabel: language === 'en' ? 'Duration' : 'Durasi',
+          durationLabel: 'Durasi',
           team: '16',
-          teamLabel: language === 'en' ? 'Team' : 'Tim'
+          teamLabel: 'Tim'
         },
-        viewText: language === 'en' ? 'View Project' : 'Lihat Proyek',
+        viewText: 'Lihat Proyek',
         filterCategory: 'web'
       }
     ],
     cta: {
-      title: language === 'en' 
-        ? "Ready to Start Your Project?" 
-        : 'Siap Memulai Proyek Anda?',
-      subtitle: language === 'en'
-        ? "Let's collaborate to create something extraordinary that drives your business forward"
-        : 'Mari berkolaborasi untuk menciptakan sesuatu yang luar biasa yang mendorong bisnis Anda maju',
-      button: language === 'en' ? 'Start Your Project' : 'Mulai Proyek Anda'
+      title: 'Siap Memulai Proyek Anda?',
+      subtitle: 'Mari berkolaborasi untuk menciptakan sesuatu yang luar biasa yang mendorong bisnis Anda maju',
+      button: 'Mulai Proyek Anda'
     }
-  }), [language]);
+  }), []);
 
   // Filter projects based on active filter
   const filteredProjects = useMemo(() => {
@@ -551,7 +512,7 @@ export default function PortfolioPage() {
                 <div className="text-center py-20">
                   <Filter className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-lg">
-                    {language === 'en' ? 'No projects found in this category' : 'Tidak ada proyek dalam kategori ini'}
+                    {'Tidak ada proyek dalam kategori ini'}
                   </p>
                 </div>
               </FadeInSection>

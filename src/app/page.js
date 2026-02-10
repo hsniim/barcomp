@@ -286,14 +286,12 @@ const EventCard = memo(({ event, learnMoreText }) => (
 EventCard.displayName = 'EventCard';
 
 export default function Home() {
-  const [language, setLanguage] = useState('en');
-
   const [articles, setArticles] = useState([]);
   const [events, setEvents] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
-  // Optimized language sync - listen to custom events from Navbar
+  // listen to custom events from Navbar
   useEffect(() => {
     // Initial load
     const fetchLandingData = async () => {
@@ -323,8 +321,7 @@ export default function Home() {
     fetchLandingData();
 
     return () => {
-      window.removeEventListener('languageChange', handleLanguageChange);
-      window.removeEventListener('storage', handleStorageChange);
+      
     };
 
 
@@ -333,122 +330,90 @@ export default function Home() {
   // Memoized translations
   const t = useMemo(() => ({
     hero: {
-      title: language === 'en' 
-        ? 'Barcomp: Innovative IT Solutions for Your Business'
-        : 'Barcomp: Solusi IT Inovatif untuk Bisnis Anda',
-      subtitle: language === 'en'
-        ? 'We deliver cutting-edge web development, mobile apps, UI/UX design, digital marketing, and cloud solutions to transform your business and drive growth in the digital age.'
-        : 'Kami menghadirkan pengembangan web terkini, aplikasi mobile, desain UI/UX, pemasaran digital, dan solusi cloud untuk mentransformasi bisnis Anda dan mendorong pertumbuhan di era digital.',
-      cta: language === 'en' ? 'Start Your Project' : 'Mulai Proyek Anda',
-      imageAlt: language === 'en' 
-        ? 'Modern workspace with laptop showing code - Barcomp web development services'
-        : 'Ruang kerja modern dengan laptop menampilkan kode - layanan pengembangan web Barcomp'
+      title:  'Barcomp: Solusi IT Inovatif untuk Bisnis Anda',
+      subtitle: 'Kami menghadirkan pengembangan web terkini, aplikasi mobile, desain UI/UX, pemasaran digital, dan solusi cloud untuk mentransformasi bisnis Anda dan mendorong pertumbuhan di era digital.',
+      cta: 'Mulai Proyek Anda',
+      imageAlt: 'Ruang kerja modern dengan laptop menampilkan kode - layanan pengembangan web Barcomp'
     },
-    trustedBy: language === 'en' ? 'Trusted By Industry Leaders' : 'Dipercaya oleh Industri Terbaik',
+    trustedBy: 'Dipercaya oleh Industri Terbaik',
     services: {
-      title: language === 'en' ? 'Our Services' : 'Layanan Kami',
-      subtitle: language === 'en' 
-        ? 'Comprehensive IT solutions tailored to your business needs'
-        : 'Solusi IT komprehensif yang disesuaikan dengan kebutuhan bisnis Anda',
+      title: 'Layanan Kami',
+      subtitle: 'Solusi IT komprehensif yang disesuaikan dengan kebutuhan bisnis Anda',
       items: [
         {
           icon: Code,
-          title: language === 'en' ? 'Web Development' : 'Pengembangan Web',
-          description: language === 'en'
-            ? 'Custom web applications built with cutting-edge technologies for optimal performance and scalability.'
-            : 'Aplikasi web khusus yang dibangun dengan teknologi terkini untuk performa dan skalabilitas optimal.',
+          title:'Pengembangan Web',
+          description: 'Aplikasi web khusus yang dibangun dengan teknologi terkini untuk performa dan skalabilitas optimal.',
           link: '/services/web-development'
         },
         {
           icon: Smartphone,
-          title: language === 'en' ? 'Mobile App Development' : 'Pengembangan Aplikasi Mobile',
-          description: language === 'en'
-            ? 'Native and cross-platform mobile applications that deliver exceptional user experiences on iOS and Android.'
-            : 'Aplikasi mobile native dan cross-platform yang memberikan pengalaman pengguna luar biasa di iOS dan Android.',
+          title: 'Pengembangan Aplikasi Mobile',
+          description: 'Aplikasi mobile native dan cross-platform yang memberikan pengalaman pengguna luar biasa di iOS dan Android.',
           link: '/services/mobile'
         },
         {
           icon: Palette,
-          title: language === 'en' ? 'UI/UX Design' : 'Desain UI/UX',
-          description: language === 'en'
-            ? 'Beautiful, intuitive interfaces designed with users in mind, combining aesthetics with functionality.'
-            : 'Antarmuka yang indah dan intuitif dirancang dengan mempertimbangkan pengguna, menggabungkan estetika dengan fungsi.',
+          title: 'Desain UI/UX',
+          description: 'Antarmuka yang indah dan intuitif dirancang dengan mempertimbangkan pengguna, menggabungkan estetika dengan fungsi.',
           link: '/services/ui-ux'
         },
         {
           icon: TrendingUp,
-          title: language === 'en' ? 'Digital Marketing' : 'Pemasaran Digital',
-          description: language === 'en'
-            ? 'Data-driven marketing strategies to grow your online presence and reach your target audience effectively.'
-            : 'Strategi pemasaran berbasis data untuk mengembangkan kehadiran online Anda dan menjangkau audiens target secara efektif.',
+          title: 'Pemasaran Digital',
+          description: 'Strategi pemasaran berbasis data untuk mengembangkan kehadiran online Anda dan menjangkau audiens target secara efektif.',
           link: '/services/marketing'
         },
         {
           icon: Cloud,
-          title: language === 'en' ? 'Cloud Solutions' : 'Solusi Cloud',
-          description: language === 'en'
-            ? 'Scalable cloud infrastructure and migration services to modernize your IT operations.'
-            : 'Infrastruktur cloud yang skalabel dan layanan migrasi untuk memodernisasi operasi IT Anda.',
+          title: 'Solusi Cloud',
+          description: 'Infrastruktur cloud yang skalabel dan layanan migrasi untuk memodernisasi operasi IT Anda.',
           link: '/services/cloud'
         }
       ],
-      learnMore: language === 'en' ? 'Learn More' : 'Pelajari Lebih Lanjut'
+      learnMore: 'Pelajari Lebih Lanjut'
     },
     about: {
-      title: language === 'en' ? 'Why Should Barcomp' : 'Kenapa Harus Barcomp',
-      subtitle: language === 'en' 
-        ? 'We delivering excellence through innovation and expertise'
-        : 'Kami menghadirkan keunggulan melalui inovasi dan keahlian',
+      title: 'Kenapa Harus Barcomp',
+      subtitle: 'Kami menghadirkan keunggulan melalui inovasi dan keahlian',
       stats: {
-        years: language === 'en' ? 'Years Experience' : 'Tahun Pengalaman',
-        projects: language === 'en' ? 'Successful Projects' : 'Proyek Sukses',
-        clients: language === 'en' ? 'Satisfied Clients' : 'Klien Puas'
+        years: 'Tahun Pengalaman',
+        projects: 'Proyek Sukses',
+        clients: 'Klien Puas'
       },
-      valuesTitle: language === 'en' ? 'Our Core Values' : 'Nilai Inti Kami',
+      valuesTitle: 'Nilai Inti Kami',
       values: [
         {
           icon: Award,
-          title: language === 'en' ? 'Innovation' : 'Inovasi',
-          description: language === 'en'
-            ? 'We stay ahead of technology trends to deliver cutting-edge solutions.'
-            : 'Kami selalu mengikuti tren teknologi untuk menghadirkan solusi terkini.'
+          title: 'Inovasi',
+          description: 'Kami selalu mengikuti tren teknologi untuk menghadirkan solusi terkini.'
         },
         {
           icon: Users,
-          title: language === 'en' ? 'Quality' : 'Kualitas',
-          description: language === 'en'
-            ? 'Excellence in every project, from code to customer service.'
-            : 'Keunggulan di setiap proyek, dari kode hingga layanan pelanggan.'
+          title: 'Kualitas',
+          description: 'Keunggulan di setiap proyek, dari kode hingga layanan pelanggan.'
         },
         {
           icon: Briefcase,
-          title: language === 'en' ? 'Collaboration' : 'Kolaborasi',
-          description: language === 'en'
-            ? 'We work closely with clients as partners in success.'
-            : 'Kami bekerja sama erat dengan klien sebagai mitra kesuksesan.'
+          title: 'Kolaborasi',
+          description: 'Kami bekerja sama erat dengan klien sebagai mitra kesuksesan.'
         }
       ]
     },
     news: {
-      title: language === 'en' ? 'Latest News & Events' : 'Berita & Acara Terbaru',
-      subtitle: language === 'en'
-        ? 'Stay updated with our latest insights and upcoming events'
-        : 'Tetap update dengan wawasan terbaru dan acara mendatang kami',
-      articlesTitle: language === 'en' ? 'Recent Articles' : 'Artikel Terbaru',
-      eventsTitle: language === 'en' ? 'Upcoming Events' : 'Acara Mendatang',
-      readMore: language === 'en' ? 'Read More' : 'Baca Selengkapnya',
-      learnMore: language === 'en' ? 'Learn More' : 'Pelajari Lebih Lanjut'
+      title: 'Berita & Acara Terbaru',
+      subtitle: 'Tetap update dengan wawasan terbaru dan acara mendatang kami',
+      articlesTitle: 'Artikel Terbaru',
+      eventsTitle: 'Acara Mendatang',
+      readMore: 'Baca Selengkapnya',
+      learnMore: 'Pelajari Lebih Lanjut'
     },
     cta: {
-      title: language === 'en' 
-        ? 'Ready to Transform Your Business?'
-        : 'Siap Mentransformasi Bisnis Anda?',
-      subtitle: language === 'en'
-        ? "Let's collaborate to bring your vision to life with innovative IT solutions tailored to your needs."
-        : 'Mari berkolaborasi untuk mewujudkan visi Anda dengan solusi IT inovatif yang disesuaikan dengan kebutuhan Anda.',
-      button: language === 'en' ? 'Contact Us Now' : 'Hubungi Kami Sekarang'
+      title:  'Siap Mentransformasi Bisnis Anda?',
+      subtitle: 'Mari berkolaborasi untuk mewujudkan visi Anda dengan solusi IT inovatif yang disesuaikan dengan kebutuhan Anda.',
+      button: 'Hubungi Kami Sekarang'
     }
-  }), [language]);
+  }), []);
 
   if (loadingData) {
     return (

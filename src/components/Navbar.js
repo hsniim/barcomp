@@ -9,7 +9,6 @@ import {
   Menu, 
   ChevronDown, 
   X, 
-  Globe,
   LogOut,
   Settings,
   UserCircle,
@@ -85,20 +84,6 @@ const MobileMenuItem = memo(({ item, onClose }) => (
   </Link>
 ));
 MobileMenuItem.displayName = 'MobileMenuItem';
-
-// language Switcher Component
-const LanguageSwitcher = memo(({ language, onToggle }) => (
-  <button
-    onClick={onToggle}
-    className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-300 hover:border-indigo-500 transition-colors duration-200 bg-white"
-  >
-    <Globe className="h-4 w-4 text-gray-600" />
-    <span className="text-sm font-medium text-gray-900">
-      {language.toUpperCase()}
-    </span>
-  </button>
-));
-LanguageSwitcher.displayName = 'LanguageSwitcher';
 
 // User Menu Component
 const UserMenu = memo(({ user, onLogout }) => {
@@ -208,17 +193,8 @@ export default function Navbar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileExpandedMenu, setMobileExpandedMenu] = useState(null);
-  const [language, setLanguage] = useState('en');
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // initialize language from localStorage
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    if (savedLang !== language) {
-      setLanguage(savedLang);
-    }
-  }, []);
 
   // Check authentication status
   useEffect(() => {
@@ -266,93 +242,75 @@ export default function Navbar() {
     }
   }, [router]);
 
-  // toggle language
-  const toggleLanguage = useCallback(() => {
-    setLanguage(prev => {
-      const newLang = prev === 'en' ? 'id' : 'en';
-      localStorage.setItem('language', newLang);
-      
-      // dispatch custom event to notify Home page and other components
-      window.dispatchEvent(new CustomEvent('languageChange', { 
-        detail: newLang,
-        bubbles: true 
-      }));
-      
-      console.log('Language changed to:', newLang);
-      
-      return newLang;
-    });
-  }, []);
-
   // memoized menu items with translations
   const menuItems = useMemo(() => ({
     about: [
       { 
-        label: language === 'en' ? 'Profile' : 'Profil', 
-        description: language === 'en' ? 'Learn about our company' : 'Mengenal kami lebih dekat', 
+        label: 'Profil', 
+        description: 'Mengenal kami lebih dekat', 
         href: '/about/profile' 
       },
       { 
-        label: language === 'en' ? 'Vision & Mission' : 'Visi & Misi', 
-        description: language === 'en' ? 'Our goals and aspirations' : 'Aspirasi dan langkah nyata kami', 
+        label: 'Visi & Misi', 
+        description: 'Aspirasi dan langkah nyata kami', 
         href: '/about/vision' 
       },
       { 
-        label: language === 'en' ? 'Culture & Ethos' : 'Budaya & Etos', 
-        description: language === 'en' ? 'What drives our work' : 'Prinsip dan dedikasi yang mendasari', 
+        label: 'Budaya & Etos', 
+        description: 'Prinsip dan dedikasi yang mendasari', 
         href: '/about/values' 
       },
       { 
-        label: language === 'en' ? 'Our Partners' : 'Mitra Kami', 
-        description: language === 'en' ? 'Success with our partners' : 'Kolabrorasi sukses bersama mitra-mitra', 
+        label: 'Mitra Kami', 
+        description: 'Kolabrorasi sukses bersama mitra-mitra', 
         href: '/about/clients' 
       },
     ],
     services: [
       { 
-        label: language === 'en' ? 'Web Development' : 'Pengembangan Web', 
-        description: language === 'en' ? 'Modern web applications' : 'Aplikasi web modern', 
+        label: 'Pengembangan Web', 
+        description: 'Aplikasi web modern', 
         href: '/services/web' 
       },
       { 
-        label: language === 'en' ? 'Mobile App Development' : 'Pengembangan Aplikasi Mobile', 
-        description: language === 'en' ? 'iOS and Android apps' : 'Aplikasi iOS dan Android', 
+        label: 'Pengembangan Aplikasi Mobile', 
+        description: 'Aplikasi iOS dan Android', 
         href: '/services/mobile' 
       },
       { 
-        label: language === 'en' ? 'UI/UX Design' : 'Desain UI/UX', 
-        description: language === 'en' ? 'Beautiful user experiences' : 'Pengalaman pengguna yang indah', 
+        label: 'Desain UI/UX', 
+        description: 'Pengalaman pengguna yang indah', 
         href: '/services/ux' 
       },
       { 
-        label: language === 'en' ? 'Digital Marketing' : 'Pemasaran Digital', 
-        description: language === 'en' ? 'Grow your online presence' : 'Tingkatkan kehadiran online Anda', 
+        label: 'Pemasaran Digital', 
+        description: 'Tingkatkan kehadiran online Anda', 
         href: '/services/marketing' 
       },
       { 
-        label: language === 'en' ? 'Cloud Solutions' : 'Solusi Cloud', 
-        description: language === 'en' ? 'Scalable infrastructure' : 'Infrastruktur yang skalabel', 
+        label: 'Solusi Cloud', 
+        description: 'Infrastruktur yang skalabel', 
         href: '/services/cloud' 
       },
     ],
     resources: [
       { 
-        label: language === 'en' ? 'Articles' : 'Artikel', 
-        description: language === 'en' ? 'Read our latest insights' : 'Baca wawasan terbaru kami', 
+        label: 'Artikel', 
+        description: 'Baca wawasan terbaru kami', 
         href: '/resources/articles' 
       },
       { 
-        label: language === 'en' ? 'Events' : 'Acara', 
-        description: language === 'en' ? 'Join our upcoming events' : 'Ikuti acara mendatang kami', 
+        label: 'Acara', 
+        description: 'Ikuti acara mendatang kami', 
         href: '/resources/events' 
       },
       { 
-        label: language === 'en' ? 'Photo Gallery' : 'Galeri Foto', 
-        description: language === 'en' ? 'Browse our image collection' : 'Jelajahi koleksi gambar kami', 
+        label: 'Galeri Foto', 
+        description: 'Jelajahi koleksi gambar kami', 
         href: '/resources/gallery' 
       },
     ]
-  }), [language]);
+  }), []);
 
   // optimized scroll handler with throttling
   useEffect(() => {
@@ -418,17 +376,17 @@ export default function Navbar() {
 
   // translated labels
   const t = useMemo(() => ({
-    home: language === 'en' ? 'Home' : 'Beranda',
-    aboutUs: language === 'en' ? 'About Us' : 'Tentang Kami',
-    services: language === 'en' ? 'Services' : 'Layanan',
-    resources: language === 'en' ? 'Resources' : 'Sumber Daya',
-    contact: language === 'en' ? 'Contact' : 'Kontak',
-    login: language === 'en' ? 'Log in' : 'Masuk',
-    signup: language === 'en' ? 'Sign up' : 'Daftar',
-    needHelp: language === 'en' ? 'Need help choosing?' : 'Butuh bantuan memilih?',
-    getInTouch: language === 'en' ? 'Get in touch with our team' : 'Hubungi tim kami',
-    contactUs: language === 'en' ? 'Contact us' : 'Hubungi kami',
-  }), [language]);
+    home: 'Beranda',
+    aboutUs: 'Tentang Kami',
+    services: 'Layanan',
+    resources: 'Sumber Daya',
+    contact: 'Kontak',
+    login: 'Masuk',
+    signup: 'Daftar',
+    needHelp: 'Butuh bantuan memilih?',
+    getInTouch: 'Hubungi tim kami',
+    contactUs: 'Hubungi kami',
+  }), []);
 
   return (
     <>
@@ -489,8 +447,6 @@ export default function Navbar() {
 
             {/* desktop right navbar (login/signup or user menu) */}
             <div className="hidden lg:flex items-center gap-4">
-              <LanguageSwitcher language={language} onToggle={toggleLanguage} />
-              
               {isAuthenticated ? (
                 <UserMenu user={user} onLogout={handleLogout} />
               ) : (
@@ -512,10 +468,8 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* mobile menu button & lang switcher */}
+            {/* mobile menu button*/}
             <div className="lg:hidden flex items-center gap-3 z-50">
-              <LanguageSwitcher language={language} onToggle={toggleLanguage} />
-              
               <button
                 onClick={toggleMobileOpen}
                 className="p-2 text-gray-900"
