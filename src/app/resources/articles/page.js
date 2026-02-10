@@ -1,3 +1,4 @@
+// app/resources/articles/page.js
 'use client';
 
 import { useState, useEffect, useRef, memo } from 'react';
