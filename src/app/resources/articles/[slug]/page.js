@@ -206,12 +206,6 @@ export default function ArticleDetailPage() {
                   className="object-cover hover:scale-105 transition-transform duration-500"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                 />
-                {/* QR Code Overlay */}
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border">
-                  <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500 text-sm font-mono">QR</span>
-                  </div>
-                </div>
               </div>
               
               <header className="max-w-4xl mx-auto">
@@ -247,7 +241,7 @@ export default function ArticleDetailPage() {
 
           {/* Content Utama */}
           <FadeInSection delay={0.3}>
-            <div className="prose prose-lg max-w-none lg:prose-xl mx-auto">
+            <div className="prose prose-lg max-w-none lg:prose-xl text-black mx-auto">
               <div className={cn(
                 "prose prose-headings:font-bold prose-headings:text-gray-900",
                 "prose-p:text-gray-700 prose-p:leading-relaxed",
@@ -277,21 +271,10 @@ export default function ArticleDetailPage() {
               )}
               
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <Button variant="outline" onClick={() => window.history.back()}>
+                <Button variant="outline" className="bg-blue-600" onClick={() => window.history.back()}>
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Kembali
                 </Button>
-                
-                <div className="flex gap-3">
-                  <Button variant="outline">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Bagikan
-                  </Button>
-                  <Button variant="outline">
-                    <Bookmark className="w-4 h-4 mr-2" />
-                    Simpan
-                  </Button>
-                </div>
               </div>
             </div>
           </FadeInSection>
