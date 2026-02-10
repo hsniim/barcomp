@@ -1,3 +1,4 @@
+// app/page.js
 'use client';
 
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
@@ -177,7 +178,12 @@ const UPCOMING_EVENTS = [
 ];
 
 const CLIENT_LOGOS = [
-  "Google", "Amazon", "Microsoft", "Meta", "Apple", "Netflix"
+  { name: "Aetheric Systems",    logo: "/logos/aetheric.svg"   },
+  { name: "Zenith Capital Trust",    logo: "/logos/zenith.svg"   },
+  { name: "Edupulse", logo: "/logos/edupulse.svg"},
+  { name: "Ironpath",      logo: "/logos/ironpath.svg"     },
+  { name: "Veridian",   logo: "/logos/veridian.svg"  },
+  { name: "Fortis",     logo: "/logos/fortis.svg"    }
 ];
 
 // Memoized Service Card Component
@@ -282,33 +288,46 @@ EventCard.displayName = 'EventCard';
 export default function Home() {
   const [language, setLanguage] = useState('en');
 
+  const [articles, setArticles] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
   // Optimized language sync - listen to custom events from Navbar
   useEffect(() => {
     // Initial load
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
+    const fetchLandingData = async () => {
+      try {
+        setLoadingData(true);
+        setFetchError(null);
 
-    // Listen for language changes from Navbar
-    const handleLanguageChange = (e) => {
-      if (e.detail) {
-        setLanguage(e.detail);
+        // 1. Ambil 3 artikel terbaru yang published
+        const articlesRes = await fetch('/api/articles?status=published&limit=3&featured=true');
+        const articlesData = await articlesRes.json();
+
+        // 2. Ambil event upcoming (default API sudah filter upcoming)
+        const eventsRes = await fetch('/api/events');
+        const eventsData = await eventsRes.json();
+
+        if (articlesData.success) setArticles(articlesData.data || []);
+        if (eventsData.success) setEvents(eventsData.data || []);
+
+      } catch (err) {
+        console.error('Gagal fetch data landing:', err);
+        setFetchError('Gagal memuat data. Coba refresh halaman.');
+      } finally {
+        setLoadingData(false);
       }
     };
 
-    // Listen for storage changes (cross-tab)
-    const handleStorageChange = (e) => {
-      if (e.key === 'language' && e.newValue) {
-        setLanguage(e.newValue);
-      }
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    window.addEventListener('storage', handleStorageChange);
+    fetchLandingData();
 
     return () => {
       window.removeEventListener('languageChange', handleLanguageChange);
       window.removeEventListener('storage', handleStorageChange);
     };
+
+
   }, []);
 
   // Memoized translations
@@ -431,6 +450,25 @@ export default function Home() {
     }
   }), [language]);
 
+  if (loadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#0066FF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Memuat artikel & acara terbaru...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white text-red-600">
+        <p>{fetchError}</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Navbar />
@@ -490,12 +528,19 @@ export default function Home() {
             </FadeInSection>
             <div className="relative">
               <div className="flex animate-scroll space-x-12 items-center">
-                {[...CLIENT_LOGOS, ...CLIENT_LOGOS].map((logo, index) => (
+                {[...CLIENT_LOGOS, ...CLIENT_LOGOS].map((client, index) => (
                   <div
                     key={index}
-                    className="flex-shrink-0 flex items-center justify-center w-40 h-20 text-2xl font-bold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                    className="flex-shrink-0 flex items-center justify-center h-16 md:h-20 w-32 md:w-40 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110"
                   >
-                    <span>{logo}</span>
+                    <Image
+                      src={client.logo}
+                      alt={`${client.name} logo`}
+                      width={client.width || 140}   // sesuaikan ukuran logo masing-masing
+                      height={client.height || 45}
+                      className="object-contain max-w-full max-h-full"
+                      priority={index < 6} // optional: priority untuk logo pertama
+                    />
                   </div>
                 ))}
               </div>
@@ -621,37 +666,66 @@ export default function Home() {
               </div>
             </FadeInSection>
 
-            {/* Recent Articles */}
-            <div className="mb-16">
-              <FadeInSection delay={0.1}>
-                <h3 className="text-2xl font-bold text-gray-900 mb-8">{t.news.articlesTitle}</h3>
-              </FadeInSection>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {RECENT_ARTICLES.map((article, index) => (
-                  <FadeInSection key={article.id} delay={0.1 + index * 0.1}>
-                    <ArticleCard article={article} readMoreText={t.news.readMore} />
-                  </FadeInSection>
-                ))}
-              </div>
-            </div>
+           {/* Recent Articles */}
+          <div className="mb-16">
+          <FadeInSection delay={0.1}>
+            <h3 className="text-2xl font-bold text-gray-900 mb-8">{t.news.articlesTitle}</h3>
+          </FadeInSection>
 
-            {/* Upcoming Events */}
-            <div>
-              <FadeInSection delay={0.2}>
-                <h3 className="text-2xl font-bold text-gray-900 mb-8">{t.news.eventsTitle}</h3>
-              </FadeInSection>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {UPCOMING_EVENTS.map((event, index) => (
-                  <FadeInSection key={event.id} delay={0.2 + index * 0.1}>
-                    <EventCard event={event} learnMoreText={t.news.learnMore} />
-                  </FadeInSection>
-                ))}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {articles.length === 0 ? (
+          <p className="text-gray-500">Belum ada artikel terbaru.</p>
+          ) : (
+          articles.map((article, index) => (
+        <FadeInSection key={article.id} delay={0.1 + index * 0.1}>
+          <ArticleCard 
+            article={{
+              id: article.id,
+              title: article.title,
+              excerpt: article.excerpt,
+              date: new Date(article.published_at || article.created_at)
+                     .toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }),
+              image: article.cover_image_url || article.cover_image
+            }} 
+            readMoreText={t.news.readMore} 
+          />
+        </FadeInSection>
+        ))
+      )}
+    </div>
+  </div> 
+
+  {/* Upcoming Events */}
+<div>
+  <FadeInSection delay={0.2}>
+    <h3 className="text-2xl font-bold text-gray-900 mb-8">{t.news.eventsTitle}</h3>
+  </FadeInSection>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {events.length === 0 ? (
+      <p className="text-gray-500">Belum ada acara mendatang.</p>
+    ) : (
+      events.map((event, index) => (
+        <FadeInSection key={event.id} delay={0.2 + index * 0.1}>
+          <EventCard 
+            event={{
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              date: new Date(event.start_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }),
+              time: `${new Date(event.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} - ${new Date(event.end_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+            }} 
+            learnMoreText={t.news.learnMore} 
+          />
+        </FadeInSection>
+      ))
+    )}
+  </div>
+</div>
           </div>
         </section>
+
+
 
         {/* Final CTA */}
         <section className="relative py-20 lg:py-28 bg-gradient-to-br from-[#0066FF] to-[#0052CC] overflow-hidden">
