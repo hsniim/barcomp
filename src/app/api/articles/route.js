@@ -14,12 +14,11 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Extract query params
-    const slug = searchParams.get('slug'); // untuk single article by slug
-    const status = searchParams.get('status'); // 'published', 'draft', atau null (all)
-    const category = searchParams.get('category'); // 'teknologi', 'kesehatan', dll
-    const search = searchParams.get('search'); // keyword search
-    const featured = searchParams.get('featured'); // 'true' untuk featured only
+    const slug = searchParams.get('slug'); // Untuk single article by slug
+    const status = searchParams.get('status'); // 'published', 'draft', atau null
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const featured = searchParams.get('featured');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '9', 10);
     
@@ -27,41 +26,37 @@ export async function GET(request) {
       slug, status, category, search, featured, page, limit
     });
 
-    // Build WHERE clause dengan parameterized queries (prevent SQL injection)
+    // Build WHERE clause
     const conditions = [];
     const params = [];
 
-    // Filter by slug (untuk detail page)
     if (slug) {
       conditions.push('slug = ?');
       params.push(slug);
     }
 
-    // Filter by status (untuk public pages: published only)
-    if (status) {
+    // Untuk public access (no auth, atau slug), force published jika tidak specify status
+    const effectiveStatus = status || (slug ? 'published' : status);
+    if (effectiveStatus) {
       conditions.push('status = ?');
-      params.push(status);
+      params.push(effectiveStatus);
       
-      // CRITICAL: Hanya show published yang sudah lewat published_at
-      if (status === 'published') {
+      if (effectiveStatus === 'published') {
         conditions.push('(published_at IS NULL OR published_at <= NOW())');
       }
     }
 
-    // Filter by category
     if (category && category !== 'all') {
       conditions.push('category = ?');
       params.push(category);
     }
 
-    // Search by title, excerpt, atau content
     if (search && search.trim()) {
       conditions.push('(title LIKE ? OR excerpt LIKE ? OR content LIKE ?)');
       const searchPattern = `%${search.trim()}%`;
       params.push(searchPattern, searchPattern, searchPattern);
     }
 
-    // Filter featured
     if (featured === 'true') {
       conditions.push('featured = 1');
     }
@@ -70,46 +65,69 @@ export async function GET(request) {
       ? `WHERE ${conditions.join(' AND ')}` 
       : '';
 
-    // Count total untuk pagination
-    const countQuery = `SELECT COUNT(*) as total FROM articles ${whereClause}`;
-    const [countResult] = await pool.query(countQuery, params);
-    const total = countResult[0]?.total || 0;
+    // Count total untuk pagination (hanya jika bukan single)
+    let total = 0;
+    if (!slug) {
+      const countQuery = `SELECT COUNT(*) as total FROM articles ${whereClause}`;
+      const [countResult] = await pool.query(countQuery, params);
+      total = countResult[0]?.total || 0;
+      console.log(`[GET /api/articles] Total matching articles: ${total}`);
+    }
 
-    console.log(`[GET /api/articles] Total matching articles: ${total}`);
+    let dataRows;
+    if (slug) {
+      // Mode single: No pagination, return object langsung
+      const singleQuery = `SELECT * FROM articles ${whereClause}`;
+      [dataRows] = await pool.query(singleQuery, params);
 
-    // Fetch articles dengan pagination
-    const offset = (page - 1) * limit;
-    const dataQuery = `
-      SELECT * FROM articles 
-      ${whereClause}
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `;
-    
-    const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
+      if (dataRows.length === 0) {
+        console.log(`[GET /api/articles] Article not found for slug: ${slug}`);
+        return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+      }
 
-    console.log(`[GET /api/articles] Returned ${rows.length} articles (page ${page})`);
+      // Transform data untuk consistency
+      const article = {
+        ...dataRows[0],
+        cover_image_url: dataRows[0].cover_image || dataRows[0].cover_image_url, // Handle kedua nama field
+        tags: typeof dataRows[0].tags === 'string' ? JSON.parse(dataRows[0].tags) : dataRows[0].tags || [],
+      };
 
-    // FIXED: Return format yang diexpect client
-    return NextResponse.json({
-      success: true,
-      data: rows,
-      total: total,
-      page: page,
-      limit: limit,
-      totalPages: Math.ceil(total / limit)
-    });
+      console.log(`[GET /api/articles] Single article fetched: ${article.title}`);
+      return NextResponse.json({ success: true, data: article });
+    } else {
+      // Mode list: Dengan pagination
+      const offset = (page - 1) * limit;
+      const dataQuery = `
+        SELECT * FROM articles 
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      [dataRows] = await pool.query(dataQuery, [...params, limit, offset]);
 
+      // Transform list juga untuk consistency
+      const transformedData = dataRows.map(article => ({
+        ...article,
+        cover_image_url: article.cover_image || article.cover_image_url,
+        tags: typeof article.tags === 'string' ? JSON.parse(article.tags) : article.tags || [],
+      }));
+
+      console.log(`[GET /api/articles] List fetched: ${transformedData.length} articles`);
+      return NextResponse.json({
+        success: true,
+        data: transformedData,
+        total,
+        page,
+        limit,
+      });
+    }
   } catch (error) {
-    console.error('[GET /api/articles] Error:', error);
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Gagal mengambil daftar artikel',
-        details: error.message 
-      },
-      { status: 500 }
-    );
+    console.error('[GET /api/articles] Error:', error.message || error);
+    return NextResponse.json({ 
+      success: false,
+      error: 'Gagal mengambil daftar artikel',
+      details: error.message 
+    }, { status: 500 });
   }
 }
 

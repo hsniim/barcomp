@@ -240,7 +240,7 @@ const ArticleCard = memo(({ article, readMoreText }) => (
         {article.excerpt}
       </CardDescription>
       <Link 
-        href={`/resources/articles/${article.id}`}
+        href={`/resources/articles/${article.slug || article.id || 'artikel-tidak-ditemukan'}`}
         className="inline-flex items-center text-[#0066FF] font-semibold hover:underline"
       >
         {readMoreText}
@@ -273,7 +273,7 @@ const EventCard = memo(({ event, learnMoreText }) => (
         <span>{event.time}</span>
       </div>
       <Link 
-        href={`/resources/events/${event.id}`}
+        href={`/resources/events/${event.slug || event.id || 'event-tidak-ditemukan'}`}
         className="inline-flex items-center text-[#0066FF] font-semibold hover:underline mt-4"
       >
         {learnMoreText}
@@ -293,39 +293,47 @@ export default function Home() {
 
   // listen to custom events from Navbar
   useEffect(() => {
-    // Initial load
-    const fetchLandingData = async () => {
-      try {
-        setLoadingData(true);
-        setFetchError(null);
+  const fetchLandingData = async () => {
+    setLoadingData(true);
+    setFetchError(null);
 
-        // 1. Ambil 3 artikel terbaru yang published
-        const articlesRes = await fetch('/api/articles?status=published&limit=3&featured=true');
-        const articlesData = await articlesRes.json();
+    try {
+      // 1. Ambil 3 artikel terbaru yang published & featured
+      const articlesRes = await fetch('/api/articles?status=published&limit=3&featured=true');
+      const articlesData = await articlesRes.json();
 
-        // 2. Ambil event upcoming (default API sudah filter upcoming)
-        const eventsRes = await fetch('/api/events');
-        const eventsData = await eventsRes.json();
+      console.log('RAW Response dari API articles (landing):', articlesData); // ← log penting untuk debug
 
-        if (articlesData.success) setArticles(articlesData.data || []);
-        if (eventsData.success) setEvents(eventsData.data || []);
-
-      } catch (err) {
-        console.error('Gagal fetch data landing:', err);
-        setFetchError('Gagal memuat data. Coba refresh halaman.');
-      } finally {
-        setLoadingData(false);
+      // FIX parsing supaya tidak jadi Array(0)
+      let articlesList = [];
+      if (articlesData.success && Array.isArray(articlesData.data)) {
+        articlesList = articlesData.data;
+      } else if (Array.isArray(articlesData)) {
+        articlesList = articlesData;
+      } else if (articlesData.data && Array.isArray(articlesData.data)) {
+        articlesList = articlesData.data;
       }
-    };
 
-    fetchLandingData();
+      console.log('Articles setelah diparsing (harusnya ada 1 artikel):', articlesList);
 
-    return () => {
-      
-    };
+      setArticles(articlesList);
 
+      // 2. Ambil events (upcoming)
+      const eventsRes = await fetch('/api/events');
+      const eventsData = await eventsRes.json();
 
-  }, []);
+      if (eventsData.success) setEvents(eventsData.data || []);
+
+    } catch (err) {
+      console.error('Gagal fetch data landing:', err);
+      setFetchError('Gagal memuat data. Coba refresh halaman.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  fetchLandingData();
+}, []);
 
   // Memoized translations
   const t = useMemo(() => ({
@@ -357,18 +365,6 @@ export default function Home() {
           title: 'Desain UI/UX',
           description: 'Antarmuka yang indah dan intuitif dirancang dengan mempertimbangkan pengguna, menggabungkan estetika dengan fungsi.',
           link: '/services/ui-ux'
-        },
-        {
-          icon: TrendingUp,
-          title: 'Pemasaran Digital',
-          description: 'Strategi pemasaran berbasis data untuk mengembangkan kehadiran online Anda dan menjangkau audiens target secara efektif.',
-          link: '/services/marketing'
-        },
-        {
-          icon: Cloud,
-          title: 'Solusi Cloud',
-          description: 'Infrastruktur cloud yang skalabel dan layanan migrasi untuk memodernisasi operasi IT Anda.',
-          link: '/services/cloud'
         }
       ],
       learnMore: 'Pelajari Lebih Lanjut'
@@ -642,10 +638,11 @@ export default function Home() {
           <p className="text-gray-500">Belum ada artikel terbaru.</p>
           ) : (
           articles.map((article, index) => (
-        <FadeInSection key={article.id} delay={0.1 + index * 0.1}>
+        <FadeInSection key={article.slug} delay={0.1 + index * 0.1}>
           <ArticleCard 
             article={{
               id: article.id,
+              slug: article.slug,
               title: article.title,
               excerpt: article.excerpt,
               date: new Date(article.published_at || article.created_at)
@@ -671,11 +668,12 @@ export default function Home() {
       <p className="text-gray-500">Belum ada acara mendatang.</p>
     ) : (
       events.map((event, index) => (
-        <FadeInSection key={event.id} delay={0.2 + index * 0.1}>
+        <FadeInSection key={event.slug} delay={0.2 + index * 0.1}>
           <EventCard 
             event={{
               id: event.id,
               title: event.title,
+              slug: event.slug,
               description: event.description,
               date: new Date(event.start_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }),
               time: `${new Date(event.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} - ${new Date(event.end_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
