@@ -256,11 +256,6 @@ export default function Navbar() {
         href: '/about/vision' 
       },
       { 
-        label: 'Budaya & Etos', 
-        description: 'Prinsip dan dedikasi yang mendasari', 
-        href: '/about/values' 
-      },
-      { 
         label: 'Mitra Kami', 
         description: 'Kolabrorasi sukses bersama mitra-mitra', 
         href: '/about/clients' 
@@ -281,16 +276,6 @@ export default function Navbar() {
         label: 'Desain UI/UX', 
         description: 'Pengalaman pengguna yang indah', 
         href: '/services/ux' 
-      },
-      { 
-        label: 'Pemasaran Digital', 
-        description: 'Tingkatkan kehadiran online Anda', 
-        href: '/services/marketing' 
-      },
-      { 
-        label: 'Solusi Cloud', 
-        description: 'Infrastruktur yang skalabel', 
-        href: '/services/cloud' 
       },
     ],
     resources: [
@@ -381,8 +366,6 @@ export default function Navbar() {
     services: 'Layanan',
     resources: 'Sumber Daya',
     contact: 'Kontak',
-    login: 'Masuk',
-    signup: 'Daftar',
     needHelp: 'Butuh bantuan memilih?',
     getInTouch: 'Hubungi tim kami',
     contactUs: 'Hubungi kami',
@@ -441,31 +424,17 @@ export default function Navbar() {
                   onClick={(e) => handleDropdownClick(e, 'resources')}
                 />
               </div>
-
-              <NavLink href="/contact">{t.contact}</NavLink>
             </div>
 
             {/* desktop right navbar (login/signup or user menu) */}
-            <div className="hidden lg:flex items-center gap-4">
-              {isAuthenticated ? (
-                <UserMenu user={user} onLogout={handleLogout} />
-              ) : (
+            <div className="hidden lg:flex items-center gap-4">   
                 <>
-                  <Link href="/login">
-                    <Button
-                      variant="ghost"
-                      className="text-gray-700 hover:text-indigo-600 font-medium"
-                    >
-                      {t.login}
-                    </Button>
-                  </Link>
-                  <Link href="/register">
+                  <Link href="/contact">
                     <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6">
-                      {t.signup}
+                      {t.contact}
                     </Button>
                   </Link>
                 </>
-              )}
             </div>
 
             {/* mobile menu button*/}
@@ -682,60 +651,15 @@ export default function Navbar() {
                     )}
                   </AnimatePresence>
                 </div>
-
-                <Link
-                  href="/contact"
-                  onClick={closeMobileMenu}
-                  className="block py-4 text-2xl font-medium text-gray-900 border-b border-gray-200"
-                >
-                  {t.contact}
-                </Link>
               </nav>
 
               {/* mobile login/signup button or user menu */}
               <div className="p-6 border-t border-gray-200 space-y-3">
-                {isAuthenticated ? (
-                  <>
-                    <Link href="/profile" onClick={closeMobileMenu}>
-                      <Button variant="outline" className="w-full h-12">
-                        <UserCircle className="mr-2 h-5 w-5" />
-                        Profil Saya
-                      </Button>
-                    </Link>
-                    {(user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'editor') && (
-                      <Link href="/admin/dashboard" onClick={closeMobileMenu}>
-                        <Button variant="outline" className="w-full h-12">
-                          <LayoutDashboard className="mr-2 h-5 w-5" />
-                          Admin Panel
-                        </Button>
-                      </Link>
-                    )}
-                    <Button 
-                      onClick={() => { closeMobileMenu(); handleLogout(); }} 
-                      variant="outline" 
-                      className="w-full h-12 text-red-600 hover:text-red-700"
-                    >
-                      <LogOut className="mr-2 h-5 w-5" />
-                      Keluar
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login" onClick={closeMobileMenu}>
-                      <Button 
-                        variant="ghost"
-                        className="w-full h-12 text-gray-700 hover:text-indigo-600 font-medium text-base"
-                      >
-                        {t.login}
-                      </Button>
-                    </Link>
-                    <Link href="/register" onClick={closeMobileMenu}>
-                      <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-base">
-                        {t.signup}
-                      </Button>
-                    </Link>
-                  </>
-                )}
+                <Link href="/contact" onClick={closeMobileMenu}>
+                  <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-base">
+                    {t.contact}
+                  </Button>
+                </Link>
               </div>
             </div>
           </motion.div>
