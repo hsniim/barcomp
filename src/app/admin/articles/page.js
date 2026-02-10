@@ -31,7 +31,8 @@ import {
   MessageSquare,
   Star,
   StarOff,
-  Loader2
+  Loader2,
+  Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -239,19 +240,19 @@ export default function ArticlesPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.5 }}
         className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
       >
-        <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             Articles
           </h1>
-          <p className="text-gray-600 mt-2 text-base">
+          <p className="text-sm text-gray-600">
             Create, manage, and publish your articles
           </p>
         </div>
         <Link href="/admin/articles/create">
-          <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 px-6 py-5 text-base font-bold">
+          <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-3 font-bold">
             <Plus className="w-5 h-5 mr-2" />
             Create New Article
           </Button>
@@ -266,15 +267,15 @@ export default function ArticlesPage() {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
         <motion.div variants={itemVariants}>
-          <Card className="border-2 border-gray-200 hover:border-[#0066FF] transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+          <Card className="border-gray-300 hover:border-[#0066FF] shadow-sm hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Articles</p>
-                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.total}</p>
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Total Articles</p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.total}</p>
                 </div>
-                <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-2xl">
-                  <FileText className="w-8 h-8 text-[#0066FF]" />
+                <div className="w-14 h-14 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <FileText className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -282,15 +283,15 @@ export default function ArticlesPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-2 border-gray-200 hover:border-green-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+          <Card className="border-gray-300 hover:border-green-500 shadow-sm hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Published</p>
-                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.published}</p>
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Published</p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.published}</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-2xl">
-                  <TrendingUp className="w-8 h-8 text-green-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <TrendingUp className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -298,15 +299,15 @@ export default function ArticlesPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-2 border-gray-200 hover:border-gray-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+          <Card className="border-gray-300 hover:border-gray-500 shadow-sm hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Draft</p>
-                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.draft}</p>
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Draft</p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.draft}</p>
                 </div>
-                <div className="bg-gradient-to-br from-gray-100 to-slate-100 p-4 rounded-2xl">
-                  <Edit className="w-8 h-8 text-gray-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <Edit className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -314,15 +315,15 @@ export default function ArticlesPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-2 border-gray-200 hover:border-orange-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+          <Card className="border-gray-300 hover:border-amber-500 shadow-sm hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Featured</p>
-                  <p className="text-4xl font-black text-gray-900 mt-2">{stats.featured}</p>
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Featured</p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.featured}</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-100 to-amber-100 p-4 rounded-2xl">
-                  <Star className="w-8 h-8 text-orange-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <Star className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -336,7 +337,7 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-2 border-gray-200 shadow-sm">
+        <Card className="border-gray-300 shadow-sm">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1">
@@ -347,7 +348,7 @@ export default function ArticlesPage() {
                     placeholder="Search articles by title, slug, or excerpt..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-12 h-12 border-2 border-gray-200 focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-base"
+                    className="pl-12 h-12 text-black border-gray-300 focus:border-[#0066FF] focus:ring-2 focus:ring-blue-100 transition-all duration-200 text-base"
                   />
                 </div>
               </div>
@@ -355,7 +356,7 @@ export default function ArticlesPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-12 px-4 border-2 border-gray-200 rounded-lg focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-700 font-medium cursor-pointer"
+                  className="h-12 px-4 border border-gray-300 rounded-lg focus:border-[#0066FF] focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-700 font-medium cursor-pointer"
                 >
                   <option value="">All Status</option>
                   {STATUSES.map(status => (
@@ -368,7 +369,7 @@ export default function ArticlesPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="h-12 px-4 border-2 border-gray-200 rounded-lg focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-700 font-medium cursor-pointer"
+                  className="h-12 px-4 border border-gray-300 rounded-lg focus:border-[#0066FF] focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-700 font-medium cursor-pointer"
                 >
                   <option value="">All Categories</option>
                   {CATEGORIES.map(cat => (
@@ -389,17 +390,17 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-2 border-gray-200 shadow-lg">
+        <Card className="border-gray-300 shadow-sm">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24 px-4">
                 <Loader2 className="w-12 h-12 text-[#0066FF] animate-spin" />
-                <p className="text-gray-600 mt-6 text-lg font-semibold">Loading articles...</p>
+                <p className="text-gray-600 mt-6 text-base font-semibold">Loading articles...</p>
               </div>
             ) : filteredArticles.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 px-4">
-                <div className="bg-gradient-to-br from-gray-100 to-slate-100 p-8 rounded-3xl mb-6">
-                  <FileText className="w-20 h-20 text-gray-400" />
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-6">
+                  <FileText className="w-10 h-10 text-[#0066FF]" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   {search || statusFilter || categoryFilter
@@ -413,8 +414,8 @@ export default function ArticlesPage() {
                 </p>
                 {articles.length === 0 && (
                   <Link href="/admin/articles/create">
-                    <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 px-6 py-3 text-base font-bold">
-                      <Plus className="w-4 h-4 mr-2" />
+                    <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-3 font-bold">
+                      <Plus className="w-5 h-5 mr-2" />
                       Create First Article
                     </Button>
                   </Link>
@@ -529,29 +530,20 @@ export default function ArticlesPage() {
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/articles/edit/${article.id}`}
-                                  className="flex items-center gap-2 cursor-pointer"
+                                  className="flex items-center gap-2 cursor-pointer text-black"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Edit className="w-4 h-4 text-black" />
                                   <span>Edit Article</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/resources/articles/${article.slug}`}
-                                  className="flex items-center gap-2 cursor-pointer"
+                                  className="flex items-center gap-2 cursor-pointer text-black"
                                   target="_blank"
                                 >
                                   <Eye className="w-4 h-4" />
                                   <span>View Article</span>
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link 
-                                  href={`/admin/articles/${article.id}/comments`}
-                                  className="flex items-center gap-2 cursor-pointer"
-                                >
-                                  <MessageSquare className="w-4 h-4" />
-                                  <span>Manage Comments</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />

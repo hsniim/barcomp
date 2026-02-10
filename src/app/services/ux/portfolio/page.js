@@ -4,16 +4,17 @@ import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  Briefcase,
-  Code2,
-  ShoppingCart,
-  Building2,
+  Palette,
   Smartphone,
+  ShoppingCart,
+  Heart,
+  GraduationCap,
+  Utensils,
   Layers,
   TrendingUp,
   Award,
   Users,
-  Globe,
+  Eye,
   ArrowRight,
   ExternalLink,
   CheckCircle2,
@@ -23,7 +24,9 @@ import {
   ChevronRight,
   Calendar,
   Target,
-  Zap
+  Zap,
+  Monitor,
+  Briefcase
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -127,14 +130,14 @@ const ProjectCard = memo(({ project, index }) => {
           {project.description}
         </p>
 
-        {/* Tech Stack Tags */}
+        {/* Design Methods Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {project.technologies.map((tech, idx) => (
+          {project.methods.map((method, idx) => (
             <span 
               key={idx}
               className="px-2 py-1 bg-blue-50 text-[#0066FF] rounded-md text-xs font-medium"
             >
-              {tech}
+              {method}
             </span>
           ))}
         </div>
@@ -142,16 +145,16 @@ const ProjectCard = memo(({ project, index }) => {
         {/* Project Stats */}
         <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{project.stats.completion}</div>
-            <div className="text-xs text-gray-500">{project.stats.completionLabel}</div>
+            <div className="text-lg font-bold text-gray-900">{project.stats.result}</div>
+            <div className="text-xs text-gray-500">{project.stats.resultLabel}</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">{project.stats.duration}</div>
             <div className="text-xs text-gray-500">{project.stats.durationLabel}</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{project.stats.team}</div>
-            <div className="text-xs text-gray-500">{project.stats.teamLabel}</div>
+            <div className="text-lg font-bold text-gray-900">{project.stats.rating}</div>
+            <div className="text-xs text-gray-500">{project.stats.ratingLabel}</div>
           </div>
         </div>
       </CardContent>
@@ -193,97 +196,231 @@ const FilterButton = memo(({ label, icon: Icon, isActive, onClick }) => {
 
 FilterButton.displayName = 'FilterButton';
 
-export default function PortfolioPage() {
+export default function UXPortfolioPage() {
   const [activeFilter, setActiveFilter] = useState('all');
 
   const t = useMemo(() => ({
     hero: {
-      badge: 'Karya Kami',
-      title: 'Menghadirkan Keunggulan',
-      subtitle: 'Melalui Setiap Proyek',
-      description: 'Jelajahi portofolio proyek sukses kami di berbagai industri. Dari platform enterprise hingga startup inovatif, kami mewujudkan ide dengan teknologi terdepan dan desain yang luar biasa.',
+      badge: 'Portfolio UX Design',
+      title: 'Desain yang Mengutamakan',
+      subtitle: 'Pengalaman Pengguna',
+      description: 'Jelajahi portofolio desain UX/UI kami yang telah membantu bisnis meningkatkan konversi, kepuasan pengguna, dan menciptakan pengalaman digital yang memorable di berbagai industri.',
     },
     stats: {
-      badge: 'Dalam Angka',
+      badge: 'Pencapaian Kami',
       items: [
         { 
-          value: '500', 
+          value: '150', 
           suffix: '+',
-          label: 'Proyek Selesai', 
-          icon: Briefcase 
+          label: 'Proyek UX Selesai', 
+          icon: Palette 
         },
         { 
-          value: '200', 
-          suffix: '+',
-          label: 'Klien Puas', 
-          icon: Users 
-        },
-        { 
-          value: '15', 
-          suffix: '+',
-          label: 'Negara Dilayani', 
-          icon: Globe 
-        },
-        { 
-          value: '98', 
+          value: '95', 
           suffix: '%',
           label: 'Kepuasan Klien', 
+          icon: Heart 
+        },
+        { 
+          value: '45', 
+          suffix: '%',
+          label: 'Avg. Konversi Naik', 
+          icon: TrendingUp 
+        },
+        { 
+          value: '4.9', 
+          suffix: '/5',
+          label: 'Rating Rata-rata', 
           icon: Star 
         }
       ]
     },
     filters: {
-      title: 'Filter berdasarkan Kategori',
-      all: 'Semua Proyek',
       items: [
-        { id: 'all', label: 'Semua Proyek', icon: Layers },
-        { id: 'ecommerce', label: 'E-commerce', icon: ShoppingCart },
-        { id: 'enterprise', label: 'Enterprise', icon: Building2 }
+        { id: 'all', label: 'Semua Project', icon: Layers },
+        { id: 'ecommerce', label: 'E-Commerce', icon: ShoppingCart },
+        { id: 'mobile', label: 'Mobile App', icon: Smartphone },
+        { id: 'saas', label: 'SaaS Platform', icon: Monitor },
+        { id: 'education', label: 'Edukasi', icon: GraduationCap }
       ]
     },
     projects: [
       {
         id: 1,
-        title: 'RACSI',
-        description: 'Sistem informasi ketersediaan ruangan kampus untuk memudahkan monitoring dan peminjaman ruang',
-        category: 'Enterprise',
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
-        technologies: ['Tailwind CSS', 'React', 'Node.js', 'MySQL'],
+        title: 'Fashion E-Commerce Redesign',
+        description: 'Redesign complete platform e-commerce fashion dengan fokus pada mobile-first experience dan peningkatan conversion rate',
+        category: 'E-Commerce',
+        image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop',
+        methods: ['User Research', 'Wireframing', 'Prototyping', 'A/B Testing'],
         stats: {
-          completion: '2025',
-          completionLabel: 'Tahun',
+          result: '+45%',
+          resultLabel: 'Konversi',
           duration: '3 Bln',
-          durationLabel: 'Durasi',
-          team: '2',
-          teamLabel: 'Tim'
+          durationLabel: 'Timeline',
+          rating: '4.9',
+          ratingLabel: 'Rating'
         },
-        viewText: 'Lihat Proyek',
-        link: 'https://racsi-9dc.pages.dev/',
-        filterCategory: 'enterprise'
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'ecommerce'
       },
       {
         id: 2,
-        title: 'Jakpedia',
-        description: 'Platform yang memberikan informasi tentang Jakarta',
-        category: 'Edukasi',
-        image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=600&fit=crop',
-        technologies: ['HTML', 'CSS', 'Javascript'],
+        title: 'Banking Mobile App',
+        description: 'Aplikasi mobile banking dengan interface intuitif, keamanan tinggi, dan fokus pada kemudahan transaksi untuk semua kalangan',
+        category: 'Fintech',
+        image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop',
+        methods: ['UX Research', 'User Flows', 'UI Design', 'Usability Testing'],
         stats: {
-          completion: '2024',
-          completionLabel: 'Tahun',
-          duration: '1 Bln',
-          durationLabel: 'Durasi',
-          team: '1',
-          teamLabel: 'Tim'
+          result: '250K+',
+          resultLabel: 'Users',
+          duration: '4 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.8',
+          ratingLabel: 'Rating'
         },
-        viewText: 'Lihat Proyek',
-        link: 'https://jakpedia.vercel.app/',
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'mobile'
+      },
+      {
+        id: 3,
+        title: 'Healthcare Dashboard',
+        description: 'Dashboard komprehensif untuk tenaga medis dengan visualisasi data pasien yang jelas dan actionable insights',
+        category: 'Healthcare',
+        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop',
+        methods: ['Data Visualization', 'Information Architecture', 'Interaction Design'],
+        stats: {
+          result: '-65%',
+          resultLabel: 'Error Rate',
+          duration: '5 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.7',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'saas'
+      },
+      {
+        id: 4,
+        title: 'Food Delivery App',
+        description: 'Aplikasi food delivery dengan real-time tracking, personalisasi menu, dan checkout process yang super cepat',
+        category: 'Food & Beverage',
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop',
+        methods: ['Mobile UX', 'Personalization', 'Real-time Features'],
+        stats: {
+          result: '+85%',
+          resultLabel: 'Orders',
+          duration: '3 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.6',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'mobile'
+      },
+      {
+        id: 5,
+        title: 'Learning Management System',
+        description: 'Platform pembelajaran online dengan gamifikasi, progress tracking, dan interactive learning experience',
+        category: 'Edukasi',
+        image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&h=600&fit=crop',
+        methods: ['Gamification', 'Learning UX', 'Engagement Design'],
+        stats: {
+          result: '+75%',
+          resultLabel: 'Engagement',
+          duration: '6 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.8',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'education'
+      },
+      {
+        id: 6,
+        title: 'Smart Home Control App',
+        description: 'Interface sederhana untuk mengontrol smart home devices dengan automasi cerdas dan energy monitoring',
+        category: 'IoT',
+        image: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=800&h=600&fit=crop',
+        methods: ['IoT UX', 'Smart Automation', 'Voice Interface'],
+        stats: {
+          result: '50+',
+          resultLabel: 'Devices',
+          duration: '4 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.7',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'mobile'
+      },
+      {
+        id: 7,
+        title: 'SaaS Project Management Tool',
+        description: 'Platform manajemen proyek dengan collaboration features, timeline visualization, dan team productivity insights',
+        category: 'SaaS',
+        image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop',
+        methods: ['Dashboard Design', 'Collaboration UX', 'Data Analytics'],
+        stats: {
+          result: '+60%',
+          resultLabel: 'Productivity',
+          duration: '5 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.9',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'saas'
+      },
+      {
+        id: 8,
+        title: 'Travel Booking Platform',
+        description: 'Platform booking travel dengan advanced search, price comparison, dan seamless booking experience',
+        category: 'Travel',
+        image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop',
+        methods: ['Search UX', 'Booking Flow', 'Mobile Optimization'],
+        stats: {
+          result: '+55%',
+          resultLabel: 'Bookings',
+          duration: '4 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.7',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'ecommerce'
+      },
+      {
+        id: 9,
+        title: 'Fitness Tracking App',
+        description: 'Aplikasi fitness dengan workout plans, nutrition tracking, dan social features untuk motivasi komunitas',
+        category: 'Health & Fitness',
+        image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&h=600&fit=crop',
+        methods: ['Health UX', 'Motivation Design', 'Social Features'],
+        stats: {
+          result: '100K+',
+          resultLabel: 'Active Users',
+          duration: '4 Bln',
+          durationLabel: 'Timeline',
+          rating: '4.8',
+          ratingLabel: 'Rating'
+        },
+        viewText: 'Lihat Case Study',
+        link: '#',
+        filterCategory: 'mobile'
       }
     ],
     cta: {
-      title: 'Siap Memulai Proyek Anda?',
-      subtitle: 'Mari berkolaborasi untuk menciptakan sesuatu yang luar biasa yang mendorong bisnis Anda maju',
-      button: 'Mulai Proyek Anda'
+      title: 'Siap Menciptakan Pengalaman Digital yang Luar Biasa?',
+      subtitle: 'Mari berkolaborasi untuk merancang solusi UX yang meningkatkan kepuasan pengguna dan mendorong hasil bisnis Anda',
+      button: 'Mulai Proyek UX Anda'
     }
   }), []);
 
@@ -310,7 +447,7 @@ export default function PortfolioPage() {
             <FadeInSection>
               <div className="max-w-4xl mx-auto text-center">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-8 border border-gray-200 shadow-sm">
-                  <Briefcase className="w-4 h-4 text-[#0066FF]" />
+                  <Palette className="w-4 h-4 text-[#0066FF]" />
                   <span className="text-sm font-semibold text-gray-700">{t.hero.badge}</span>
                 </div>
                 
@@ -414,7 +551,7 @@ export default function PortfolioPage() {
           <div className="container mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
             <FadeInSection>
               <div className="text-center max-w-3xl mx-auto">
-                <Target className="w-16 h-16 mx-auto mb-6 text-white" />
+                <Eye className="w-16 h-16 mx-auto mb-6 text-white" />
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
                   {t.cta.title}
                 </h2>
@@ -462,6 +599,13 @@ export default function PortfolioPage() {
         
         .animate-pulse {
           animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </>

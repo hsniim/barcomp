@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -14,7 +15,8 @@ import {
   Plus,
   ArrowUpRight,
   MessageSquare,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -45,7 +47,6 @@ export default function AdminDashboard() {
     articles: { total: 0, published: 0, draft: 0, featured: 0 },
     events: { total: 0, upcoming: 0, ongoing: 0, completed: 0, featured: 0 },
     gallery: { total: 0, featured: 0 },
-    comments: { total: 0, pending: 0, approved: 0, spam: 0 }
   });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -94,17 +95,10 @@ export default function AdminDashboard() {
       });
       const galleryData = await galleryRes.json();
 
-      // Fetch comments stats
-      const commentsRes = await fetch('/api/comments', {
-        credentials: 'include'
-      });
-      const commentsData = await commentsRes.json();
-
       // Calculate stats
       const articles = articlesData.data || [];
       const events = eventsData.data || [];
       const gallery = galleryData.data || [];
-      const comments = commentsData.data || [];
 
       setStats({
         articles: {
@@ -124,12 +118,6 @@ export default function AdminDashboard() {
           total: gallery.filter(g => !g.deleted_at).length,
           featured: gallery.filter(g => g.featured && !g.deleted_at).length
         },
-        comments: {
-          total: comments.length,
-          pending: comments.filter(c => c.status === 'pending').length,
-          approved: comments.filter(c => c.status === 'approved').length,
-          spam: comments.filter(c => c.status === 'spam').length
-        }
       });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -147,7 +135,6 @@ export default function AdminDashboard() {
       icon: FileText,
       color: 'text-[#0066FF]',
       bgColor: 'bg-blue-50',
-      borderColor: 'border-gray-200',
       trend: `${stats.articles.featured} featured`,
       trendUp: true,
       href: '/admin/articles'
@@ -159,7 +146,6 @@ export default function AdminDashboard() {
       icon: Calendar,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
-      borderColor: 'border-gray-200',
       trend: `${stats.events.featured} featured`,
       trendUp: true,
       href: '/admin/events'
@@ -171,23 +157,10 @@ export default function AdminDashboard() {
       icon: Image,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
-      borderColor: 'border-gray-200',
       trend: 'Active items',
       trendUp: true,
       href: '/admin/gallery'
     },
-    {
-      title: 'Comments',
-      value: stats.comments.total,
-      subtitle: `${stats.comments.pending} pending, ${stats.comments.approved} approved`,
-      icon: MessageSquare,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-gray-200',
-      trend: `${stats.comments.spam} spam`,
-      trendUp: false,
-      href: '/admin/articles'
-    }
   ];
 
   const quickActions = [
@@ -197,8 +170,6 @@ export default function AdminDashboard() {
       icon: FileText,
       color: 'text-[#0066FF]',
       bgColor: 'bg-blue-50',
-      hoverBg: 'hover:bg-blue-100',
-      borderColor: 'border-gray-200',
       href: '/admin/articles/create'
     },
     {
@@ -207,8 +178,6 @@ export default function AdminDashboard() {
       icon: Calendar,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
-      hoverBg: 'hover:bg-indigo-100',
-      borderColor: 'border-gray-200',
       href: '/admin/events/create'
     },
     {
@@ -217,30 +186,15 @@ export default function AdminDashboard() {
       icon: Image,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
-      hoverBg: 'hover:bg-purple-100',
-      borderColor: 'border-gray-200',
       href: '/admin/gallery/create'
     },
-    {
-      title: 'Lihat Komentar',
-      description: 'Kelola komentar',
-      icon: MessageSquare,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      hoverBg: 'hover:bg-orange-100',
-      borderColor: 'border-gray-200',
-      href: '/admin/articles'
-    }
   ];
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-[#0066FF] border-t-transparent animate-spin"></div>
-          </div>
+          <Loader2 className="w-12 h-12 text-[#0066FF] animate-spin mx-auto" />
           <p className="text-sm font-semibold text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -254,11 +208,11 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-1"
+        className="space-y-2"
       >
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
-        <p className="text-base text-gray-600">
-          Welcome back, {user?.full_name || 'Admin'}! Here's what's happening with your site.
+        <p className="text-sm text-gray-600">
+          Welcome back, <span className="font-semibold text-gray-900">{user?.full_name || 'Admin'}</span>! Here's what's happening with your site.
         </p>
       </motion.div>
 
@@ -267,55 +221,51 @@ export default function AdminDashboard() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
       >
         {statCards.map((stat, index) => (
-          <motion.a
+          <motion.div
             key={index}
-            href={stat.href}
             variants={itemVariants}
-            whileHover={{ 
-              y: -8,
-              transition: { duration: 0.2 }
-            }}
-            className="block"
           >
-            <Card className="h-full border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300 group overflow-hidden">
-              <CardContent className="p-6 relative">
-                {/* Glow effect on hover */}
-                <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${stat.bgColor.replace('bg-', 'bg-opacity-100 bg-')}`} />
-                
-                <div className="relative">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                        {stat.title}
-                      </p>
-                      <p className="mt-3 text-4xl font-bold text-gray-900 tabular-nums">
-                        {stat.value}
-                      </p>
-                      <p className="mt-2 text-sm text-gray-500">
-                        {stat.subtitle}
-                      </p>
-                      <div className="flex items-center gap-1 mt-3">
-                        {stat.trendUp ? (
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <MessageSquare className="w-4 h-4 text-gray-600" />
-                        )}
-                        <span className={`text-sm font-semibold ${stat.trendUp ? 'text-green-600' : 'text-gray-600'}`}>
-                          {stat.trend}
-                        </span>
+            <Link href={stat.href}>
+              <Card className="border-gray-300 hover:border-[#0066FF] shadow-sm hover:shadow-lg transition-all duration-300 group overflow-hidden cursor-pointer h-full">
+                <CardContent className="p-6 relative">
+                  {/* Glow effect on hover */}
+                  <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${stat.bgColor}`} />
+                  
+                  <div className="relative">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          {stat.title}
+                        </p>
+                        <p className="mt-3 text-4xl font-bold text-gray-900 tabular-nums">
+                          {stat.value}
+                        </p>
+                        <p className="mt-2 text-sm text-gray-600 font-medium">
+                          {stat.subtitle}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-3">
+                          {stat.trendUp ? (
+                            <TrendingUp className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <MessageSquare className="w-4 h-4 text-gray-600" />
+                          )}
+                          <span className={`text-xs font-semibold ${stat.trendUp ? 'text-green-600' : 'text-gray-600'}`}>
+                            {stat.trend}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-14 h-14 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                        <stat.icon className="w-7 h-7 text-white" />
                       </div>
                     </div>
-                    <div className="w-14 h-14 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <stat.icon className="w-7 h-7 text-white" />
-                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.a>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
         ))}
       </motion.div>
 
@@ -325,130 +275,45 @@ export default function AdminDashboard() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-xl transition-all duration-300">
-          <CardHeader className="border-b bg-gradient-to-r from-gray-50 to-white pb-3 pt-4 px-6">
+        <Card className="border-gray-300 hover:border-[#0066FF] shadow-sm hover:shadow-lg transition-all duration-300">
+          <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white pb-4 pt-5 px-6">
             <div className="flex items-center gap-3">
-              <div className="inline-block px-3 py-1.5 bg-blue-100 rounded-full">
-                <Activity className="w-3.5 h-3.5 text-[#0066FF] inline mr-1.5" />
-                <span className="text-xs font-semibold text-[#0066FF]">Quick Access</span>
+              <div className="inline-flex items-center px-3 py-1.5 bg-blue-100 rounded-full border border-blue-200">
+                <Activity className="w-3.5 h-3.5 text-[#0066FF] mr-1.5" />
+                <span className="text-xs font-bold text-[#0066FF] uppercase tracking-wide">Quick Access</span>
               </div>
-              <CardTitle className="text-lg text-gray-900">Quick Actions</CardTitle>
+              <CardTitle className="text-lg font-bold text-gray-900">Quick Actions</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {quickActions.map((action, index) => (
-                <motion.a
+                <Link
                   key={index}
                   href={action.href}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`flex flex-col items-start p-4 border ${action.borderColor} rounded-xl hover:border-[#0066FF] ${action.bgColor} ${action.hoverBg} transition-all duration-300 group cursor-pointer hover:shadow-lg`}
                 >
-                  <div className="flex items-center justify-between w-full mb-3">
-                    <div className="w-11 h-11 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <action.icon className="w-5 h-5 text-white" />
+                  <motion.div
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex flex-col items-start p-5 border-2 border-gray-300 rounded-xl hover:border-[#0066FF] ${action.bgColor} hover:shadow-md transition-all duration-300 group cursor-pointer`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                        <action.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <ArrowUpRight className="w-5 h-5 text-[#0066FF] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <Plus className="w-4 h-4 text-[#0066FF] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-base mb-1 group-hover:text-[#0066FF] transition-colors duration-300">
-                    {action.title}
-                  </h3>
-                  <p className="text-xs text-gray-600 leading-relaxed">{action.description}</p>
-                </motion.a>
+                    <h3 className="font-bold text-gray-900 text-base mb-1 group-hover:text-[#0066FF] transition-colors duration-300">
+                      {action.title}
+                    </h3>
+                    <p className="text-xs text-gray-600 font-medium leading-relaxed">{action.description}</p>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           </CardContent>
         </Card>
       </motion.div>
-
-      {/* System Status */}
-      <motion.div
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Card className="border-gray-200 hover:border-green-500 hover:shadow-xl transition-all duration-300">
-          <CardHeader className="border-b bg-gradient-to-r from-green-50 to-white pb-3 pt-4 px-6">
-            <div className="flex items-center gap-3">
-              <div className="inline-block px-3 py-1.5 bg-green-100 rounded-full">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block mr-1.5 animate-pulse"></div>
-                <span className="text-xs font-semibold text-green-600">System Health</span>
-              </div>
-              <CardTitle className="text-lg text-gray-900">System Status</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 hover:border-green-300 transition-all duration-300">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-base mb-0.5">All Systems Operational</p>
-                  <p className="text-xs text-gray-600">Everything is running smoothly</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-semibold text-gray-600 mb-0.5">Last checked</p>
-                <p className="text-xs text-green-600 font-bold">Just now</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Pending Approvals */}
-      {stats.comments.pending > 0 && (
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <Card className="border-orange-200 hover:border-orange-500 hover:shadow-xl transition-all duration-300 bg-orange-50/30">
-            <CardHeader className="border-b border-orange-200 bg-gradient-to-r from-orange-50 to-white pb-3 pt-4 px-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="inline-block px-3 py-1.5 bg-orange-100 rounded-full">
-                    <MessageSquare className="w-3.5 h-3.5 text-orange-600 inline mr-1.5" />
-                    <span className="text-xs font-semibold text-orange-600">Needs Attention</span>
-                  </div>
-                  <CardTitle className="text-lg text-gray-900">Pending Approvals</CardTitle>
-                </div>
-                <a 
-                  href="/admin/articles" 
-                  className="text-xs font-semibold text-[#0066FF] hover:text-[#0052CC] flex items-center gap-1 group transition-colors"
-                >
-                  View all
-                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </a>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-orange-200 hover:border-orange-300 transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-base mb-0.5">
-                      {stats.comments.pending} Comment{stats.comments.pending > 1 ? 's' : ''} Waiting
-                    </p>
-                    <p className="text-xs text-gray-600">Review and approve new comments</p>
-                  </div>
-                </div>
-                <a 
-                  href="/admin/articles"
-                  className="px-4 py-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all duration-300"
-                >
-                  Review
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
     </div>
   );
 }

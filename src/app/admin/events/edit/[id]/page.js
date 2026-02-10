@@ -528,7 +528,6 @@ export default function EditEventPage() {
           <Link href="/admin/events">
             <button className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 text-gray-700 hover:text-[#0066FF] rounded-lg font-semibold transition-all duration-300">
               <ArrowLeft className="w-4 h-4" />
-              Back
             </button>
           </Link>
           <div>

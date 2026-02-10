@@ -468,7 +468,7 @@ export default function EventsPage() {
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/edit/${event.id}`}
-                                  className="flex items-center gap-2 cursor-pointer"
+                                  className="flex items-center gap-2 cursor-pointer text-black"
                                 >
                                   <Edit className="w-4 h-4" />
                                   <span>Edit Event</span>
@@ -477,10 +477,10 @@ export default function EventsPage() {
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/${event.id}/registrations`}
-                                  className="flex items-center gap-2 cursor-pointer"
+                                  className="flex items-center gap-2 cursor-pointer text-black"
                                 >
                                   <Users className="w-4 h-4" />
-                                  <span>View Registrations</span>
+                                  <span>View Event</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
