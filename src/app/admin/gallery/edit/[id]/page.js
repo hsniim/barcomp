@@ -416,17 +416,18 @@ export default function EditGalleryPage() {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <Link
+        <div className="flex items-center gap-4">
+          <Link 
             href="/admin/gallery"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#0066FF] mb-4 font-semibold transition-colors duration-200"
+            className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 transition-all duration-300 group"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Gallery
+            <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-[#0066FF]" />
           </Link>
-          <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">
-            Edit Gallery Item
-          </h1>
-          <p className="text-gray-600 font-medium">Update gallery item details and images</p>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Edit Photo</h1>
+            <p className="text-sm text-gray-600 mt-1">Update a new photo</p>
+          </div>
+        </div>
         </motion.div>
 
         {/* Form Grid */}

@@ -566,7 +566,7 @@ export default function ClientsPage() {
             solution: "Membangun cloud-based LMS dengan arsitektur microservices, kolaborasi real-time, gamifikasi, dan personalisasi berbasis AI.",
             results: "Platform stabil menangani 50,000+ pengguna bersamaan, engagement meningkat 85%, dan tingkat penyelesaian naik 120%.",
             icon: "/logos/edupulse.svg",
-            color: 'orange'
+            color: 'blue'
           },
           {
             client: "Urban Retail Collective",
@@ -575,7 +575,7 @@ export default function ClientsPage() {
             solution: "Redesain UX dengan one-click checkout, integrasi 15+ metode pembayaran, implementasi PWA, dan optimasi performa.",
             results: "Pembatalan checkout turun ke 22%, transaksi mobile naik 180%, dan pendapatan meningkat 210% dalam 6 bulan.",
             icon: "/logos/urban.svg",
-            color: 'green'
+            color: 'blue'
           },
           {
             client: "Lumina Healthcare Int.",
@@ -584,7 +584,7 @@ export default function ClientsPage() {
             solution: "Mengimplementasikan Hospital Information System (HIS) terintegrasi dengan EMR, e-prescription, dan modul telemedicine.",
             results: "Kesalahan pengobatan turun 95%, waktu administrasi berkurang 60%, dan kepuasan pasien meningkat dari 72% ke 94%.",
             icon: "/logos/lumina.svg",
-            color: 'pink'
+            color: 'blue'
           },
           {
             client: "IronPath Logistics",
@@ -593,7 +593,7 @@ export default function ClientsPage() {
             solution: "Mengembangkan sistem ERP dengan pelacakan inventori real-time, analitik prediktif, pemesanan ulang otomatis, dan manajemen gudang.",
             results: "Akurasi stok 99.5%, kehabisan stok turun 88%, biaya penyimpanan inventori berkurang 35%, dan efisiensi operasional naik 45%.",
             icon: "/logos/ironpath.svg",
-            color: 'purple'
+            color: 'blue'
           },
           {
             client: "SwiftScale Hub",
@@ -602,7 +602,7 @@ export default function ClientsPage() {
             solution: "Pengembangan agile dengan sprint 2 minggu, menggunakan teknologi modern, fokus pada fitur inti, dan infrastruktur cloud.",
             results: "MVP diluncurkan tepat waktu, berhasil mendapat pendanaan awal $500K, dan platform berkembang dari 100 ke 10,000 pengguna tanpa perlu refactor.",
             icon: "/logos/swift.svg",
-            color: 'indigo'
+            color: 'blue'
           }
         ]
       },
@@ -1049,7 +1049,7 @@ export default function ClientsPage() {
                   <Button 
                     variant="outline" 
                     size="lg"
-                    className="border-[#0066FF] text-[#0066FF] hover:bg-[#0066FF] hover:text-white"
+                    className="border-[#0066FF] bg-blue-600 text-white hover:bg-[#0658d5]"
                   >
                     {'Join Them'}
                     <ChevronRight className="ml-2 h-5 w-5" />

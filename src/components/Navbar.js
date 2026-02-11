@@ -364,7 +364,7 @@ export default function Navbar() {
     home: 'Beranda',
     aboutUs: 'Tentang Kami',
     services: 'Layanan',
-    resources: 'Sumber Daya',
+    resources: 'Media',
     contact: 'Kontak',
     needHelp: 'Butuh bantuan memilih?',
     getInTouch: 'Hubungi tim kami',
@@ -398,7 +398,7 @@ export default function Navbar() {
             </Link>
 
             {/* desktop center navbar */}
-            <div className="hidden lg:flex items-center space-x-1">
+            <div className="hidden lg:flex items-center gap-5 space-x-1">
               <NavLink href="/">{t.home}</NavLink>
               
               <div className="relative">

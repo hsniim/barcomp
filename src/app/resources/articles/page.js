@@ -324,13 +324,13 @@ export default function ArticlesPage() {
 
                 {/* Search */}
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 text-black -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Cari artikel..."
                     value={filters.search}
                     onChange={handleSearchChange}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all hover:border-[#0066FF]"
+                    className="w-full pl-10 pr-4 py-3 border-2 text-black border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all hover:border-[#0066FF]"
                   />
                 </div>
 

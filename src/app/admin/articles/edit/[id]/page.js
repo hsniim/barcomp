@@ -462,15 +462,17 @@ export default function EditArticle() {
         transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <Link 
-          href="/admin/articles"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-[#0066FF] transition-colors duration-200 mb-4 font-semibold"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Articles
-        </Link>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Edit Article</h1>
-        <p className="text-gray-600">Update article information and content</p>
+        <div className="flex items-center gap-4">
+          <Link href="/admin/articles">
+            <button className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 hover:border-[#0066FF] hover:bg-blue-50 text-gray-700 hover:text-[#0066FF] rounded-lg font-semibold transition-all duration-300">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Article</h1>
+            <p className="text-sm text-gray-600 mt-1">Fill in the details to edit a new article</p>
+          </div>
+        </div>
       </motion.div>
 
       {/* Two Column Layout */}
