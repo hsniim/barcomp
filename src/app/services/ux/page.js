@@ -176,58 +176,28 @@ const StatCard = memo(({ value, label, icon: Icon, suffix = '' }) => {
 StatCard.displayName = 'StatCard';
 
 export default function UXDesignPage() {
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
-
   const t = useMemo(() => ({
     hero: {
-      badge: language === 'en' ? 'UI/UX Design Excellence' : 'Keunggulan Desain UI/UX',
-      title: language === 'en' ? 'Design that Prioritizes Users' : 'Desain yang Mengutamakan Pengguna',
-      subtitle: language === 'en' 
-        ? '& Conversion'
-        : '& Konversi',
-      description: language === 'en'
-        ? 'We craft beautiful, intuitive interfaces that delight users and drive business results. Our design process combines user research, data-driven insights, and creative excellence to deliver exceptional digital experiences.'
-        : 'Kami menciptakan antarmuka yang indah dan intuitif yang menyenangkan pengguna dan mendorong hasil bisnis. Proses desain kami menggabungkan riset pengguna, wawasan berbasis data, dan keunggulan kreatif untuk memberikan pengalaman digital yang luar biasa.',
+      badge: 'Keunggulan Desain UI/UX',
+      title: 'Desain yang Mengutamakan Pengguna',
+      subtitle: '& Konversi',
+      description: 'Kami menciptakan antarmuka yang indah dan intuitif yang menyenangkan pengguna dan mendorong hasil bisnis. Proses desain kami menggabungkan riset pengguna, wawasan berbasis data, dan keunggulan kreatif untuk memberikan pengalaman digital yang luar biasa.',
       cta: {
-        primary: language === 'en' ? 'Start Your Project' : 'Mulai Proyek Anda',
-        secondary: language === 'en' ? 'View Our Work' : 'Lihat Karya Kami'
+        primary: 'Mulai Proyek Anda',
+        secondary: 'Lihat Karya Kami'
       }
     },
     workflow: {
-      badge: language === 'en' ? 'Design Workflow' : 'Alur Kerja Desain',
-      title: language === 'en' ? 'Our Design Process' : 'Proses Desain Kami',
-      subtitle: language === 'en'
-        ? 'A systematic approach to creating exceptional user experiences'
-        : 'Pendekatan sistematis untuk menciptakan pengalaman pengguna yang luar biasa',
+      badge: 'Alur Kerja Desain',
+      title: 'Proses Desain Kami',
+      subtitle: 'Pendekatan sistematis untuk menciptakan pengalaman pengguna yang luar biasa',
       steps: [
         {
           number: '01',
           icon: Search,
-          title: language === 'en' ? 'User Research' : 'Riset Pengguna',
-          description: language === 'en'
-            ? 'We start by deeply understanding your users through comprehensive research methods to uncover their needs, behaviors, and pain points.'
-            : 'Kami memulai dengan memahami pengguna Anda secara mendalam melalui metode riset komprehensif untuk mengungkap kebutuhan, perilaku, dan pain point mereka.',
-          items: language === 'en' 
-            ? [
-                'User interviews and surveys',
-                'Competitive analysis',
-                'Persona development',
-                'User journey mapping',
-                'Analytics review'
-              ]
-            : [
+          title: 'Riset Pengguna',
+          description: 'Kami memulai dengan memahami pengguna Anda secara mendalam melalui metode riset komprehensif untuk mengungkap kebutuhan, perilaku, dan pain point mereka.',
+          items: [
                 'Wawancara dan survei pengguna',
                 'Analisis kompetitor',
                 'Pengembangan persona',
@@ -238,19 +208,9 @@ export default function UXDesignPage() {
         {
           number: '02',
           icon: PenTool,
-          title: language === 'en' ? 'Wireframing' : 'Wireframing',
-          description: language === 'en'
-            ? 'Transform research insights into low-fidelity wireframes that map out the structure and flow of your digital product.'
-            : 'Transformasikan wawasan riset menjadi wireframe low-fidelity yang memetakan struktur dan alur produk digital Anda.',
-          items: language === 'en'
-            ? [
-                'Information architecture',
-                'User flow diagrams',
-                'Low-fidelity sketches',
-                'Interactive wireframes',
-                'Rapid prototyping'
-              ]
-            : [
+          title: 'Wireframing',
+          description: 'Transformasikan wawasan riset menjadi wireframe low-fidelity yang memetakan struktur dan alur produk digital Anda.',
+          items: [
                 'Arsitektur informasi',
                 'Diagram alur pengguna',
                 'Sketsa low-fidelity',
@@ -261,19 +221,9 @@ export default function UXDesignPage() {
         {
           number: '03',
           icon: Palette,
-          title: language === 'en' ? 'Visual Design' : 'Desain Visual',
-          description: language === 'en'
-            ? 'Create stunning, pixel-perfect interfaces that align with your brand identity and captivate your target audience.'
-            : 'Ciptakan antarmuka yang memukau dan pixel-perfect yang selaras dengan identitas brand Anda dan memikat target audiens.',
-          items: language === 'en'
-            ? [
-                'UI design system',
-                'Typography & color theory',
-                'Iconography & illustrations',
-                'Responsive design',
-                'Micro-interactions'
-              ]
-            : [
+          title: 'Desain Visual',
+          description: 'Ciptakan antarmuka yang memukau dan pixel-perfect yang selaras dengan identitas brand Anda dan memikat target audiens.',
+          items: [
                 'Sistem desain UI',
                 'Tipografi & teori warna',
                 'Ikonografi & ilustrasi',
@@ -284,19 +234,9 @@ export default function UXDesignPage() {
         {
           number: '04',
           icon: TestTube,
-          title: language === 'en' ? 'Usability Testing' : 'Pengujian Usabilitas',
-          description: language === 'en'
-            ? 'Validate design decisions through rigorous testing with real users to ensure optimal usability and user satisfaction.'
-            : 'Validasi keputusan desain melalui pengujian ketat dengan pengguna nyata untuk memastikan usabilitas optimal dan kepuasan pengguna.',
-          items: language === 'en'
-            ? [
-                'A/B testing',
-                'User acceptance testing',
-                'Heatmap analysis',
-                'Feedback collection',
-                'Iterative improvements'
-              ]
-            : [
+          title: 'Pengujian Usabilitas',
+          description: 'Validasi keputusan desain melalui pengujian ketat dengan pengguna nyata untuk memastikan usabilitas optimal dan kepuasan pengguna.',
+          items: [
                 'Pengujian A/B',
                 'Pengujian penerimaan pengguna',
                 'Analisis heatmap',
@@ -307,214 +247,170 @@ export default function UXDesignPage() {
       ]
     },
     principles: {
-      badge: language === 'en' ? 'Design Principles' : 'Prinsip Desain',
-      title: language === 'en' ? 'User-Centered Design Philosophy' : 'Filosofi Desain Berpusat pada Pengguna',
-      subtitle: language === 'en'
-        ? 'Every design decision is guided by deep user understanding and business goals'
-        : 'Setiap keputusan desain dipandu oleh pemahaman mendalam pengguna dan tujuan bisnis',
+      badge: 'Prinsip Desain',
+      title: 'Filosofi Desain Berpusat pada Pengguna',
+      subtitle: 'Setiap keputusan desain dipandu oleh pemahaman mendalam pengguna dan tujuan bisnis',
       items: [
         {
           icon: Users,
-          title: language === 'en' ? 'User-First Approach' : 'Pendekatan Pengguna Pertama',
-          description: language === 'en'
-            ? 'We start with deep user research and empathy to understand real needs, behaviors, and pain points before designing a single pixel.'
-            : 'Kami memulai dengan riset pengguna mendalam dan empati untuk memahami kebutuhan, perilaku, dan pain point sebenarnya sebelum mendesain satu pixel pun.',
+          title: 'Pendekatan Pengguna Pertama',
+          description: 'Kami memulai dengan riset pengguna mendalam dan empati untuk memahami kebutuhan, perilaku, dan pain point sebenarnya sebelum mendesain satu pixel pun.',
           accent: 'blue'
         },
         {
           icon: Target,
-          title: language === 'en' ? 'Goal-Driven Design' : 'Desain Berorientasi Tujuan',
-          description: language === 'en'
-            ? 'Every element serves a purpose. We align design decisions with business objectives and measurable KPIs to maximize conversion and engagement.'
-            : 'Setiap elemen memiliki tujuan. Kami menyelaraskan keputusan desain dengan tujuan bisnis dan KPI yang terukur untuk memaksimalkan konversi dan engagement.',
+          title: 'Desain Berorientasi Tujuan',
+          description: 'Setiap elemen memiliki tujuan. Kami menyelaraskan keputusan desain dengan tujuan bisnis dan KPI yang terukur untuk memaksimalkan konversi dan engagement.',
           accent: 'purple'
         },
         {
           icon: Sparkles,
-          title: language === 'en' ? 'Aesthetic Excellence' : 'Keunggulan Estetika',
-          description: language === 'en'
-            ? 'Beautiful design builds trust and credibility. We create visually stunning interfaces that reflect your brand and captivate your audience.'
-            : 'Desain yang indah membangun kepercayaan dan kredibilitas. Kami menciptakan antarmuka visual yang memukau yang mencerminkan brand Anda dan memikat audiens.',
+          title: 'Keunggulan Estetika',
+          description: 'Desain yang indah membangun kepercayaan dan kredibilitas. Kami menciptakan antarmuka visual yang memukau yang mencerminkan brand Anda dan memikat audiens.',
           accent: 'pink'
         },
         {
           icon: Zap,
-          title: language === 'en' ? 'Performance Focused' : 'Fokus pada Kinerja',
-          description: language === 'en'
-            ? 'Fast, responsive interfaces that work seamlessly across all devices. We optimize every interaction for speed and efficiency.'
-            : 'Antarmuka cepat dan responsif yang bekerja mulus di semua perangkat. Kami mengoptimalkan setiap interaksi untuk kecepatan dan efisiensi.',
+          title: 'Fokus pada Kinerja',
+          description: 'Antarmuka cepat dan responsif yang bekerja mulus di semua perangkat. Kami mengoptimalkan setiap interaksi untuk kecepatan dan efisiensi.',
           accent: 'orange'
         }
       ]
     },
     capabilities: {
-      badge: language === 'en' ? 'What We Deliver' : 'Apa yang Kami Berikan',
-      title: language === 'en' ? 'Comprehensive Design Services' : 'Layanan Desain Komprehensif',
-      subtitle: language === 'en'
-        ? 'From strategy to implementation, we cover every aspect of UX/UI design'
-        : 'Dari strategi hingga implementasi, kami mencakup setiap aspek desain UX/UI',
+      badge: 'Apa yang Kami Berikan',
+      title: 'Layanan Desain Komprehensif',
+      subtitle: 'Dari strategi hingga implementasi, kami mencakup setiap aspek desain UX/UI',
       items: [
         {
           icon: Compass,
-          title: language === 'en' ? 'UX Strategy' : 'Strategi UX',
-          description: language === 'en'
-            ? 'Strategic planning and user experience roadmaps'
-            : 'Perencanaan strategis dan roadmap pengalaman pengguna'
+          title: 'Strategi UX',
+          description: 'Perencanaan strategis dan roadmap pengalaman pengguna'
         },
         {
           icon: Grid3x3,
-          title: language === 'en' ? 'Design Systems' : 'Sistem Desain',
-          description: language === 'en'
-            ? 'Scalable component libraries and style guides'
-            : 'Library komponen scalable dan panduan style'
+          title: 'Sistem Desain',
+          description: 'Library komponen scalable dan panduan style'
         },
         {
           icon: Smartphone,
-          title: language === 'en' ? 'Mobile Design' : 'Desain Mobile',
-          description: language === 'en'
-            ? 'Native iOS and Android app interfaces'
-            : 'Antarmuka aplikasi iOS dan Android native'
+          title: 'Desain Mobile',
+          description: 'Antarmuka aplikasi iOS dan Android native'
         },
         {
           icon: Monitor,
-          title: language === 'en' ? 'Web Design' : 'Desain Web',
-          description: language === 'en'
-            ? 'Responsive websites and web applications'
-            : 'Website responsif dan aplikasi web'
+          title: 'Desain Web',
+          description: 'Website responsif dan aplikasi web'
         },
         {
           icon: Layout,
-          title: language === 'en' ? 'Dashboard Design' : 'Desain Dashboard',
-          description: language === 'en'
-            ? 'Data visualization and admin interfaces'
-            : 'Visualisasi data dan antarmuka admin'
+          title: 'Desain Dashboard',
+          description: 'Visualisasi data dan antarmuka admin'
         },
         {
           icon: Figma,
-          title: language === 'en' ? 'Prototyping' : 'Prototyping',
-          description: language === 'en'
-            ? 'Interactive prototypes for user testing'
-            : 'Prototipe interaktif untuk pengujian pengguna'
+          title: 'Prototyping',
+          description: 'Prototipe interaktif untuk pengujian pengguna'
         }
       ]
     },
     stats: {
-      badge: language === 'en' ? 'Our Impact' : 'Dampak Kami',
-      title: language === 'en' ? 'Design That Delivers Results' : 'Desain yang Memberikan Hasil',
-      subtitle: language === 'en'
-        ? 'Proven metrics from our design projects'
-        : 'Metrik terbukti dari proyek desain kami',
+      badge: 'Dampak Kami',
+      title: 'Desain yang Memberikan Hasil',
+      subtitle: 'Metrik terbukti dari proyek desain kami',
       items: [
         {
           value: '95',
           suffix: '%',
-          label: language === 'en' ? 'User Satisfaction' : 'Kepuasan Pengguna',
+          label: 'Kepuasan Pengguna',
           icon: Heart
         },
         {
           value: '2.5',
           suffix: 'x',
-          label: language === 'en' ? 'Conversion Increase' : 'Peningkatan Konversi',
+          label: 'Peningkatan Konversi',
           icon: TrendingUp
         },
         {
           value: '40',
           suffix: '%',
-          label: language === 'en' ? 'Time Saved' : 'Waktu Dihemat',
+          label: 'Waktu Dihemat',
           icon: Zap
         },
         {
           value: '4.8',
           suffix: '/5',
-          label: language === 'en' ? 'Client Rating' : 'Rating Klien',
+          label: 'Rating Klien',
           icon: Star
         }
       ]
     },
     tools: {
-      badge: language === 'en' ? 'Tools & Technologies' : 'Tools & Teknologi',
-      title: language === 'en' ? 'Industry-Leading Design Tools' : 'Tools Desain Terdepan',
-      subtitle: language === 'en'
-        ? 'We use the best tools to deliver exceptional results'
-        : 'Kami menggunakan tools terbaik untuk memberikan hasil luar biasa',
+      badge: 'Tools & Teknologi',
+      title: 'Tools Desain Terdepan',
+      subtitle: 'Kami menggunakan tools terbaik untuk memberikan hasil luar biasa',
       categories: [
         {
-          category: language === 'en' ? 'Design' : 'Desain',
+          category: 'Desain',
           tools: ['Figma', 'Adobe XD', 'Sketch', 'Illustrator']
         },
         {
-          category: language === 'en' ? 'Prototyping' : 'Prototyping',
+          category: 'Prototyping',
           tools: ['Figma', 'ProtoPie', 'Principle', 'Framer']
         },
         {
-          category: language === 'en' ? 'Research' : 'Riset',
+          category: 'Riset',
           tools: ['UserTesting', 'Hotjar', 'Google Analytics', 'Maze']
         },
         {
-          category: language === 'en' ? 'Collaboration' : 'Kolaborasi',
+          category: 'Kolaborasi',
           tools: ['Miro', 'FigJam', 'Notion', 'Slack']
         }
       ]
     },
     benefits: {
-      badge: language === 'en' ? 'Why Choose Us' : 'Mengapa Memilih Kami',
-      title: language === 'en' ? 'The Barcomp Design Advantage' : 'Keunggulan Desain Barcomp',
-      subtitle: language === 'en'
-        ? 'Partner with a team committed to your success'
-        : 'Bermitra dengan tim yang berkomitmen pada kesuksesan Anda',
+      badge: 'Mengapa Memilih Kami',
+      title: 'Keunggulan Desain Barcomp',
+      subtitle: 'Bermitra dengan tim yang berkomitmen pada kesuksesan Anda',
       items: [
         {
           icon: Compass,
-          title: language === 'en' ? 'Strategic Thinking' : 'Pemikiran Strategis',
-          description: language === 'en'
-            ? 'We align design with business strategy to ensure every pixel contributes to your goals.'
-            : 'Kami menyelaraskan desain dengan strategi bisnis untuk memastikan setiap pixel berkontribusi pada tujuan Anda.'
+          title: 'Pemikiran Strategis',
+          description: 'Kami menyelaraskan desain dengan strategi bisnis untuk memastikan setiap pixel berkontribusi pada tujuan Anda.'
         },
         {
           icon: Eye,
-          title: language === 'en' ? 'Data-Driven Decisions' : 'Keputusan Berbasis Data',
-          description: language === 'en'
-            ? 'Analytics and user testing inform our design choices for optimal performance.'
-            : 'Analitik dan pengujian pengguna menginformasikan pilihan desain kami untuk kinerja optimal.'
+          title: 'Keputusan Berbasis Data',
+          description: 'Analitik dan pengujian pengguna menginformasikan pilihan desain kami untuk kinerja optimal.'
         },
         {
           icon: Rocket,
-          title: language === 'en' ? 'Fast Iteration' : 'Iterasi Cepat',
-          description: language === 'en'
-            ? 'Agile design process allows for quick refinements and continuous improvement.'
-            : 'Proses desain agile memungkinkan penyempurnaan cepat dan peningkatan berkelanjutan.'
+          title: 'Iterasi Cepat',
+          description: 'Proses desain agile memungkinkan penyempurnaan cepat dan peningkatan berkelanjutan.'
         },
         {
           icon: Layers,
-          title: language === 'en' ? 'Design Systems' : 'Sistem Desain',
-          description: language === 'en'
-            ? 'Scalable design systems ensure consistency and efficiency across all touchpoints.'
-            : 'Sistem desain scalable memastikan konsistensi dan efisiensi di semua touchpoint.'
+          title: 'Sistem Desain',
+          description: 'Sistem desain scalable memastikan konsistensi dan efisiensi di semua touchpoint.'
         },
         {
           icon: Smartphone,
-          title: language === 'en' ? 'Multi-Platform Expertise' : 'Keahlian Multi-Platform',
-          description: language === 'en'
-            ? 'Seamless experiences across web, mobile, tablet, and emerging platforms.'
-            : 'Pengalaman mulus di web, mobile, tablet, dan platform yang sedang berkembang.'
+          title: 'Keahlian Multi-Platform',
+          description: 'Pengalaman mulus di web, mobile, tablet, dan platform yang sedang berkembang.'
         },
         {
           icon: Award,
-          title: language === 'en' ? 'Award-Winning Work' : 'Karya Pemenang Penghargaan',
-          description: language === 'en'
-            ? 'Recognition from industry leaders for design excellence and innovation.'
-            : 'Pengakuan dari pemimpin industri untuk keunggulan dan inovasi desain.'
+          title: 'Karya Pemenang Penghargaan',
+          description: 'Pengakuan dari pemimpin industri untuk keunggulan dan inovasi desain.'
         }
       ]
     },
     cta: {
-      title: language === 'en' ? 'Ready to Create Exceptional Experiences?' : 'Siap Menciptakan Pengalaman Luar Biasa?',
-      subtitle: language === 'en'
-        ? "Let's collaborate to design interfaces that your users will love and your business will benefit from"
-        : 'Mari berkolaborasi untuk mendesain antarmuka yang akan disukai pengguna Anda dan menguntungkan bisnis Anda',
-      button: language === 'en' ? 'Start Your Design Project' : 'Mulai Proyek Desain Anda'
+      title: 'Siap Menciptakan Pengalaman Luar Biasa?',
+      subtitle: 'Mari berkolaborasi untuk mendesain antarmuka yang akan disukai pengguna Anda dan menguntungkan bisnis Anda',
+      button: 'Mulai Proyek Desain Anda'
     }
-  }), [language]);
+  }), []);
 
   return (
     <>

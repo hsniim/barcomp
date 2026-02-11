@@ -495,30 +495,6 @@ export default function EventDetailPage() {
                     </div>
                   </div>
                 </FadeInSection>
-
-                {/* Social Share */}
-                <FadeInSection delay={0.5}>
-                  <div className="pt-8 border-t border-gray-200">
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        onClick={handleShare}
-                        variant="outline"
-                        className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-gray-50 transition-all"
-                      >
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Bagikan
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-gray-50 transition-all"
-                      >
-                        <Bookmark className="w-4 h-4 mr-2" />
-                        Simpan
-                      </Button>
-                    </div>
-                  </div>
-                </FadeInSection>
-
                 {/* CTA Section */}
                 {event.status === 'upcoming' && (
                   <FadeInSection delay={0.6}>
@@ -558,42 +534,6 @@ export default function EventDetailPage() {
               </div>
             </article>
           </FadeInSection>
-
-          {/* Registration Form Section */}
-          {event.status === 'upcoming' && (
-            <FadeInSection delay={0.8}>
-              <div id="registration" className="mt-8 bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-gray-200 p-6 sm:p-8 md:p-10 lg:p-12">
-                <div className="max-w-2xl mx-auto text-center">
-                  <Users className="w-16 h-16 mx-auto text-[#0066FF] mb-6" />
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                    Pendaftaran Event
-                  </h2>
-                  <p className="text-lg text-gray-600 mb-8">
-                    Untuk mendaftar event ini, silakan hubungi tim kami melalui halaman kontak atau email resmi Barcomp
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/contact">
-                      <Button 
-                        size="lg"
-                        className="bg-[#0066FF] hover:bg-[#0052CC] text-white px-8 shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
-                      >
-                        <ExternalLink className="w-5 h-5 mr-2" />
-                        Hubungi Kami
-                      </Button>
-                    </Link>
-                    <Button 
-                      size="lg"
-                      variant="outline"
-                      className="border-2 border-gray-200 hover:border-[#0066FF] hover:bg-gray-50 w-full sm:w-auto"
-                      onClick={() => window.location.href = 'mailto:info@barcomp.com'}
-                    >
-                      Kirim Email
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </FadeInSection>
-          )}
         </div>
       </main>
 

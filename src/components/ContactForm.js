@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mail, Phone, MapPin, Send, Clock } from 'lucide-react';
 
 export default function ContactForm() {
-  const [language, setLanguage] = useState('en');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,69 +19,8 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
-  // Listen for language changes
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    if (savedLang !== language) {
-      setLanguage(savedLang);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleLanguageChange = (e) => {
-      if (e.detail && e.detail !== language) {
-        setLanguage(e.detail);
-      }
-    };
-
-    const handleStorageChange = (e) => {
-      if (e.key === 'language' && e.newValue && e.newValue !== language) {
-        setLanguage(e.newValue);
-      }
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('languageChange', handleLanguageChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [language]);
-
   // Translations
   const t = {
-    en: {
-      formTitle: 'Send us a Message',
-      formDescription: "Fill out the form below and we'll get back to you as soon as possible.",
-      name: 'Name',
-      email: 'Email',
-      phone: 'Phone',
-      subject: 'Subject',
-      message: 'Message',
-      namePlaceholder: 'Your name',
-      emailPlaceholder: 'your.email@example.com',
-      phonePlaceholder: '+62 xxx xxxx xxxx',
-      subjectPlaceholder: 'What is this about?',
-      messagePlaceholder: 'Tell us more about your project...',
-      send: 'Send Message',
-      sending: 'Sending...',
-      contactInfo: 'Contact Information',
-      contactDesc: 'Get in touch with us through any of these channels',
-      emailLabel: 'Email',
-      phoneLabel: 'Phone',
-      office: 'Office',
-      businessHours: 'Business Hours',
-      monday: 'Monday - Friday:',
-      saturday: 'Saturday:',
-      sunday: 'Sunday:',
-      mondayHours: '9:00 AM - 6:00 PM',
-      saturdayHours: '10:00 AM - 2:00 PM',
-      sundayHours: 'Closed',
-      successMsg: 'Message sent successfully! We\'ll get back to you soon.',
-      errorMsg: 'Failed to send message. Please try again.',
-      required: '*'
-    },
     id: {
       formTitle: 'Kirim Pesan',
       formDescription: 'Isi formulir di bawah ini dan kami akan menghubungi Anda sesegera mungkin.',
@@ -116,7 +54,7 @@ export default function ContactForm() {
     }
   };
 
-  const content = t[language];
+  const content = t.id;
 
   const handleChange = (e) => {
     const { name, value } = e.target;

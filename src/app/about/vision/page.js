@@ -208,133 +208,87 @@ const PillarCard = memo(({ icon: Icon, title, description, initiatives }) => {
 PillarCard.displayName = 'PillarCard';
 
 export default function VisionPage() {
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
-
   const t = {
     hero: {
-      badge: language === 'en' ? 'Our Aspirations and Goals' : 'Aspirasi dan Tujuan Kami',
-      title: language === 'en' ? 'Shaping the Future of' : 'Membentuk Masa Depan',
-      subtitle: language === 'en' ? 'Digital Innovation' : 'Inovasi Digital',
-      description: language === 'en'
-        ? "We envision a future where technology empowers every business to reach its full potential. Through innovation, collaboration, and unwavering commitment to excellence, we are building tomorrow's digital landscape today."
-        : 'Kami membayangkan masa depan di mana teknologi memberdayakan setiap bisnis untuk mencapai potensi penuhnya. Melalui inovasi, kolaborasi, dan komitmen teguh pada keunggulan, kami membangun lanskap digital masa depan hari ini.'
+      badge: 'Aspirasi dan Tujuan Kami',
+      title: 'Membentuk Masa Depan',
+      subtitle: 'Inovasi Digital',
+      description: 'Kami membayangkan masa depan di mana teknologi memberdayakan setiap bisnis untuk mencapai potensi penuhnya. Melalui inovasi, kolaborasi, dan komitmen teguh pada keunggulan, kami membangun lanskap digital masa depan hari ini.'
     },
     vision: {
-      badge: language === 'en' ? 'Our Vision' : 'Visi Kami',
-      title: language === 'en' ? 'Leading Digital Transformation in Southeast Asia' : 'Memimpin Transformasi Digital di Asia Tenggara',
-      subtitle: language === 'en'
-        ? 'By 2030, we aspire to be the most trusted and innovative digital solutions provider, empowering businesses across the region to thrive in the digital age.'
-        : 'Pada tahun 2030, kami bercita-cita menjadi penyedia solusi digital paling terpercaya dan inovatif, memberdayakan bisnis di seluruh region untuk berkembang di era digital.',
+      badge: 'Visi Kami',
+      title: 'Memimpin Transformasi Digital di Asia Tenggara',
+      subtitle: 'Pada tahun 2030, kami bercita-cita menjadi penyedia solusi digital paling terpercaya dan inovatif, memberdayakan bisnis di seluruh region untuk berkembang di era digital.',
       cards: [
         {
           icon: Globe,
-          title: language === 'en' ? 'Regional Leadership' : 'Kepemimpinan Regional',
-          description: language === 'en'
-            ? 'Establish presence across Southeast Asia, serving 1000+ enterprises with world-class digital solutions and setting industry standards for innovation.'
-            : 'Membangun kehadiran di seluruh Asia Tenggara, melayani 1000+ perusahaan dengan solusi digital kelas dunia dan menetapkan standar industri untuk inovasi.',
+          title: 'Kepemimpinan Regional',
+          description: 'Membangun kehadiran di seluruh Asia Tenggara, melayani 1000+ perusahaan dengan solusi digital kelas dunia dan menetapkan standar industri untuk inovasi.',
           accent: 'blue'
         },
         {
           icon: Lightbulb,
-          title: language === 'en' ? 'Innovation Pioneer' : 'Pelopor Inovasi',
-          description: language === 'en'
-            ? 'Lead the adoption of emerging technologies including AI, blockchain, and cloud computing to create transformative solutions for our clients.'
-            : 'Memimpin adopsi teknologi emerging termasuk AI, blockchain, dan cloud computing untuk menciptakan solusi transformatif bagi klien kami.',
+          title: 'Pelopor Inovasi',
+          description: 'Memimpin adopsi teknologi emerging termasuk AI, blockchain, dan cloud computing untuk menciptakan solusi transformatif bagi klien kami.',
           accent: 'purple'
         },
         {
           icon: Users,
-          title: language === 'en' ? 'Empowering Teams' : 'Memberdayakan Tim',
-          description: language === 'en'
-            ? 'Build a team of 200+ exceptional professionals, fostering a culture of continuous learning, innovation, and excellence in everything we do.'
-            : 'Membangun tim 200+ profesional luar biasa, memupuk budaya pembelajaran berkelanjutan, inovasi, dan keunggulan dalam segala yang kami lakukan.',
+          title: 'Memberdayakan Tim',
+          description: 'Membangun tim 200+ profesional luar biasa, memupuk budaya pembelajaran berkelanjutan, inovasi, dan keunggulan dalam segala yang kami lakukan.',
           accent: 'green'
         }
       ]
     },
     mission: {
-      badge: language === 'en' ? 'Our Mission' : 'Misi Kami',
-      title: language === 'en' ? 'How We Make It Happen' : 'Bagaimana Kami Mewujudkannya',
-      subtitle: language === 'en'
-        ? 'Our mission drives every decision, every project, and every innovation we pursue.'
-        : 'Misi kami mendorong setiap keputusan, setiap proyek, dan setiap inovasi yang kami kejar.',
+      badge: 'Misi Kami',
+      title: 'Bagaimana Kami Mewujudkannya',
+      subtitle: 'Misi kami mendorong setiap keputusan, setiap proyek, dan setiap inovasi yang kami kejar.',
       items: [
         {
           icon: Zap,
-          title: language === 'en' ? 'Deliver Excellence' : 'Memberikan Keunggulan',
-          description: language === 'en'
-            ? 'Create cutting-edge digital solutions that exceed client expectations and drive measurable business results.'
-            : 'Menciptakan solusi digital mutakhir yang melampaui ekspektasi klien dan mendorong hasil bisnis yang terukur.'
+          title: 'Memberikan Keunggulan',
+          description: 'Menciptakan solusi digital mutakhir yang melampaui ekspektasi klien dan mendorong hasil bisnis yang terukur.'
         },
         {
           icon: Target,
-          title: language === 'en' ? 'Client Success First' : 'Kesuksesan Klien Utama',
-          description: language === 'en'
-            ? "Partner closely with clients to understand their unique challenges and deliver tailored solutions that truly make a difference."
-            : 'Bermitra erat dengan klien untuk memahami tantangan unik mereka dan memberikan solusi yang disesuaikan yang benar-benar membuat perbedaan.'
+          title: 'Kesuksesan Klien Utama',
+          description: 'Bermitra erat dengan klien untuk memahami tantangan unik mereka dan memberikan solusi yang disesuaikan yang benar-benar membuat perbedaan.'
         },
         {
           icon: Rocket,
-          title: language === 'en' ? 'Continuous Innovation' : 'Inovasi Berkelanjutan',
-          description: language === 'en'
-            ? 'Stay at the forefront of technology by investing in research, development, and the continuous upskilling of our team.'
-            : 'Tetap di garis depan teknologi dengan berinvestasi dalam penelitian, pengembangan, dan peningkatan keterampilan berkelanjutan tim kami.'
+          title: 'Inovasi Berkelanjutan',
+          description: 'Tetap di garis depan teknologi dengan berinvestasi dalam penelitian, pengembangan, dan peningkatan keterampilan berkelanjutan tim kami.'
         },
         {
           icon: Building2,
-          title: language === 'en' ? 'Build Lasting Partnerships' : 'Membangun Kemitraan Jangka Panjang',
-          description: language === 'en'
-            ? 'Foster long-term relationships based on trust, transparency, and mutual growth with clients, partners, and communities.'
-            : 'Membangun hubungan jangka panjang berdasarkan kepercayaan, transparansi, dan pertumbuhan bersama dengan klien, mitra, dan komunitas.'
+          title: 'Membangun Kemitraan Jangka Panjang',
+          description: 'Membangun hubungan jangka panjang berdasarkan kepercayaan, transparansi, dan pertumbuhan bersama dengan klien, mitra, dan komunitas.'
         },
         {
           icon: Award,
-          title: language === 'en' ? 'Maintain Quality Standards' : 'Menjaga Standar Kualitas',
-          description: language === 'en'
-            ? 'Uphold the highest standards of quality, security, and reliability in every solution we deliver, certified by international standards.'
-            : 'Menjunjung standar kualitas, keamanan, dan keandalan tertinggi dalam setiap solusi yang kami berikan, tersertifikasi oleh standar internasional.'
+          title: 'Menjaga Standar Kualitas',
+          description: 'Menjunjung standar kualitas, keamanan, dan keandalan tertinggi dalam setiap solusi yang kami berikan, tersertifikasi oleh standar internasional.'
         },
         {
           icon: Compass,
-          title: language === 'en' ? 'Lead with Integrity' : 'Memimpin dengan Integritas',
-          description: language === 'en'
-            ? 'Conduct business with honesty, ethical practices, and social responsibility in everything we do.'
-            : 'Menjalankan bisnis dengan kejujuran, praktik etis, dan tanggung jawab sosial dalam segala yang kami lakukan.'
+          title: 'Memimpin dengan Integritas',
+          description: 'Menjalankan bisnis dengan kejujuran, praktik etis, dan tanggung jawab sosial dalam segala yang kami lakukan.'
         }
       ]
     },
     roadmap: {
-      badge: language === 'en' ? 'Strategic Roadmap' : 'Roadmap Strategis',
-      title: language === 'en' ? 'Our Journey to 2030' : 'Perjalanan Kami Menuju 2030',
-      subtitle: language === 'en'
-        ? 'A clear, ambitious path forward with measurable milestones and transformative goals.'
-        : 'Jalur yang jelas dan ambisius dengan milestone yang terukur dan tujuan transformatif.',
+      badge: 'Roadmap Strategis',
+      title: 'Perjalanan Kami Menuju 2030',
+      subtitle: 'Jalur yang jelas dan ambisius dengan milestone yang terukur dan tujuan transformatif.',
       items: [
         {
           year: '2025-2026',
-          phase: language === 'en' ? 'Phase I: Consolidation' : 'Fase I: Konsolidasi',
-          title: language === 'en' ? 'Strengthening Foundations' : 'Memperkuat Fondasi',
+          phase: 'Fase I: Konsolidasi',
+          title: 'Memperkuat Fondasi',
           status: 'current',
           isHighlight: true,
-          goals: language === 'en' ? [
-            'Expand team to 75+ professionals across specialized departments',
-            'Achieve ISO 27001 (Information Security) certification',
-            'Launch 3 new service offerings in AI/ML and automation',
-            'Establish strategic partnerships with 5 major tech providers',
-            'Serve 250+ active clients with 98% satisfaction rate'
-          ] : [
+          goals: [
             'Memperluas tim menjadi 75+ profesional di berbagai departemen khusus',
             'Meraih sertifikasi ISO 27001 (Keamanan Informasi)',
             'Meluncurkan 3 penawaran layanan baru dalam AI/ML dan otomasi',
@@ -344,18 +298,11 @@ export default function VisionPage() {
         },
         {
           year: '2027-2028',
-          phase: language === 'en' ? 'Phase II: Expansion' : 'Fase II: Ekspansi',
-          title: language === 'en' ? 'Regional Growth' : 'Pertumbuhan Regional',
+          phase: 'Fase II: Ekspansi',
+          title: 'Pertumbuhan Regional',
           status: 'upcoming',
           isHighlight: false,
-          goals: language === 'en' ? [
-            'Open branch offices in Singapore and Malaysia',
-            'Grow team to 150+ professionals with international talent',
-            'Launch Barcomp Academy for client training and certification',
-            'Develop proprietary SaaS products for enterprise clients',
-            'Achieve 500+ enterprise clients across Southeast Asia',
-            'Establish venture capital arm for tech startups'
-          ] : [
+          goals: [
             'Membuka kantor cabang di Singapura dan Malaysia',
             'Menumbuhkan tim menjadi 150+ profesional dengan talenta internasional',
             'Meluncurkan Barcomp Academy untuk pelatihan dan sertifikasi klien',
@@ -366,18 +313,11 @@ export default function VisionPage() {
         },
         {
           year: '2029-2030',
-          phase: language === 'en' ? 'Phase III: Leadership' : 'Fase III: Kepemimpinan',
-          title: language === 'en' ? 'Industry Pioneer' : 'Pelopor Industri',
+          phase: 'Fase III: Kepemimpinan',
+          title: 'Pelopor Industri',
           status: 'future',
           isHighlight: false,
-          goals: language === 'en' ? [
-            'Establish presence in 6+ Southeast Asian countries',
-            'Team of 200+ elite professionals and thought leaders',
-            'Lead industry conferences and publish thought leadership',
-            'Launch innovation lab for R&D in emerging technologies',
-            'Achieve 1000+ clients with 50+ Fortune 500 companies',
-            'Recognized as Top 10 digital solutions provider in SEA'
-          ] : [
+          goals: [
             'Membangun kehadiran di 6+ negara Asia Tenggara',
             'Tim 200+ profesional elite dan pemimpin pemikiran',
             'Memimpin konferensi industri dan menerbitkan thought leadership',
@@ -389,24 +329,15 @@ export default function VisionPage() {
       ]
     },
     pillars: {
-      badge: language === 'en' ? 'Strategic Pillars' : 'Pilar Strategis',
-      title: language === 'en' ? 'Four Pillars of Growth' : 'Empat Pilar Pertumbuhan',
-      subtitle: language === 'en'
-        ? 'Our strategic focus areas that guide investment, innovation, and organizational development.'
-        : 'Area fokus strategis kami yang memandu investasi, inovasi, dan pengembangan organisasi.',
+      badge: 'Pilar Strategis',
+      title: 'Empat Pilar Pertumbuhan',
+      subtitle: 'Area fokus strategis kami yang memandu investasi, inovasi, dan pengembangan organisasi.',
       items: [
         {
           icon: TrendingUp,
-          title: language === 'en' ? 'Technology Excellence' : 'Keunggulan Teknologi',
-          description: language === 'en'
-            ? 'Leading the adoption and mastery of cutting-edge technologies'
-            : 'Memimpin adopsi dan penguasaan teknologi mutakhir',
-          initiatives: language === 'en' ? [
-            'AI & Machine Learning Center of Excellence',
-            'Cloud Architecture & DevOps practices',
-            'Blockchain & Web3 innovation lab',
-            'Cybersecurity & data protection expertise'
-          ] : [
+          title: 'Keunggulan Teknologi',
+          description: 'Memimpin adopsi dan penguasaan teknologi mutakhir',
+          initiatives: [
             'AI & Machine Learning Center of Excellence',
             'Praktik Cloud Architecture & DevOps',
             'Lab inovasi Blockchain & Web3',
@@ -415,16 +346,9 @@ export default function VisionPage() {
         },
         {
           icon: Users,
-          title: language === 'en' ? 'Talent Development' : 'Pengembangan Talenta',
-          description: language === 'en'
-            ? 'Building and nurturing world-class teams'
-            : 'Membangun dan memelihara tim kelas dunia',
-          initiatives: language === 'en' ? [
-            'Continuous learning & certification programs',
-            'Leadership development initiatives',
-            'Innovation challenges & hackathons',
-            'Competitive compensation & benefits'
-          ] : [
+          title: 'Pengembangan Talenta',
+          description: 'Membangun dan memelihara tim kelas dunia',
+          initiatives: [
             'Program pembelajaran berkelanjutan & sertifikasi',
             'Inisiatif pengembangan kepemimpinan',
             'Tantangan inovasi & hackathon',
@@ -433,16 +357,9 @@ export default function VisionPage() {
         },
         {
           icon: Globe,
-          title: language === 'en' ? 'Market Expansion' : 'Ekspansi Pasar',
-          description: language === 'en'
-            ? 'Growing our footprint across Southeast Asia'
-            : 'Mengembangkan jejak kami di seluruh Asia Tenggara',
-          initiatives: language === 'en' ? [
-            'Strategic partnerships with regional players',
-            'Industry-specific solution development',
-            'Multi-country service delivery capability',
-            'Local market expertise & cultural understanding'
-          ] : [
+          title: 'Ekspansi Pasar',
+          description: 'Mengembangkan jejak kami di seluruh Asia Tenggara',
+          initiatives: [
             'Kemitraan strategis dengan pemain regional',
             'Pengembangan solusi spesifik industri',
             'Kapabilitas penyampaian layanan multi-negara',
@@ -451,16 +368,9 @@ export default function VisionPage() {
         },
         {
           icon: Star,
-          title: language === 'en' ? 'Client Success' : 'Kesuksesan Klien',
-          description: language === 'en'
-            ? 'Ensuring exceptional outcomes for every client'
-            : 'Memastikan hasil luar biasa untuk setiap klien',
-          initiatives: language === 'en' ? [
-            'Dedicated success management teams',
-            'Outcome-based engagement models',
-            'Regular business reviews & optimization',
-            'Long-term partnership approach'
-          ] : [
+          title: 'Kesuksesan Klien',
+          description: 'Memastikan hasil luar biasa untuk setiap klien',
+          initiatives: [
             'Tim manajemen kesuksesan khusus',
             'Model engagement berbasis hasil',
             'Tinjauan bisnis reguler & optimisasi',
@@ -470,11 +380,9 @@ export default function VisionPage() {
       ]
     },
     cta: {
-      title: language === 'en' ? 'Join Us on This Journey' : 'Bergabunglah Bersama Kami',
-      subtitle: language === 'en'
-        ? "Whether you're a client, partner, or future team member, we'd love to have you be part of our vision for the future."
-        : 'Baik Anda klien, mitra, atau calon anggota tim, kami ingin Anda menjadi bagian dari visi kami untuk masa depan.',
-      button: language === 'en' ? 'Explore Opportunities' : 'Jelajahi Peluang'
+      title: 'Bergabunglah Bersama Kami',
+      subtitle: 'Baik Anda klien, mitra, atau calon anggota tim, kami ingin Anda menjadi bagian dari visi kami untuk masa depan.',
+      button: 'Jelajahi Peluang'
     }
   };
 

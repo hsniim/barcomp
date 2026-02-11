@@ -211,105 +211,66 @@ const LifeAtBarcompItem = memo(({ icon: Icon, title, description }) => {
 LifeAtBarcompItem.displayName = 'LifeAtBarcompItem';
 
 export default function ValuesPage() {
-  const [language, setLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-    const handleLanguageChange = (e) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
-
   const t = {
     hero: {
-      badge: language === 'en' ? 'Culture & Ethos' : 'Budaya & Etos',
-      title: language === 'en' ? 'Values That' : 'Nilai-Nilai Yang',
-      subtitle: language === 'en' ? 'Drive Everything We Do' : 'Menggerakkan Semua Yang Kami Lakukan',
-      description: language === 'en'
-        ? "Our values are not just words on a wall—they are the foundation of how we work, collaborate, and deliver excellence every single day."
-        : 'Nilai-nilai kami bukan sekadar kata-kata di dinding—ini adalah fondasi bagaimana kami bekerja, berkolaborasi, dan memberikan keunggulan setiap hari.'
+      badge: 'Budaya & Etos',
+      title: 'Nilai-Nilai Yang',
+      subtitle: 'Menggerakkan Semua Yang Kami Lakukan',
+      description: 'Nilai-nilai kami bukan sekadar kata-kata di dinding—ini adalah fondasi bagaimana kami bekerja, berkolaborasi, dan memberikan keunggulan setiap hari.'
     },
     coreValues: {
-      badge: language === 'en' ? 'Core Values' : 'Nilai Inti',
-      title: language === 'en' ? 'Six Principles That Define Us' : 'Enam Prinsip Yang Mendefinisikan Kami',
-      subtitle: language === 'en'
-        ? 'These values guide every decision, every project, and every interaction with our clients and team members.'
-        : 'Nilai-nilai ini memandu setiap keputusan, setiap proyek, dan setiap interaksi dengan klien dan anggota tim kami.',
+      badge: 'Nilai Inti',
+      title: 'Enam Prinsip Yang Mendefinisikan Kami',
+      subtitle: 'Nilai-nilai ini memandu setiap keputusan, setiap proyek, dan setiap interaksi dengan klien dan anggota tim kami.',
       values: [
         {
           icon: Lightbulb,
-          title: language === 'en' ? 'Innovation' : 'Inovasi',
-          description: language === 'en'
-            ? "We constantly push boundaries and embrace new technologies. Innovation is not just about tools—it's a mindset that drives us to find better solutions every day."
-            : 'Kami terus mendorong batasan dan mengadopsi teknologi baru. Inovasi bukan hanya tentang alat—ini adalah pola pikir yang mendorong kami menemukan solusi lebih baik setiap hari.',
+          title: 'Inovasi',
+          description: 'Kami terus mendorong batasan dan mengadopsi teknologi baru. Inovasi bukan hanya tentang alat—ini adalah pola pikir yang mendorong kami menemukan solusi lebih baik setiap hari.',
           color: 'purple'
         },
         {
           icon: Award,
-          title: language === 'en' ? 'Excellence' : 'Keunggulan',
-          description: language === 'en'
-            ? "We set the bar high and never settle for good enough. Excellence means delivering quality that exceeds expectations in every line of code and every client interaction."
-            : 'Kami menetapkan standar tinggi dan tidak pernah puas dengan yang cukup baik. Keunggulan berarti memberikan kualitas yang melampaui ekspektasi di setiap baris kode dan setiap interaksi klien.',
+          title: 'Keunggulan',
+          description: 'Kami menetapkan standar tinggi dan tidak pernah puas dengan yang cukup baik. Keunggulan berarti memberikan kualitas yang melampaui ekspektasi di setiap baris kode dan setiap interaksi klien.',
           color: 'blue'
         },
         {
           icon: Shield,
-          title: language === 'en' ? 'Integrity' : 'Integritas',
-          description: language === 'en'
-            ? "Honesty and transparency are non-negotiable. We build trust through ethical practices, clear communication, and always doing the right thing—even when no one is watching."
-            : 'Kejujuran dan transparansi tidak bisa ditawar. Kami membangun kepercayaan melalui praktik etis, komunikasi yang jelas, dan selalu melakukan hal yang benar—bahkan ketika tidak ada yang melihat.',
+          title: 'Integritas',
+          description: 'Kejujuran dan transparansi tidak bisa ditawar. Kami membangun kepercayaan melalui praktik etis, komunikasi yang jelas, dan selalu melakukan hal yang benar—bahkan ketika tidak ada yang melihat.',
           color: 'green'
         },
         {
           icon: Users,
-          title: language === 'en' ? 'Collaboration' : 'Kolaborasi',
-          description: language === 'en'
-            ? "Great things happen when talented people work together. We foster a culture where diverse perspectives are valued and teamwork leads to extraordinary results."
-            : 'Hal-hal besar terjadi ketika orang-orang berbakat bekerja bersama. Kami memupuk budaya di mana perspektif yang beragam dihargai dan kerja tim menghasilkan hasil luar biasa.',
+          title: 'Kolaborasi',
+          description: 'Hal-hal besar terjadi ketika orang-orang berbakat bekerja bersama. Kami memupuk budaya di mana perspektif yang beragam dihargai dan kerja tim menghasilkan hasil luar biasa.',
           color: 'orange'
         },
         {
           icon: Heart,
-          title: language === 'en' ? 'Client Focus' : 'Fokus pada Klien',
-          description: language === 'en'
-            ? "Our clients' success is our success. We listen deeply, understand their unique challenges, and go the extra mile to deliver solutions that truly make a difference."
-            : 'Kesuksesan klien kami adalah kesuksesan kami. Kami mendengarkan dengan saksama, memahami tantangan unik mereka, dan berusaha ekstra untuk memberikan solusi yang benar-benar membuat perbedaan.',
+          title: 'Fokus pada Klien',
+          description: 'Kesuksesan klien kami adalah kesuksesan kami. Kami mendengarkan dengan saksama, memahami tantangan unik mereka, dan berusaha ekstra untuk memberikan solusi yang benar-benar membuat perbedaan.',
           color: 'pink'
         },
         {
           icon: TrendingUp,
-          title: language === 'en' ? 'Continuous Growth' : 'Pertumbuhan Berkelanjutan',
-          description: language === 'en'
-            ? "We invest in learning and development for our team and organization. Growth is not just about scaling—it's about becoming better, smarter, and more capable every day."
-            : 'Kami berinvestasi dalam pembelajaran dan pengembangan untuk tim dan organisasi kami. Pertumbuhan bukan hanya tentang skala—ini tentang menjadi lebih baik, lebih cerdas, dan lebih mampu setiap hari.',
+          title: 'Pertumbuhan Berkelanjutan',
+          description: 'Kami berinvestasi dalam pembelajaran dan pengembangan untuk tim dan organisasi kami. Pertumbuhan bukan hanya tentang skala—ini tentang menjadi lebih baik, lebih cerdas, dan lebih mampu setiap hari.',
           color: 'indigo'
         }
       ]
     },
     culture: {
-      badge: language === 'en' ? 'Our Culture' : 'Budaya Kami',
-      title: language === 'en' ? 'Life at Barcomp' : 'Kehidupan di Barcomp',
-      subtitle: language === 'en'
-        ? "What makes working here different? It's our commitment to creating an environment where talented people thrive."
-        : 'Apa yang membuat bekerja di sini berbeda? Ini adalah komitmen kami untuk menciptakan lingkungan di mana orang-orang berbakat berkembang.',
+      badge: 'Budaya Kami',
+      title: 'Kehidupan di Barcomp',
+      subtitle: 'Apa yang membuat bekerja di sini berbeda? Ini adalah komitmen kami untuk menciptakan lingkungan di mana orang-orang berbakat berkembang.',
       features: [
         {
           icon: GraduationCap,
-          title: language === 'en' ? 'Continuous Learning' : 'Pembelajaran Berkelanjutan',
-          description: language === 'en'
-            ? "We believe in investing in our people. From certifications to workshops, we provide the resources you need to grow."
-            : 'Kami percaya dalam berinvestasi pada orang-orang kami. Dari sertifikasi hingga workshop, kami menyediakan sumber daya yang Anda butuhkan untuk tumbuh.',
-          items: language === 'en' ? [
-            'Annual training budget per employee',
-            'Access to online learning platforms',
-            'Technical certification support',
-            'Quarterly internal knowledge sharing'
-          ] : [
+          title: 'Pembelajaran Berkelanjutan',
+          description: 'Kami percaya dalam berinvestasi pada orang-orang kami. Dari sertifikasi hingga workshop, kami menyediakan sumber daya yang Anda butuhkan untuk tumbuh.',
+          items: [
             'Anggaran pelatihan tahunan per karyawan',
             'Akses ke platform pembelajaran online',
             'Dukungan sertifikasi teknis',
@@ -318,16 +279,9 @@ export default function ValuesPage() {
         },
         {
           icon: Handshake,
-          title: language === 'en' ? 'Work-Life Balance' : 'Keseimbangan Kerja-Hidup',
-          description: language === 'en'
-            ? "We understand that great work comes from happy, balanced individuals. Flexibility and well-being are priorities."
-            : 'Kami memahami bahwa pekerjaan yang hebat datang dari individu yang bahagia dan seimbang. Fleksibilitas dan kesejahteraan adalah prioritas.',
-          items: language === 'en' ? [
-            'Flexible working hours',
-            'Remote work options',
-            'Generous paid time off',
-            'Health and wellness programs'
-          ] : [
+          title: 'Keseimbangan Kerja-Hidup',
+          description: 'Kami memahami bahwa pekerjaan yang hebat datang dari individu yang bahagia dan seimbang. Fleksibilitas dan kesejahteraan adalah prioritas.',
+          items: [
             'Jam kerja fleksibel',
             'Opsi kerja remote',
             'Cuti berbayar yang murah hati',
@@ -336,16 +290,9 @@ export default function ValuesPage() {
         },
         {
           icon: Sparkles,
-          title: language === 'en' ? 'Innovation Time' : 'Waktu Inovasi',
-          description: language === 'en'
-            ? "We encourage experimentation and creative thinking. Dedicated time for innovation projects and hackathons."
-            : 'Kami mendorong eksperimen dan pemikiran kreatif. Waktu khusus untuk proyek inovasi dan hackathon.',
-          items: language === 'en' ? [
-            '20% time for passion projects',
-            'Quarterly innovation challenges',
-            'Cross-team collaboration initiatives',
-            'Support for open source contributions'
-          ] : [
+          title: 'Waktu Inovasi',
+          description: 'Kami mendorong eksperimen dan pemikiran kreatif. Waktu khusus untuk proyek inovasi dan hackathon.',
+          items: [
             '20% waktu untuk proyek passion',
             'Tantangan inovasi triwulanan',
             'Inisiatif kolaborasi lintas tim',
@@ -354,16 +301,9 @@ export default function ValuesPage() {
         },
         {
           icon: Medal,
-          title: language === 'en' ? 'Recognition & Growth' : 'Pengakuan & Pertumbuhan',
-          description: language === 'en'
-            ? "Your contributions matter. We celebrate achievements and provide clear paths for career advancement."
-            : 'Kontribusi Anda penting. Kami merayakan pencapaian dan menyediakan jalur yang jelas untuk kemajuan karir.',
-          items: language === 'en' ? [
-            'Performance-based bonuses',
-            'Clear career progression paths',
-            'Peer recognition programs',
-            'Leadership development opportunities'
-          ] : [
+          title: 'Pengakuan & Pertumbuhan',
+          description: 'Kontribusi Anda penting. Kami merayakan pencapaian dan menyediakan jalur yang jelas untuk kemajuan karir.',
+          items: [
             'Bonus berbasis kinerja',
             'Jalur progres karir yang jelas',
             'Program pengakuan dari rekan kerja',
@@ -373,24 +313,15 @@ export default function ValuesPage() {
       ]
     },
     certifications: {
-      badge: language === 'en' ? 'Standards & Certifications' : 'Standar & Sertifikasi',
-      title: language === 'en' ? 'How Certifications Shape Our Excellence' : 'Bagaimana Sertifikasi Membentuk Keunggulan Kami',
-      subtitle: language === 'en'
-        ? "Our certifications are not just badges—they represent our commitment to world-class quality and continuous improvement in everything we do."
-        : 'Sertifikasi kami bukan sekadar lencana—mereka mewakili komitmen kami terhadap kualitas kelas dunia dan perbaikan berkelanjutan dalam semua yang kami lakukan.',
+      badge: 'Standar & Sertifikasi',
+      title: 'Bagaimana Sertifikasi Membentuk Keunggulan Kami',
+      subtitle: 'Sertifikasi kami bukan sekadar lencana—mereka mewakili komitmen kami terhadap kualitas kelas dunia dan perbaikan berkelanjutan dalam semua yang kami lakukan.',
       items: [
         {
           icon: Shield,
           certification: 'ISO 9001:2015',
-          impact: language === 'en'
-            ? "This quality management certification ensures every project follows rigorous processes. From initial planning to final delivery, we maintain consistent quality standards that clients can rely on."
-            : 'Sertifikasi manajemen mutu ini memastikan setiap proyek mengikuti proses yang ketat. Dari perencanaan awal hingga pengiriman akhir, kami mempertahankan standar kualitas yang konsisten yang dapat diandalkan klien.',
-          standards: language === 'en' ? [
-            'Documented quality procedures',
-            'Regular internal audits',
-            'Continuous improvement cycles',
-            'Client satisfaction tracking'
-          ] : [
+          impact: 'Sertifikasi manajemen mutu ini memastikan setiap proyek mengikuti proses yang ketat. Dari perencanaan awal hingga pengiriman akhir, kami mempertahankan standar kualitas yang konsisten yang dapat diandalkan klien.',
+          standards: [
             'Prosedur mutu terdokumentasi',
             'Audit internal reguler',
             'Siklus perbaikan berkelanjutan',
@@ -400,15 +331,8 @@ export default function ValuesPage() {
         {
           icon: Award,
           certification: 'Microsoft Gold Partner',
-          impact: language === 'en'
-            ? "As a Gold Partner, we have access to the latest Microsoft technologies and training. This means our team stays at the cutting edge, delivering solutions built on proven, enterprise-grade platforms."
-            : 'Sebagai Gold Partner, kami memiliki akses ke teknologi dan pelatihan Microsoft terbaru. Ini berarti tim kami tetap di garis depan, memberikan solusi yang dibangun di platform yang terbukti dan kelas enterprise.',
-          standards: language === 'en' ? [
-            'Advanced technical competencies',
-            'Direct Microsoft support access',
-            'Early access to new technologies',
-            'Certified Microsoft professionals'
-          ] : [
+          impact: 'Sebagai Gold Partner, kami memiliki akses ke teknologi dan pelatihan Microsoft terbaru. Ini berarti tim kami tetap di garis depan, memberikan solusi yang dibangun di platform yang terbukti dan kelas enterprise.',
+          standards: [
             'Kompetensi teknis lanjutan',
             'Akses dukungan langsung Microsoft',
             'Akses awal ke teknologi baru',
@@ -418,15 +342,8 @@ export default function ValuesPage() {
         {
           icon: Shield,
           certification: 'AWS Partner',
-          impact: language === 'en'
-            ? "Our AWS partnership demonstrates expertise in cloud architecture and deployment. We design scalable, secure cloud solutions that help clients innovate faster and reduce infrastructure costs."
-            : 'Kemitraan AWS kami menunjukkan keahlian dalam arsitektur dan deployment cloud. Kami merancang solusi cloud yang scalable dan aman yang membantu klien berinovasi lebih cepat dan mengurangi biaya infrastruktur.',
-          standards: language === 'en' ? [
-            'AWS-certified architects',
-            'Security best practices',
-            'Cost optimization strategies',
-            'High-availability designs'
-          ] : [
+          impact: 'Kemitraan AWS kami menunjukkan keahlian dalam arsitektur dan deployment cloud. Kami merancang solusi cloud yang scalable dan aman yang membantu klien berinovasi lebih cepat dan mengurangi biaya infrastruktur.',
+          standards: [
             'Arsitek tersertifikasi AWS',
             'Praktik terbaik keamanan',
             'Strategi optimisasi biaya',
@@ -436,15 +353,8 @@ export default function ValuesPage() {
         {
           icon: Award,
           certification: 'Google Cloud Partner',
-          impact: language === 'en'
-            ? "Google Cloud partnership enables us to leverage cutting-edge tools for data analytics, AI, and machine learning. We help clients unlock insights and build intelligent applications."
-            : 'Kemitraan Google Cloud memungkinkan kami memanfaatkan alat mutakhir untuk analitik data, AI, dan machine learning. Kami membantu klien membuka wawasan dan membangun aplikasi cerdas.',
-          standards: language === 'en' ? [
-            'GCP-certified engineers',
-            'Data privacy compliance',
-            'ML/AI implementation expertise',
-            'Modern DevOps practices'
-          ] : [
+          impact: 'Kemitraan Google Cloud memungkinkan kami memanfaatkan alat mutakhir untuk analitik data, AI, dan machine learning. Kami membantu klien membuka wawasan dan membangun aplikasi cerdas.',
+          standards: [
             'Insinyur tersertifikasi GCP',
             'Kepatuhan privasi data',
             'Keahlian implementasi ML/AI',
@@ -454,48 +364,36 @@ export default function ValuesPage() {
       ]
     },
     workEnvironment: {
-      badge: language === 'en' ? 'Work Environment' : 'Lingkungan Kerja',
-      title: language === 'en' ? 'A Day in the Life' : 'Sehari di Kehidupan',
-      subtitle: language === 'en'
-        ? "From collaborative spaces to cutting-edge tools, we've built an environment where great work happens naturally."
-        : 'Dari ruang kolaboratif hingga alat mutakhir, kami telah membangun lingkungan di mana pekerjaan hebat terjadi secara alami.',
+      badge: 'Lingkungan Kerja',
+      title: 'Sehari di Kehidupan',
+      subtitle: 'Dari ruang kolaboratif hingga alat mutakhir, kami telah membangun lingkungan di mana pekerjaan hebat terjadi secara alami.',
       items: [
         {
           icon: Coffee,
-          title: language === 'en' ? 'Modern Workspace' : 'Ruang Kerja Modern',
-          description: language === 'en'
-            ? "Ergonomic setups, standing desks, and collaboration spaces designed for productivity and creativity."
-            : 'Setup ergonomis, standing desk, dan ruang kolaborasi yang dirancang untuk produktivitas dan kreativitas.'
+          title: 'Ruang Kerja Modern',
+          description: 'Setup ergonomis, standing desk, dan ruang kolaborasi yang dirancang untuk produktivitas dan kreativitas.'
         },
         {
           icon: Code,
-          title: language === 'en' ? 'Latest Technology' : 'Teknologi Terbaru',
-          description: language === 'en'
-            ? "Access to cutting-edge development tools, cloud platforms, and software that help you work at your best."
-            : 'Akses ke alat pengembangan mutakhir, platform cloud, dan perangkat lunak yang membantu Anda bekerja dengan sebaik-baiknya.'
+          title: 'Teknologi Terbaru',
+          description: 'Akses ke alat pengembangan mutakhir, platform cloud, dan perangkat lunak yang membantu Anda bekerja dengan sebaik-baiknya.'
         },
         {
           icon: Users,
-          title: language === 'en' ? 'Team Activities' : 'Aktivitas Tim',
-          description: language === 'en'
-            ? "Regular team building, social events, and celebrations that strengthen our bonds beyond work projects."
-            : 'Pembangunan tim reguler, acara sosial, dan perayaan yang memperkuat ikatan kami di luar proyek kerja.'
+          title: 'Aktivitas Tim',
+          description: 'Pembangunan tim reguler, acara sosial, dan perayaan yang memperkuat ikatan kami di luar proyek kerja.'
         },
         {
           icon: Briefcase,
-          title: language === 'en' ? 'Professional Development' : 'Pengembangan Profesional',
-          description: language === 'en'
-            ? "Conference attendance, mentorship programs, and opportunities to speak at industry events."
-            : 'Kehadiran di konferensi, program mentorship, dan kesempatan untuk berbicara di acara industri.'
+          title: 'Pengembangan Profesional',
+          description: 'Kehadiran di konferensi, program mentorship, dan kesempatan untuk berbicara di acara industri.'
         }
       ]
     },
     cta: {
-      title: language === 'en' ? 'Join Our Team' : 'Bergabunglah dengan Tim Kami',
-      subtitle: language === 'en'
-        ? "If our values resonate with you and you're passionate about building exceptional digital solutions, we'd love to hear from you."
-        : 'Jika nilai-nilai kami beresonansi dengan Anda dan Anda bersemangat membangun solusi digital yang luar biasa, kami ingin mendengar dari Anda.',
-      button: language === 'en' ? 'View Career Opportunities' : 'Lihat Peluang Karir'
+      title: 'Bergabunglah dengan Tim Kami',
+      subtitle: 'Jika nilai-nilai kami beresonansi dengan Anda dan Anda bersemangat membangun solusi digital yang luar biasa, kami ingin mendengar dari Anda.',
+      button: 'Lihat Peluang Karir'
     }
   };
 

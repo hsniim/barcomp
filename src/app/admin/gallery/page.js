@@ -89,7 +89,7 @@ export default function GalleryListPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Gallery Management</h1>
+        <h1 className="text-3xl text-black font-bold">Gallery Management</h1>
         <Link
           href="/admin/gallery/create"
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -107,12 +107,12 @@ export default function GalleryListPage() {
               <img
                 src={item.thumbnail_url || item.image_url}
                 alt={item.title}
-                className="w-full h-48 object-cover"
+                className="w-full h-48 object-cover text-black"
               />
               <div className="p-4">
                 <h3 className="font-bold text-lg mb-2">{item.title}</h3>
                 {item.category && (
-                  <span className="inline-block px-2 py-1 text-xs bg-gray-200 rounded mb-2">
+                  <span className="inline-block px-2 py-1 text-xs text-black bg-gray-200 rounded mb-2">
                     {item.category}
                   </span>
                 )}
@@ -128,7 +128,7 @@ export default function GalleryListPage() {
                 <div className="flex gap-2">
                   <Link
                     href={`/admin/gallery/edit/${item.id}`}
-                    className="flex-1 text-center px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                    className="flex-1 text-center px-3 py-2 text-black bg-gray-100 rounded hover:bg-gray-200"
                   >
                     Edit
                   </Link>
