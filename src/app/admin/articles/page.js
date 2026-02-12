@@ -215,7 +215,14 @@ export default function ArticlesPage() {
     published: articles.filter(a => a.status === 'published').length,
     draft: articles.filter(a => a.status === 'draft').length,
     featured: articles.filter(a => a.featured).length
-  };
+  }
+
+  const statsData = [
+  { label: 'Total Articles', value: stats.total, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
+  { label: 'Published', value: stats.published, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+  { label: 'Draft', value: stats.draft, icon: Edit, color: 'text-gray-600', bg: 'bg-gray-50' },
+  { label: 'Featured', value: stats.featured, icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' }
+  ];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -264,73 +271,30 @@ export default function ArticlesPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" // Ubah ke lg:grid-cols-4 (sesuaikan jumlah, events pakai 5)
       >
-        <motion.div variants={itemVariants}>
-          <Card className="border-gray-300 hover:border-[#0066FF] shadow-sm hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Total Articles</p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.total}</p>
+        {statsData.map((stat, index) => (
+          <motion.div key={index} variants={itemVariants}>
+            <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-4"> {/* Ubah padding ke p-4 */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide"> {/* Ubah style label */}
+                      {stat.label}
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums"> {/* Ubah size value ke text-3xl */}
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}> {/* Ubah size, bg solid, rounded-xl, hilangkan gradient/scale/shadow */}
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} /> {/* Ubah size icon ke w-6 h-6, color sesuai stat */}
+                  </div>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                  <FileText className="w-7 h-7 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="border-gray-300 hover:border-green-500 shadow-sm hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Published</p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.published}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                  <TrendingUp className="w-7 h-7 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="border-gray-300 hover:border-gray-500 shadow-sm hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Draft</p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.draft}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                  <Edit className="w-7 h-7 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="border-gray-300 hover:border-amber-500 shadow-sm hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Featured</p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2 tabular-nums">{stats.featured}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                  <Star className="w-7 h-7 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+  ))}
       </motion.div>
-
       {/* Filters */}
       <motion.div
         variants={itemVariants}
