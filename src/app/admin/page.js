@@ -243,7 +243,7 @@ export default function AdminDashboard() {
                         {stat.subtitle}
                       </p>
                       <div className="flex items-center gap-1 mt-2 text-green-600">
-                        <TrendingUp className="w-4 h-4" />  {/* Sesuaikan ikon trend jika perlu */}
+                        <TrendingUp className="w-4 h-4" />
                         <span className="text-xs font-semibold">{stat.trend}</span>
                       </div>
                     </div>
