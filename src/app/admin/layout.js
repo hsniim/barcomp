@@ -180,10 +180,10 @@ export default function AdminLayout({ children }) {
         {/* Header sidebar */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <Link href="/admin" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg">B</span>
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src='/logos/barcomp_primarylogo-blacktransp.svg'></img>
             </div>
-            <span className="text-xl font-bold text-gray-900">Barcomp</span>
+            <h2 className='text-black text-2xl'>Barcomp</h2>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
