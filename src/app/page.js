@@ -435,7 +435,7 @@ export default function Home() {
       <Navbar />
       
       <main className="bg-white">
-        {/* Hero Section - 2 Columns (Text Left, Image Right) */}
+        {/*Hero Section*/}
         <section className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/30 to-white pt-20 lg:pt-24">
           <div className="container mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -462,7 +462,7 @@ export default function Home() {
                 </div>
               </FadeInSection>
 
-              {/* Right Column - Image */}
+              {/* Right Column */}
               <FadeInSection delay={0.2}>
                 <div className="relative">
                   <Image
@@ -497,10 +497,10 @@ export default function Home() {
                     <Image
                       src={client.logo}
                       alt={`${client.name} logo`}
-                      width={client.width || 140}   // sesuaikan ukuran logo masing-masing
+                      width={client.width || 140} 
                       height={client.height || 45}
                       className="object-contain max-w-full max-h-full"
-                      priority={index < 6} // optional: priority untuk logo pertama
+                      priority={index < 6} 
                     />
                   </div>
                 ))}

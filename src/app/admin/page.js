@@ -133,8 +133,8 @@ export default function AdminDashboard() {
       value: stats.articles.total,
       subtitle: `${stats.articles.published} published, ${stats.articles.draft} draft`,
       icon: FileText,
-      color: 'text-[#0066FF]',
-      bgColor: 'bg-blue-50',
+      color: 'text-[#0066FF]',  // Warna ikon biru seperti total di events
+      bg: 'bg-blue-50',        // Background ringan
       trend: `${stats.articles.featured} featured`,
       trendUp: true,
       href: '/admin/articles'
@@ -144,8 +144,8 @@ export default function AdminDashboard() {
       value: stats.events.total,
       subtitle: `${stats.events.upcoming} upcoming, ${stats.events.ongoing} ongoing`,
       icon: Calendar,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
+      color: 'text-blue-600',  // Sesuaikan dengan upcoming di events
+      bg: 'bg-blue-50',
       trend: `${stats.events.featured} featured`,
       trendUp: true,
       href: '/admin/events'
@@ -153,10 +153,10 @@ export default function AdminDashboard() {
     {
       title: 'Gallery Items',
       value: stats.gallery.total,
-      subtitle: `${stats.gallery.featured} featured photos`,
+      subtitle: `0 featured photos`,  // Sesuaikan subtitle jika perlu
       icon: Image,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-green-600',  // Sesuaikan dengan ongoing di events
+      bg: 'bg-green-50',
       trend: 'Active items',
       trendUp: true,
       href: '/admin/gallery'
@@ -229,37 +229,26 @@ export default function AdminDashboard() {
             variants={itemVariants}
           >
             <Link href={stat.href}>
-              <Card className="border-gray-300 hover:border-[#0066FF] shadow-sm hover:shadow-lg transition-all duration-300 group overflow-hidden cursor-pointer h-full">
-                <CardContent className="p-6 relative">
-                  {/* Glow effect on hover */}
-                  <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${stat.bgColor}`} />
-                  
-                  <div className="relative">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          {stat.title}
-                        </p>
-                        <p className="mt-3 text-4xl font-bold text-gray-900 tabular-nums">
-                          {stat.value}
-                        </p>
-                        <p className="mt-2 text-sm text-gray-600 font-medium">
-                          {stat.subtitle}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-3">
-                          {stat.trendUp ? (
-                            <TrendingUp className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <MessageSquare className="w-4 h-4 text-gray-600" />
-                          )}
-                          <span className={`text-xs font-semibold ${stat.trendUp ? 'text-green-600' : 'text-gray-600'}`}>
-                            {stat.trend}
-                          </span>
-                        </div>
+              <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300 group overflow-hidden cursor-pointer h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        {stat.title}
+                      </p>
+                      <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">
+                        {stat.value}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {stat.subtitle}
+                      </p>
+                      <div className="flex items-center gap-1 mt-2 text-green-600">
+                        <TrendingUp className="w-4 h-4" />
+                        <span className="text-xs font-semibold">{stat.trend}</span>
                       </div>
-                      <div className="w-14 h-14 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                        <stat.icon className="w-7 h-7 text-white" />
-                      </div>
+                    </div>
+                    <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
+                      <stat.icon className={`w-6 h-6 ${stat.color}`} />
                     </div>
                   </div>
                 </CardContent>
@@ -288,18 +277,15 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {quickActions.map((action, index) => (
-                <Link
-                  key={index}
-                  href={action.href}
-                >
+                <Link key={index} href={action.href}>
                   <motion.div
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`flex flex-col items-start p-5 border-2 border-gray-300 rounded-xl hover:border-[#0066FF] ${action.bgColor} hover:shadow-md transition-all duration-300 group cursor-pointer`}
+                    className={`flex flex-col items-start p-5 border border-gray-200 rounded-xl hover:border-[#0066FF] hover:shadow-md transition-all duration-300 group cursor-pointer ${action.bg}`}
                   >
                     <div className="flex items-center justify-between w-full mb-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#0052CC] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                        <action.icon className="w-6 h-6 text-white" />
+                      <div className={`w-12 h-12 ${action.bg} rounded-xl flex items-center justify-center`}>
+                        <action.icon className={`w-6 h-6 ${action.color}`} />
                       </div>
                       <ArrowUpRight className="w-5 h-5 text-[#0066FF] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
