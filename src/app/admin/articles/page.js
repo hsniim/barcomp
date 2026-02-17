@@ -259,9 +259,9 @@ export default function ArticlesPage() {
           </p>
         </div>
         <Link href="/admin/articles/create">
-          <Button className="bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-3 font-bold">
-            <Plus className="w-5 h-5 mr-2" />
-            Create New Article
+          <Button className="bg-blue-600 text-white  transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-5 text-md font-bold">
+            <Plus className="w-5 h-5" />
+            New Article
           </Button>
         </Link>
       </motion.div>
@@ -354,7 +354,7 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-300 shadow-sm">
+        <Card className="border-gray-300 shadow-sm p-1">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24 px-4">
@@ -485,37 +485,37 @@ export default function ArticlesPage() {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                className="h-9 w-9 p-0 hover:bg-blue-100 hover:text-[#0066FF] transition-colors duration-200"
+                                className="h-9 w-9 p-0 hover:bg-blue-100 bg-blue-50 text-black hover:text-[#0066FF] transition-colors duration-200"
                               >
                                 <MoreHorizontal className="w-5 h-5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-48 bg-white">
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/articles/edit/${article.id}`}
-                                  className="flex items-center gap-2 cursor-pointer text-black"
+                                  className="flex items-center gap-2 cursor-pointer text-black focus:bg-gray-100"
                                 >
-                                  <Edit className="w-4 h-4 text-black" />
+                                  <Edit className="w-4 h-4 text-black focis" />
                                   <span>Edit Article</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/resources/articles/${article.slug}`}
-                                  className="flex items-center gap-2 cursor-pointer text-black"
+                                  className="flex items-center gap-2 cursor-pointer text-black focus:bg-gray-100"
                                   target="_blank"
                                 >
                                   <Eye className="w-4 h-4" />
                                   <span>View Article</span>
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                              <DropdownMenuSeparator className="bg-gray-300 h-1.5px" />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(article.id, article.title)}
                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="w-4 h-4 mr-0" />
                                 <span>Delete Article</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>

@@ -225,7 +225,7 @@ export default function EventsPage() {
           <p className="mt-1 text-base text-gray-600">Manage and organize your events</p>
         </div>
         <Link href="/admin/events/create">
-          <Button className="flex items-center gap-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white transition-all duration-300">
+          <Button className="bg-blue-600 text-white  transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-5 text-md font-bold">
             <Plus className="w-4 h-4" />
             New Event
           </Button>
@@ -274,7 +274,7 @@ export default function EventsPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-sm p-1">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search */}
@@ -323,7 +323,7 @@ export default function EventsPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-sm p-1">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -459,16 +459,16 @@ export default function EventsPage() {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                className="h-9 w-9 p-0 hover:bg-blue-100 hover:text-[#0066FF] transition-colors duration-200"
+                                className="h-9 w-9 p-0 hover:bg-blue-100 bg-blue-50 text-black hover:text-[#0066FF] transition-colors duration-200"
                               >
                                 <MoreHorizontal className="w-5 h-5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-48 bg-white">
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/edit/${event.id}`}
-                                  className="flex items-center gap-2 cursor-pointer text-black"
+                                  className="flex items-center gap-2 cursor-pointer text-black focus:bg-gray-100"
                                 >
                                   <Edit className="w-4 h-4" />
                                   <span>Edit Event</span>
@@ -477,18 +477,18 @@ export default function EventsPage() {
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/${event.id}/registrations`}
-                                  className="flex items-center gap-2 cursor-pointer text-black"
+                                  className="flex items-center gap-2 cursor-pointer text-black focus:bg-gray-100"
                                 >
                                   <Users className="w-4 h-4" />
                                   <span>View Event</span>
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                              <DropdownMenuSeparator className="bg-gray-300 h-1.5px"/>
                               <DropdownMenuItem
                                 onClick={() => handleDelete(event.id, event.title)}
                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="w-4 h-4 mr-0" />
                                 <span>Delete Event</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
