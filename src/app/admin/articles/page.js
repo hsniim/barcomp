@@ -218,10 +218,10 @@ export default function ArticlesPage() {
   }
 
   const statsData = [
-  { label: 'Total Articles', value: stats.total, icon: FileText, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-  { label: 'Published', value: stats.published, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-  { label: 'Draft', value: stats.draft, icon: Edit, color: 'text-gray-600', bg: 'bg-gray-50' },
-  { label: 'Featured', value: stats.featured, icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' }
+  { label: 'Total Articles', value: stats.total, icon: FileText, color: 'text-blue-600' },
+  { label: 'Published', value: stats.published, icon: TrendingUp, color: 'text-blue-600' },
+  { label: 'Draft', value: stats.draft, icon: Edit, color: 'text-blue-600'},
+  { label: 'Featured', value: stats.featured, icon: Star, color: 'text-blue-600' }
   ];
 
   const containerVariants = {
@@ -275,19 +275,19 @@ export default function ArticlesPage() {
       >
         {statsData.map((stat, index) => (
           <motion.div key={index} variants={itemVariants}>
-            <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-4"> {/* Ubah padding ke p-4 */}
+            <Card className="bg-white hover:bg-blue-700 shadow-lg transition-all duration-300 group">
+              <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide"> {/* Ubah style label */}
+                    <p className="text-xs font-semibold group-hover:text-white text-gray-600 uppercase tracking-wide"> {/* Ubah style label */}
                       {stat.label}
                     </p>
-                    <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums"> {/* Ubah size value ke text-3xl */}
+                    <p className="mt-2 text-3xl font-bold group-hover:text-white text-gray-900 tabular-nums"> {/* Ubah size value ke text-3xl */}
                       {stat.value}
                     </p>
                   </div>
                   <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}> {/* Ubah size, bg solid, rounded-xl, hilangkan gradient/scale/shadow */}
-                    <stat.icon className={`w-6 h-6 ${stat.color}`} /> {/* Ubah size icon ke w-6 h-6, color sesuai stat */}
+                    <stat.icon className={`w-6 h-6 ${stat.color} group-hover:text-white`} /> {/* Ubah size icon ke w-6 h-6, color sesuai stat */}
                   </div>
                 </div>
               </CardContent>
@@ -301,8 +301,8 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-300 shadow-sm">
-          <CardContent className="p-6">
+        <Card className="hover:shadow-lg transition duration-300 bg-white">
+          <CardContent className="">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
@@ -354,7 +354,7 @@ export default function ArticlesPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-300 shadow-sm p-1">
+        <Card className="p-0">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24 px-4">
@@ -386,26 +386,26 @@ export default function ArticlesPage() {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-gray-50 to-white border-b-2 border-gray-200">
+              <div className="overflow-x-auto overflow-hidden rounded-t-xl px-2 py-1">
+                <table className="w-full border-separate border-spacing-y-1">
+                  <thead className="bg-white">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="rounded-l-md px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Article
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Category
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Published
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Featured
                       </th>
-                      <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="rounded-r-md px-6 py-5 text-center text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -419,17 +419,17 @@ export default function ArticlesPage() {
                         transition={{ delay: index * 0.05 }}
                         className="hover:bg-blue-50/50 transition-colors duration-200 group"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 rounded-l-xl">
                           <div className="flex items-center gap-3">
                             {article.cover_image ? (
                               <img
                                 src={article.cover_image}
                                 alt={article.title}
-                                className="w-16 h-16 rounded-xl object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200"
+                                className="w-12 h-12 rounded-xl object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200 flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200">
-                                <FileText className="w-7 h-7 text-[#0066FF]" />
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200 flex-shrink-0">
+                                <FileText className="w-6 h-6 text-[#0066FF]" />
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
@@ -444,7 +444,7 @@ export default function ArticlesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {article.category ? (
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getCategoryBadge(article.category)} capitalize`}>
+                            <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${getCategoryBadge(article.category)} capitalize`}>
                               {article.category}
                             </span>
                           ) : (
@@ -452,13 +452,12 @@ export default function ArticlesPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(article.status)} capitalize`}>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusBadge(article.status)} capitalize`}>
                             {article.status || 'N/A'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-sm text-gray-900">
-                            <Calendar className="w-4 h-4 text-gray-400" />
                             <span className="font-medium">{formatDate(article.published_at)}</span>
                           </div>
                         </td>
@@ -479,7 +478,7 @@ export default function ArticlesPage() {
                             )}
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center rounded-r-xl">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button 
