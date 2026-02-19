@@ -16,6 +16,8 @@ import {
   X,
   User,
   ChevronUp,
+  ChevronDown,
+  ChevronRight,
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -36,7 +38,7 @@ export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null); // null = belum load
+  const [currentUser, setCurrentUser] = useState(null);
 
   const userMenuRef = useRef(null);
 
@@ -64,7 +66,7 @@ export default function AdminLayout({ children }) {
         const res = await fetch('/api/auth/me', {
           method: 'GET',
           credentials: 'include',
-          cache: 'no-store', // penting agar selalu fresh
+          cache: 'no-store',
         });
 
         if (!res.ok) {
@@ -83,7 +85,6 @@ export default function AdminLayout({ children }) {
           return;
         }
 
-        // Validasi role (sesuaikan dengan yang ada di database kamu)
         if (data.user.role !== 'super_admin') {
           toast.error('Akses ditolak: Hanya Super Admin yang diizinkan.');
           router.replace('/unauthorized');
@@ -107,7 +108,6 @@ export default function AdminLayout({ children }) {
       } catch (err) {
         console.error('Gagal memuat info user:', err);
         toast.error('Gagal memuat data pengguna');
-        // Jangan langsung redirect agar tidak loop jika network bermasalah
       } finally {
         setIsLoadingUser(false);
       }
@@ -143,12 +143,30 @@ export default function AdminLayout({ children }) {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  // Jika halaman login → render children tanpa layout
+  // Generate breadcrumb segments from pathname
+  const getBreadcrumbs = () => {
+    const segments = pathname.split('/').filter(Boolean); // e.g. ['admin', 'articles', 'edit', '123']
+    const crumbs = [];
+    let accPath = '';
+
+    for (let i = 0; i < segments.length; i++) {
+      accPath += `/${segments[i]}`;
+      const label = segments[i].charAt(0).toUpperCase() + segments[i].slice(1);
+      // Try to match nav item for a nicer label
+      const navMatch = navigation.find((n) => n.href === accPath);
+      crumbs.push({
+        label: navMatch ? navMatch.name : label,
+        href: accPath,
+        isLast: i === segments.length - 1,
+      });
+    }
+    return crumbs;
+  };
+
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  // Jika masih loading user → tampilkan skeleton / loading
   if (isLoadingUser || !currentUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -159,6 +177,8 @@ export default function AdminLayout({ children }) {
       </div>
     );
   }
+
+  const breadcrumbs = getBreadcrumbs();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -202,17 +222,17 @@ export default function AdminLayout({ children }) {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all',
+                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all group',
                   active
-                    ? 'bg-blue-50 text-[#0066FF] shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-700 text-white'
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
                 )}
                 onClick={() => setSidebarOpen(false)}
               >
                 <item.icon
                   className={cn(
-                    'w-5 h-5 mr-3',
-                    active ? 'text-[#0066FF]' : 'text-gray-400'
+                    'w-5 h-5 mr-3 transform-colors duration-200',
+                    active ? 'text-white' : 'text-gray-600 group-hover:text-blue-700'
                   )}
                 />
                 {item.name}
@@ -221,63 +241,10 @@ export default function AdminLayout({ children }) {
           })}
         </nav>
 
-        {/* User section */}
-        <div className="relative p-4 border-t border-gray-200" ref={userMenuRef}>
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center shadow-md">
-                <span className="text-white font-medium text-sm">{currentUser.initials}</span>
-              </div>
-            )}
-            <div className="flex-1 ml-3 text-left min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{currentUser.name}</p>
-              <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
-            </div>
-            <ChevronUp
-              className={cn(
-                'w-4 h-4 text-gray-400 transition-transform',
-                userMenuOpen && 'rotate-180'
-              )}
-            />
-          </button>
-
-          {userMenuOpen && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 py-2 bg-white border border-gray-200 rounded-lg shadow-lg">
-              <Link
-                href="/admin/profile"
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={() => setUserMenuOpen(false)}
-              >
-                <User className="w-4 h-4 mr-3 text-gray-400" />
-                Profile
-              </Link>
-              <Link
-                href="/admin/settings"
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={() => setUserMenuOpen(false)}
-              >
-                <Settings className="w-4 h-4 mr-3 text-gray-400" />
-                Settings
-              </Link>
-              <div className="border-t border-gray-200 my-1" />
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <LogOut className="w-4 h-4 mr-3" />
-                Logout
-              </button>
-            </div>
-          )}
+        {/* App version info */}
+        <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0 flex items-center justify-between">
+          <p className="text-xs text-gray-400">v1.0.0</p>
+          <p className="text-xs text-gray-400">© {new Date().getFullYear()} Barcomp</p>
         </div>
       </div>
 
@@ -285,6 +252,7 @@ export default function AdminLayout({ children }) {
       <div className="lg:pl-64 flex flex-col min-h-screen">
         {/* Topbar */}
         <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm h-16 px-6 flex items-center justify-between">
+          {/* Left: Mobile menu + Breadcrumb */}
           <div className="flex items-center gap-4">
             <button
               className="lg:hidden text-gray-600 hover:text-gray-900"
@@ -292,22 +260,85 @@ export default function AdminLayout({ children }) {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {navigation.find((item) => isActiveRoute(item.href))?.name || 'Admin Panel'}
-            </h1>
+
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-1 text-sm">
+              {breadcrumbs.map((crumb, index) => (
+                <div key={crumb.href} className="flex items-center gap-1">
+                  {index > 0 && (
+                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  )}
+                  {crumb.isLast ? (
+                    <span className="font-semibold text-gray-900">{crumb.label}</span>
+                  ) : (
+                    <Link
+                      href={crumb.href}
+                      className="text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      {crumb.label}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </nav>
           </div>
 
-          {/* Mobile user avatar */}
-          <div className="lg:hidden">
-            {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-8 h-8 rounded-full object-cover"
+          {/* Right: Profile super admin */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              {currentUser.avatar && currentUser.avatar !== '/images/superadmin_avatar.jpg' ? (
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center shadow-md flex-shrink-0">
+                  <span className="text-white font-medium text-xs">{currentUser.initials}</span>
+                </div>
+              )}
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-gray-900 leading-tight truncate max-w-[140px]">{currentUser.name}</p>
+                <p className="text-xs text-gray-500 truncate max-w-[140px]">{currentUser.email}</p>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'w-4 h-4 text-gray-400 transition-transform hidden sm:block',
+                  userMenuOpen && 'rotate-180'
+                )}
               />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center">
-                <span className="text-white text-xs font-medium">{currentUser.initials}</span>
+            </button>
+
+            {/* Dropdown menu */}
+            {userMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-48 py-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <Link
+                  href="/admin/profile"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <User className="w-4 h-4 mr-3 text-gray-400" />
+                  Profile
+                </Link>
+                <Link
+                  href="/admin/settings"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <Settings className="w-4 h-4 mr-3 text-gray-400" />
+                  Settings
+                </Link>
+                <div className="border-t border-gray-200 my-1" />
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Logout
+                </button>
               </div>
             )}
           </div>
