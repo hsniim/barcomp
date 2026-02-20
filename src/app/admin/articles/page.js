@@ -279,10 +279,10 @@ export default function ArticlesPage() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold group-hover:text-white text-gray-600 uppercase tracking-wide"> {/* Ubah style label */}
+                    <p className="text-xs font-semibold group-hover:text-white text-gray-600 uppercase tracking-wide">
                       {stat.label}
                     </p>
-                    <p className="mt-2 text-3xl font-bold group-hover:text-white text-gray-900 tabular-nums"> {/* Ubah size value ke text-3xl */}
+                    <p className="mt-2 text-3xl font-bold group-hover:text-white text-gray-900 tabular-nums">
                       {stat.value}
                     </p>
                   </div>
@@ -402,7 +402,7 @@ export default function ArticlesPage() {
                       <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Published
                       </th>
-                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
+                      <th className="px-6 py-5 text-center text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Featured
                       </th>
                       <th className="rounded-r-md px-6 py-5 text-center text-xs font-sans font-medium uppercase text-black tracking-wider">
@@ -461,7 +461,7 @@ export default function ArticlesPage() {
                             <span className="font-medium">{formatDate(article.published_at)}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <button
                             onClick={() => toggleFeatured(article.id, article.featured)}
                             className={`p-2 rounded-lg transition-all duration-200 ${
