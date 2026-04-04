@@ -225,7 +225,7 @@ export default function EventsPage() {
           <p className="mt-1 text-base text-gray-600">Manage and organize your events</p>
         </div>
         <Link href="/admin/events/create">
-          <Button className="flex items-center gap-2 bg-gradient-to-r from-[#0066FF] to-[#0052CC] hover:shadow-lg text-white transition-all duration-300">
+          <Button className="bg-blue-600 text-white  transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-5 text-md font-bold">
             <Plus className="w-4 h-4" />
             New Event
           </Button>
@@ -240,26 +240,26 @@ export default function EventsPage() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
       >
         {[
-          { label: 'Total Events', value: stats.total, icon: CalendarDays, color: 'text-[#0066FF]', bg: 'bg-blue-50' },
-          { label: 'Upcoming', value: stats.upcoming, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Ongoing', value: stats.ongoing, icon: Clock, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Completed', value: stats.completed, icon: Calendar, color: 'text-gray-600', bg: 'bg-gray-50' },
-          { label: 'Featured', value: stats.featured, icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' }
+          { label: 'Total Events', value: stats.total, icon: CalendarDays, color: 'text-blue-700'},
+          { label: 'Upcoming', value: stats.upcoming, icon: TrendingUp, color: 'text-blue-700'},
+          { label: 'Ongoing', value: stats.ongoing, icon: Clock, color: 'text-blue-700'},
+          { label: 'Completed', value: stats.completed, icon: Calendar, color: 'text-blue-700'},
+          { label: 'Featured', value: stats.featured, icon: Star, color: 'text-blue-700'}
         ].map((stat, index) => (
           <motion.div key={index} variants={itemVariants}>
-            <Card className="border-gray-200 hover:border-[#0066FF] hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-4">
+            <Card className="bg-white hover:bg-blue-700 shadow-lg transition-all duration-300 group">
+              <CardContent className="pr-5 pl-5 pb-0 pt-0">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <p className="text-xs font-semibold group-hover:text-white text-gray-600 uppercase tracking-wide">
                       {stat.label}
                     </p>
-                    <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">
+                    <p className="mt-2 text-3xl font-bold group-hover:text-white text-gray-900 tabular-nums">
                       {stat.value}
                     </p>
                   </div>
                   <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                    <stat.icon className={`w-6 h-6 ${stat.color} group-hover:text-white`} />
                   </div>
                 </div>
               </CardContent>
@@ -274,7 +274,7 @@ export default function EventsPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-sm p-1">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search */}
@@ -323,7 +323,7 @@ export default function EventsPage() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-sm p-1">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -341,29 +341,29 @@ export default function EventsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-gray-50 to-white">
+              <div className="overflow-x-auto px-2 py-1">
+                <table className="min-w-full border-separate border-spacing-y-1">
+                  <thead className="bg-white">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="rounded-l-md px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Event
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Date & Time
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Location
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-left text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-5 text-center text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Featured
                       </th>
-                      <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="rounded-r-md px-6 py-5 text-center text-xs font-sans font-medium uppercase text-black tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -377,17 +377,17 @@ export default function EventsPage() {
                         transition={{ delay: index * 0.05 }}
                         className="hover:bg-blue-50/50 transition-colors duration-200 group"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 rounded-l-xl">
                           <div className="flex items-center gap-3">
                             {event.cover_image_url ? (
                               <img
                                 src={event.cover_image_url}
                                 alt={event.title}
-                                className="w-16 h-16 rounded-xl object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200"
+                                className="w-12 h-12 rounded-xl object-cover border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200 flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200">
-                                <Calendar className="w-7 h-7 text-[#0066FF]" />
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-[#0066FF] transition-colors duration-200 flex-shrink-0">
+                                <Calendar className="w-6 h-6 text-[#0066FF]" />
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
@@ -401,15 +401,12 @@ export default function EventsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-1">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getTypeBadge(event.event_type)} capitalize`}>
-                              {event.event_type || 'N/A'}
-                            </span>
-                          </div>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${getTypeBadge(event.event_type)} capitalize`}>
+                            {event.event_type || 'N/A'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2 text-sm text-gray-900">
-                            <Calendar className="w-4 h-4 text-gray-400" />
                             <div>
                               <div className="font-medium">{formatDate(event.start_date)}</div>
                               {event.start_date && (
@@ -419,24 +416,24 @@ export default function EventsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-start gap-2 text-sm">
-                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${getLocationTypeBadge(event.location_type)} capitalize mb-1`}>
-                                {event.location_type || 'N/A'}
-                              </span>
-                              {event.location_type !== 'online' && event.location_venue && (
-                                <div className="text-xs text-gray-600 truncate">{event.location_venue}</div>
-                              )}
-                            </div>
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${getLocationTypeBadge(event.location_type)} capitalize w-fit`}>
+                              {event.location_type === 'onsite' && <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />}
+                              {event.location_type || 'N/A'}
+                            </span>
+                            {event.location_type !== 'online' && event.location_venue && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                <span className="truncate max-w-[120px]">{event.location_venue}</span>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(event.status)} capitalize`}>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusBadge(event.status)} capitalize`}>
                             {event.status || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <button
                             onClick={() => toggleFeatured(event.id, event.featured)}
                             className={`p-2 rounded-lg transition-all duration-200 ${
@@ -453,22 +450,22 @@ export default function EventsPage() {
                             )}
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center rounded-r-xl">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                className="h-9 w-9 p-0 hover:bg-blue-100 hover:text-[#0066FF] transition-colors duration-200"
+                                className="h-9 w-9 p-0 hover:bg-blue-100 bg-blue-50 text-black hover:text-[#0066FF] transition-colors duration-200"
                               >
                                 <MoreHorizontal className="w-5 h-5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-48 bg-white">
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/edit/${event.id}`}
-                                  className="flex items-center gap-2 cursor-pointer text-black"
+                                  className="flex items-center gap-2 cursor-pointer text-black focus:bg-gray-100"
                                 >
                                   <Edit className="w-4 h-4" />
                                   <span>Edit Event</span>
@@ -477,18 +474,18 @@ export default function EventsPage() {
                               <DropdownMenuItem asChild>
                                 <Link 
                                   href={`/admin/events/${event.id}/registrations`}
-                                  className="flex items-center gap-2 cursor-pointer text-black"
+                                  className="flex items-center gap-2 cursor-pointer text-black focus:bg-gray-100"
                                 >
                                   <Users className="w-4 h-4" />
                                   <span>View Event</span>
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                              <DropdownMenuSeparator className="bg-gray-300 h-1.5px"/>
                               <DropdownMenuItem
                                 onClick={() => handleDelete(event.id, event.title)}
                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="w-4 h-4 mr-0" />
                                 <span>Delete Event</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>

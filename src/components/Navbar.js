@@ -430,7 +430,7 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-4">   
                 <>
                   <Link href="/contact">
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6">
+                    <Button className="bg-blue-600 hover:bg-indigo-700 text-white font-medium px-6">
                       {t.contact}
                     </Button>
                   </Link>

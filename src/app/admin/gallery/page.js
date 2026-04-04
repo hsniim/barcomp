@@ -7,7 +7,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  MoreHorizontal,
+  FileText,
+  Calendar,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+  Star,
+  StarOff,
+  Loader2,
+  Filter
+} from 'lucide-react';
 
 export default function GalleryListPage() {
   const router = useRouter();
@@ -90,11 +109,11 @@ export default function GalleryListPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl text-black font-bold">Gallery Management</h1>
-        <Link
-          href="/admin/gallery/create"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          + Tambah Gallery
+        <Link href="/admin/articles/create">
+          <Button className="bg-blue-600 text-white  transition-all duration-300 shadow-lg hover:shadow-xl px-6 py-5 text-md font-bold">
+            <Plus className="w-5 h-5" />
+            New Photo
+          </Button>
         </Link>
       </div>
 
